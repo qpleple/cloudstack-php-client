@@ -1,5 +1,5 @@
 <?php
-class CloudStackClient {
+class CloudStackClient extends CloudStackClient {
     protected $apiKey;
     protected $secretKey;
     protected $apiEndPoint; // Does not ends with a "/"
