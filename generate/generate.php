@@ -4,8 +4,6 @@ include('simple_html_dom.php');
 $html = file_get_html("http://download.cloud.com/releases/2.2.0/api/TOC_User.html");
 $base_url = "http://download.cloud.com/releases/2.2.0/api/";
 
-
-
 foreach($html->find('a') as $a) {
     $url = $a->href;
     if ($url == "index.html" || substr($url, 0, 8) == "user/2.2") {
@@ -14,11 +12,11 @@ foreach($html->find('a') as $a) {
     try {
         // Class generation
         $method = extract_method_data($base_url . $url, false);
-        echo_method($method);
+        dump_method($method);
 
         // Test generation
         //$method = extract_method_data($base_url . $url, true);
-        //echo_test_call($method);
+        //dump_test_call($method);
         //
         //echoln();
 
@@ -55,7 +53,7 @@ function extract_method_data($url, $test = false) {
     return $method;
 }
 
-function echo_test_call($method) {
+function dump_test_call($method) {
     echoln("// " . $method['description']);
     
     if ($method['params']) {
@@ -80,7 +78,7 @@ function echo_test_call($method) {
     }
 }
 
-function echo_method($method) {
+function dump_method($method) {
     echoln("/**");
     echoln(" * " . $method['description']);
     echoln(" *");
