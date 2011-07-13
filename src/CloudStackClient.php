@@ -59,8 +59,7 @@ class CloudStackClient extends BaseCloudStackClient {
     * @param $path Path for the request. Starts with a "/"
     * @param $args Array of arguments
     */
-    protected function request($command, $args)
-    {
+    protected function request($command, $args) {
         // Building the query
         $args['apikey'] = $this->apiKey;
         $args['command'] = $command;
@@ -71,44 +70,33 @@ class CloudStackClient extends BaseCloudStackClient {
         $query .= "&signature=" . urlencode(strtolower($this->getSignature($query)));
     
         $httpRequest = new HttpRequest();
-        $httpRequest->setMethod(HTTP_METH_POST);   
-        $httpRequest->setUrl("{$this->apiEndPoint}{$path}?{$query}");
+        $httpRequest->setMethod(HTTP_METH_POST);
+        $url = $this->apiEndPoint . "?" . $query;
+        $httpRequest->setUrl($url);
     
-        try 
-        {
-            $httpRequest->send();
-            $data = $httpRequest->getResponseData();
-            $result = @json_decode($data['body']);
-    
-            if ($httpRequest->getResponseCode() > 204)
-            {
-                $message = $result->message;
-                if ($message)
-                {
-                    if ($message instanceof stdClass)
-                    {
-                        $r = (array)$message;
-                        $msg = '';
-                        foreach ($r as $k=>$v)
-                            $msg .= "{$k}: {$v} ";
-    
-                        throw new Exception(trim($msg));
-                    }
-                    else 
-                        throw new Exception($message);
-                }
-                throw new Exception($data['body']);
-            }
-            return $result;
+        $httpRequest->send();
+        $data = $httpRequest->getResponseData();
+        $result = @json_decode($data['body']);
+        
+        // Error handling
+        if ($httpRequest->getResponseCode() > 204) {
+            $field = strtolower($command) . "response";
+            throw new Exception($result->{$field}->errortext);
+            //$message = $result->errortext;
+            //if ($message) {
+            //    if ($message instanceof stdClass) {
+            //        $r = (array)$message;
+            //        $msg = '';
+            //        foreach ($r as $k=>$v)
+            //            $msg .= "{$k}: {$v} ";
+            //
+            //        throw new Exception(trim($msg));
+            //    } else {
+            //        throw new Exception($message);
+            //    }
+            //}
+            //throw new Exception($data['body']);
         }
-        catch (Exception $e)
-        {
-            if ($e->innerException)
-                $message = $e->innerException->getMessage();
-            else
-                $message = $e->getMessage();  
-    
-            throw new Exception("CloudStack error: <br><tt>{$message}</tt> ");
-        }
+        return $result;
     }
 }
