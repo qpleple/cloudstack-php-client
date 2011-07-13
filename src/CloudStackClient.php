@@ -42,16 +42,14 @@ class CloudStackClient extends BaseCloudStackClient {
 	const LOAD_BALANCER_POLICY = 11;
 
 	
-	public function __construct($apiEndPoint, $apiKey, $secretKey)
-	{
+	public function __construct($apiEndPoint, $apiKey, $secretKey) {
 	    // $apiEndPoint does not ends with a "/"
 	    $this->apiEndPoint = substr($apiEndPoint, -1) == "/" ? substr($apiEndPoint, 0, -1) : $apiEndPoint;
 		$this->apiKey = $apiKey;
 		$this->secretKey = $secretKey;
 	}
 	
-    function getSignature($queryString)
-    {
+    function getSignature($queryString){
         return base64_encode(@hash_hmac("SHA1", $queryString, $this->secretKey, true));
     }
 
@@ -60,6 +58,11 @@ class CloudStackClient extends BaseCloudStackClient {
     * @param $args Array of arguments
     */
     protected function request($command, $args) {
+        foreach ($args as $key => $value) {
+            if ($value == "") {
+                unset($args[$key]);
+            }
+        }
         // Building the query
         $args['apikey'] = $this->apiKey;
         $args['command'] = $command;
@@ -72,6 +75,7 @@ class CloudStackClient extends BaseCloudStackClient {
         $httpRequest = new HttpRequest();
         $httpRequest->setMethod(HTTP_METH_POST);
         $url = $this->apiEndPoint . "?" . $query;
+        echo $url;
         $httpRequest->setUrl($url);
     
         $httpRequest->send();
