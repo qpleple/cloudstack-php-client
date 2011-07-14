@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__) . "/CloudStackClient.php";
+
 class CloudStackClient extends BaseCloudStackClient {
     /**
     * Creates and automatically starts a virtual machine based on a service offering, disk offering, and template.
