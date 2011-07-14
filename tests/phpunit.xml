@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+	colors="true"
+	backupGlobals="false"
+	backupStaticAttributes="false">
+
+	<testsuite name="CloudStack PHP Client Test Suite">
+		<directory>.</directory>
+	</testsuite>
+
+</phpunit>
