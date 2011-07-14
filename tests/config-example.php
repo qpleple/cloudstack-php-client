@@ -1,0 +1,6 @@
+<?php
+return array(
+    "api_key" => "YOUR_API_KEY",
+    "secret_key" => "YOUR_SECRET_KEY",
+    "endpoint" => "http://YOUR_DOMAIN_NAME/client/api"
+);
