@@ -5,7 +5,7 @@
 	backupStaticAttributes="false">
 
 	<testsuite name="CloudStack PHP Client Test Suite">
-		<directory>.</directory>
+		<directory>testcases</directory>
 	</testsuite>
 
 </phpunit>
