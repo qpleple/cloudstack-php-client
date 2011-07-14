@@ -33,19 +33,24 @@ class BaseCloudStackClient {
 	}
 	
     public function getSignature($queryString) {
-        //echo("queryString = $queryString\n");
+        if (empty($queryString)) {
+            throw new CloudStackClientException(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
+        }
+        
         $hash = @hash_hmac("SHA1", $queryString, $this->secretKey, true);
-        //echo("hash = $hash\n");
-        $base64 = base64_encode($hash);
-        //echo("base64 = $base64\n");
-        return $base64;
+        $base64encoded = base64_encode($hash);
+        return urlencode($base64encoded);
     }
 
-    /**
-    * @param $path Path for the request. Starts with a "/"
-    * @param $args Array of arguments
-    */
-    protected function request($command, $args) {
+    protected function request($command, $args = array()) {
+        if (empty($command)) {
+            throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);
+        }
+        
+        if (!is_array($args)) {
+            throw new CloudStackClientException(sprintf(WRONG_REQUEST_ARGS_MSG, $args), WRONG_REQUEST_ARGS);
+        }
+        
         foreach ($args as $key => $value) {
             if ($value == "") {
                 unset($args[$key]);
@@ -58,36 +63,41 @@ class BaseCloudStackClient {
         ksort($args);
         $query = http_build_query($args);
         $query = str_replace("+", "%20", $query);
-        $query .= "&signature=" . urlencode($this->getSignature(strtolower($query)));
+        $query .= "&signature=" . $this->getSignature(strtolower($query));
     
         $httpRequest = new HttpRequest();
         $httpRequest->setMethod(HTTP_METH_POST);
         $url = $this->endpoint . "?" . $query;
-        echo $url;
+
         $httpRequest->setUrl($url);
     
         $httpRequest->send();
+        
+        $code =$httpRequest->getResponseCode();
         $data = $httpRequest->getResponseData();
+        if (empty($data)) {
+            throw new CloudStackClientException(NO_DATA_RECEIVED);
+        }
+        
         $result = @json_decode($data['body']);
+        if (empty($result)) {
+            throw new CloudStackClientException(NO_VALID_JSON_RECEIVED);
+        }
         
         // Error handling
-        if ($httpRequest->getResponseCode() > 204) {
-            $field = strtolower($command) . "response";
-            throw new Exception($result->{$field}->errortext);
-            //$message = $result->errortext;
-            //if ($message) {
-            //    if ($message instanceof stdClass) {
-            //        $r = (array)$message;
-            //        $msg = '';
-            //        foreach ($r as $k=>$v)
-            //            $msg .= "{$k}: {$v} ";
-            //
-            //        throw new Exception(trim($msg));
-            //    } else {
-            //        throw new Exception($message);
-            //    }
-            //}
-            //throw new Exception($data['body']);
+        if ($code > 204) {
+            $propertyName = strtolower($command) . "response";
+            if (!property_exists($propertyName, $result)) {
+                throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $result));
+            }
+            $response = $result->{$propertyName};
+
+            if (!property_exists("errortext", $response)) {
+                throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $response));
+            }
+            $errortext = $response->errortext;
+            
+            throw new CloudStackClientException($errortext);
         }
         return $result;
     }
