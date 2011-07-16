@@ -78,27 +78,22 @@ class BaseCloudStackClient {
         if (empty($data)) {
             throw new CloudStackClientException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
-        
+        echo $data['body'] . "\n";
         $result = @json_decode($data['body']);
         if (empty($result)) {
             throw new CloudStackClientException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
         }
         
-        // Error handling
-        if ($code > 204) {
-            $propertyName = strtolower($command) . "response";
-            if (!property_exists($result, $propertyName)) {
+        $propertyResponse = strtolower($command) . "response";
+        
+        if (!property_exists($result, $propertyResponse)) {
+            if (property_exists($result, "errorresponse") && property_exists($result->errorresponse, "errortext")) {
+                throw new CloudStackClientException($result->errorresponse->errortext);
+            } else {
                 throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $data['body']));
             }
-            $response = $result->{$propertyName};
-
-            if (!property_exists("errortext", $response)) {
-                throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $response));
-            }
-            $errortext = $response->errortext;
-            
-            throw new CloudStackClientException($errortext);
         }
-        return $result;
+        
+        return $result->{$propertyResponse};
     }
 }
