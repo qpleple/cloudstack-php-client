@@ -1,2 +1,5 @@
 generated*
 tests/config.php
+config.php
+
+test/config.php
