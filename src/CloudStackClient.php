@@ -47,7 +47,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deployVirtualMachine($serviceOfferingId, $templateId, $zoneId, $account = "", $diskOfferingId = "", $displayName = "", $domainId = "", $group = "", $hostId = "", $hypervisor = "", $keyPair = "", $name = "", $networkIds = "", $securityGroupIds = "", $securityGroupNames = "", $size = "", $userData = "") {
-        $this->request("deployVirtualMachine", array(
+        return $this->request("deployVirtualMachine", array(
             'serviceofferingid' => $serviceOfferingId,
             'templateid' => $templateId,
             'zoneid' => $zoneId,
@@ -75,7 +75,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function destroyVirtualMachine($id) {
-        $this->request("destroyVirtualMachine", array(
+        return $this->request("destroyVirtualMachine", array(
             'id' => $id,
         ));
     }
@@ -87,7 +87,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function rebootVirtualMachine($id) {
-        $this->request("rebootVirtualMachine", array(
+        return $this->request("rebootVirtualMachine", array(
             'id' => $id,
         ));
     }
@@ -99,7 +99,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function startVirtualMachine($id) {
-        $this->request("startVirtualMachine", array(
+        return $this->request("startVirtualMachine", array(
             'id' => $id,
         ));
     }
@@ -112,7 +112,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function stopVirtualMachine($id, $forced = "") {
-        $this->request("stopVirtualMachine", array(
+        return $this->request("stopVirtualMachine", array(
             'id' => $id,
             'forced' => $forced,
         ));
@@ -125,7 +125,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function resetPasswordForVirtualMachine($id) {
-        $this->request("resetPasswordForVirtualMachine", array(
+        return $this->request("resetPasswordForVirtualMachine", array(
             'id' => $id,
         ));
     }
@@ -139,7 +139,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function changeServiceForVirtualMachine($id, $serviceOfferingId) {
-        $this->request("changeServiceForVirtualMachine", array(
+        return $this->request("changeServiceForVirtualMachine", array(
             'id' => $id,
             'serviceofferingid' => $serviceOfferingId,
         ));
@@ -157,7 +157,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateVirtualMachine($id, $displayName = "", $group = "", $haEnable = "", $osTypeId = "") {
-        $this->request("updateVirtualMachine", array(
+        return $this->request("updateVirtualMachine", array(
             'id' => $id,
             'displayname' => $displayName,
             'group' => $group,
@@ -194,7 +194,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listVirtualMachines($account = "", $domainId = "", $forVirtualNetwork = "", $groupId = "", $hostId = "", $hypervisor = "", $id = "", $isRecursive = "", $keyword = "", $name = "", $networkId = "", $page = "", $pageSize = "", $podId = "", $state = "", $storageId = "", $zoneId = "", $page = "") {
-        $this->request("listVirtualMachines", array(
+        return $this->request("listVirtualMachines", array(
             'account' => $account,
             'domainid' => $domainId,
             'forvirtualnetwork' => $forVirtualNetwork,
@@ -223,7 +223,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function getVMPassword($id) {
-        $this->request("getVMPassword", array(
+        return $this->request("getVMPassword", array(
             'id' => $id,
         ));
     }
@@ -251,7 +251,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createTemplate($displayText, $name, $osTypeId, $bits = "", $isFeatured = "", $isPublic = "", $passwordEnabled = "", $requireShvm = "", $snapshotId = "", $volumeId = "") {
-        $this->request("createTemplate", array(
+        return $this->request("createTemplate", array(
             'displaytext' => $displayText,
             'name' => $name,
             'ostypeid' => $osTypeId,
@@ -296,7 +296,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function registerTemplate($displayText, $format, $hypervisor, $name, $osTypeId, $url, $zoneId, $account = "", $bits = "", $checksum = "", $domainId = "", $isExtractable = "", $isFeatured = "", $isPublic = "", $passwordEnabled = "", $requireShvm = "") {
-        $this->request("registerTemplate", array(
+        return $this->request("registerTemplate", array(
             'displaytext' => $displayText,
             'format' => $format,
             'hypervisor' => $hypervisor,
@@ -331,7 +331,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateTemplate($id, $bootable = "", $displayText = "", $format = "", $name = "", $osTypeId = "", $passwordEnabled = "") {
-        $this->request("updateTemplate", array(
+        return $this->request("updateTemplate", array(
             'id' => $id,
             'bootable' => $bootable,
             'displaytext' => $displayText,
@@ -351,7 +351,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function copyTemplate($id, $destzoneId, $sourceZoneId) {
-        $this->request("copyTemplate", array(
+        return $this->request("copyTemplate", array(
             'id' => $id,
             'destzoneid' => $destzoneId,
             'sourcezoneid' => $sourceZoneId,
@@ -366,7 +366,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteTemplate($id, $zoneId = "") {
-        $this->request("deleteTemplate", array(
+        return $this->request("deleteTemplate", array(
             'id' => $id,
             'zoneid' => $zoneId,
         ));
@@ -397,7 +397,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listTemplates($templateFilter, $account = "", $domainId = "", $hypervisor = "", $id = "", $keyword = "", $name = "", $page = "", $pageSize = "", $zoneId = "", $page = "") {
-        $this->request("listTemplates", array(
+        return $this->request("listTemplates", array(
             'templatefilter' => $templateFilter,
             'account' => $account,
             'domainid' => $domainId,
@@ -424,7 +424,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateTemplatePermissions($id, $accounts = "", $isFeatured = "", $isPublic = "", $op = "") {
-        $this->request("updateTemplatePermissions", array(
+        return $this->request("updateTemplatePermissions", array(
             'id' => $id,
             'accounts' => $accounts,
             'isfeatured' => $isFeatured,
@@ -446,7 +446,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listTemplatePermissions($id, $account = "", $domainId = "", $page = "") {
-        $this->request("listTemplatePermissions", array(
+        return $this->request("listTemplatePermissions", array(
             'id' => $id,
             'account' => $account,
             'domainid' => $domainId,
@@ -464,7 +464,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function extractTemplate($id, $mode, $zoneId, $url = "") {
-        $this->request("extractTemplate", array(
+        return $this->request("extractTemplate", array(
             'id' => $id,
             'mode' => $mode,
             'zoneid' => $zoneId,
@@ -480,7 +480,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function attachIso($id, $virtualMachineId) {
-        $this->request("attachIso", array(
+        return $this->request("attachIso", array(
             'id' => $id,
             'virtualmachineid' => $virtualMachineId,
         ));
@@ -493,7 +493,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function detachIso($virtualMachineId) {
-        $this->request("detachIso", array(
+        return $this->request("detachIso", array(
             'virtualmachineid' => $virtualMachineId,
         ));
     }
@@ -527,7 +527,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listIsos($account = "", $bootable = "", $domainId = "", $hypervisor = "", $id = "", $isoFilter = "", $isPublic = "", $isReady = "", $keyword = "", $name = "", $page = "", $pageSize = "", $zoneId = "", $page = "") {
-        $this->request("listIsos", array(
+        return $this->request("listIsos", array(
             'account' => $account,
             'bootable' => $bootable,
             'domainid' => $domainId,
@@ -565,7 +565,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function registerIso($displayText, $name, $url, $zoneId, $account = "", $bootable = "", $domainId = "", $isFeatured = "", $isPublic = "", $osTypeId = "") {
-        $this->request("registerIso", array(
+        return $this->request("registerIso", array(
             'displaytext' => $displayText,
             'name' => $name,
             'url' => $url,
@@ -594,7 +594,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateIso($id, $bootable = "", $displayText = "", $format = "", $name = "", $osTypeId = "", $passwordEnabled = "") {
-        $this->request("updateIso", array(
+        return $this->request("updateIso", array(
             'id' => $id,
             'bootable' => $bootable,
             'displaytext' => $displayText,
@@ -614,7 +614,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteIso($id, $zoneId = "") {
-        $this->request("deleteIso", array(
+        return $this->request("deleteIso", array(
             'id' => $id,
             'zoneid' => $zoneId,
         ));
@@ -631,7 +631,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function copyIso($id, $destzoneId, $sourceZoneId) {
-        $this->request("copyIso", array(
+        return $this->request("copyIso", array(
             'id' => $id,
             'destzoneid' => $destzoneId,
             'sourcezoneid' => $sourceZoneId,
@@ -650,7 +650,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateIsoPermissions($id, $accounts = "", $isFeatured = "", $isPublic = "", $op = "") {
-        $this->request("updateIsoPermissions", array(
+        return $this->request("updateIsoPermissions", array(
             'id' => $id,
             'accounts' => $accounts,
             'isfeatured' => $isFeatured,
@@ -672,7 +672,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listIsoPermissions($id, $account = "", $domainId = "", $page = "") {
-        $this->request("listIsoPermissions", array(
+        return $this->request("listIsoPermissions", array(
             'id' => $id,
             'account' => $account,
             'domainid' => $domainId,
@@ -690,7 +690,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function extractIso($id, $mode, $zoneId, $url = "") {
-        $this->request("extractIso", array(
+        return $this->request("extractIso", array(
             'id' => $id,
             'mode' => $mode,
             'zoneid' => $zoneId,
@@ -710,7 +710,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function attachVolume($id, $virtualMachineId, $deviceId = "") {
-        $this->request("attachVolume", array(
+        return $this->request("attachVolume", array(
             'id' => $id,
             'virtualmachineid' => $virtualMachineId,
             'deviceid' => $deviceId,
@@ -728,7 +728,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function detachVolume($deviceId = "", $id = "", $virtualMachineId = "") {
-        $this->request("detachVolume", array(
+        return $this->request("detachVolume", array(
             'deviceid' => $deviceId,
             'id' => $id,
             'virtualmachineid' => $virtualMachineId,
@@ -754,7 +754,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createVolume($name, $account = "", $diskOfferingId = "", $domainId = "", $size = "", $snapshotId = "", $zoneId = "") {
-        $this->request("createVolume", array(
+        return $this->request("createVolume", array(
             'name' => $name,
             'account' => $account,
             'diskofferingid' => $diskOfferingId,
@@ -772,7 +772,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteVolume($id) {
-        $this->request("deleteVolume", array(
+        return $this->request("deleteVolume", array(
             'id' => $id,
         ));
     }
@@ -801,7 +801,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listVolumes($account = "", $domainId = "", $hostId = "", $id = "", $isRecursive = "", $keyword = "", $name = "", $page = "", $pageSize = "", $podId = "", $type = "", $virtualMachineId = "", $zoneId = "", $page = "") {
-        $this->request("listVolumes", array(
+        return $this->request("listVolumes", array(
             'account' => $account,
             'domainid' => $domainId,
             'hostid' => $hostId,
@@ -829,7 +829,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function extractVolume($id, $mode, $zoneId, $url = "") {
-        $this->request("extractVolume", array(
+        return $this->request("extractVolume", array(
             'id' => $id,
             'mode' => $mode,
             'zoneid' => $zoneId,
@@ -849,7 +849,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createSecurityGroup($name, $account = "", $description = "", $domainId = "") {
-        $this->request("createSecurityGroup", array(
+        return $this->request("createSecurityGroup", array(
             'name' => $name,
             'account' => $account,
             'description' => $description,
@@ -870,7 +870,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteSecurityGroup($account = "", $domainId = "", $id = "", $name = "") {
-        $this->request("deleteSecurityGroup", array(
+        return $this->request("deleteSecurityGroup", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -899,7 +899,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function authorizeSecurityGroupIngress($account = "", $cidrList = "", $domainId = "", $endPort = "", $icmpCode = "", $icmpType = "", $protocol = "", $securityGroupId = "", $securityGroupName = "", $startPort = "", $userSecurityGroupList = "") {
-        $this->request("authorizeSecurityGroupIngress", array(
+        return $this->request("authorizeSecurityGroupIngress", array(
             'account' => $account,
             'cidrlist' => $cidrList,
             'domainid' => $domainId,
@@ -925,7 +925,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function revokeSecurityGroupIngress($id, $account = "", $domainId = "") {
-        $this->request("revokeSecurityGroupIngress", array(
+        return $this->request("revokeSecurityGroupIngress", array(
             'id' => $id,
             'account' => $account,
             'domainid' => $domainId,
@@ -950,7 +950,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listSecurityGroups($account = "", $domainId = "", $id = "", $keyword = "", $page = "", $pageSize = "", $securityGroupName = "", $virtualMachineId = "", $page = "") {
-        $this->request("listSecurityGroups", array(
+        return $this->request("listSecurityGroups", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -986,7 +986,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listAccounts($accountType = "", $domainId = "", $id = "", $isCleanUpRequired = "", $isRecursive = "", $keyword = "", $name = "", $page = "", $pageSize = "", $state = "", $page = "") {
-        $this->request("listAccounts", array(
+        return $this->request("listAccounts", array(
             'accounttype' => $accountType,
             'domainid' => $domainId,
             'id' => $id,
@@ -1014,7 +1014,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createSnapshot($volumeId, $account = "", $domainId = "", $policyId = "") {
-        $this->request("createSnapshot", array(
+        return $this->request("createSnapshot", array(
             'volumeid' => $volumeId,
             'account' => $account,
             'domainid' => $domainId,
@@ -1044,7 +1044,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listSnapshots($account = "", $domainId = "", $id = "", $intervalType = "", $isRecursive = "", $keyword = "", $name = "", $page = "", $pageSize = "", $snapshotType = "", $volumeId = "", $page = "") {
-        $this->request("listSnapshots", array(
+        return $this->request("listSnapshots", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -1067,7 +1067,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteSnapshot($id) {
-        $this->request("deleteSnapshot", array(
+        return $this->request("deleteSnapshot", array(
             'id' => $id,
         ));
     }
@@ -1086,7 +1086,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createSnapshotPolicy($intervalType, $maxSnaps, $schedule, $timezone, $volumeId) {
-        $this->request("createSnapshotPolicy", array(
+        return $this->request("createSnapshotPolicy", array(
             'intervaltype' => $intervalType,
             'maxsnaps' => $maxSnaps,
             'schedule' => $schedule,
@@ -1103,7 +1103,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteSnapshotPolicies($id = "", $ids = "") {
-        $this->request("deleteSnapshotPolicies", array(
+        return $this->request("deleteSnapshotPolicies", array(
             'id' => $id,
             'ids' => $ids,
         ));
@@ -1124,7 +1124,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listSnapshotPolicies($volumeId, $account = "", $domainId = "", $keyword = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listSnapshotPolicies", array(
+        return $this->request("listSnapshotPolicies", array(
             'volumeid' => $volumeId,
             'account' => $account,
             'domainid' => $domainId,
@@ -1142,7 +1142,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function queryAsyncJobResult($jobId) {
-        $this->request("queryAsyncJobResult", array(
+        return $this->request("queryAsyncJobResult", array(
             'jobid' => $jobId,
         ));
     }
@@ -1163,7 +1163,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listAsyncJobs($account = "", $domainId = "", $keyword = "", $page = "", $pageSize = "", $startDate = "", $page = "") {
-        $this->request("listAsyncJobs", array(
+        return $this->request("listAsyncJobs", array(
             'account' => $account,
             'domainid' => $domainId,
             'keyword' => $keyword,
@@ -1197,7 +1197,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listEvents($account = "", $domainId = "", $duration = "", $endDate = "", $entryTime = "", $id = "", $keyword = "", $level = "", $page = "", $pageSize = "", $startDate = "", $type = "", $page = "") {
-        $this->request("listEvents", array(
+        return $this->request("listEvents", array(
             'account' => $account,
             'domainid' => $domainId,
             'duration' => $duration,
@@ -1226,7 +1226,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listOsTypes($id = "", $keyword = "", $osCategoryId = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listOsTypes", array(
+        return $this->request("listOsTypes", array(
             'id' => $id,
             'keyword' => $keyword,
             'oscategoryid' => $osCategoryId,
@@ -1247,7 +1247,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listOsCategories($id = "", $keyword = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listOsCategories", array(
+        return $this->request("listOsCategories", array(
             'id' => $id,
             'keyword' => $keyword,
             'page' => $page,
@@ -1273,7 +1273,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listServiceOfferings($domainId = "", $id = "", $keyword = "", $name = "", $page = "", $pageSize = "", $virtualMachineId = "", $page = "") {
-        $this->request("listServiceOfferings", array(
+        return $this->request("listServiceOfferings", array(
             'domainid' => $domainId,
             'id' => $id,
             'keyword' => $keyword,
@@ -1298,7 +1298,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listDiskOfferings($domainId = "", $id = "", $keyword = "", $name = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listDiskOfferings", array(
+        return $this->request("listDiskOfferings", array(
             'domainid' => $domainId,
             'id' => $id,
             'keyword' => $keyword,
@@ -1322,7 +1322,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createRemoteAccessVpn($publicIpId, $account = "", $domainId = "", $ipRange = "") {
-        $this->request("createRemoteAccessVpn", array(
+        return $this->request("createRemoteAccessVpn", array(
             'publicipid' => $publicIpId,
             'account' => $account,
             'domainid' => $domainId,
@@ -1337,7 +1337,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteRemoteAccessVpn($publicIpId) {
-        $this->request("deleteRemoteAccessVpn", array(
+        return $this->request("deleteRemoteAccessVpn", array(
             'publicipid' => $publicIpId,
         ));
     }
@@ -1358,7 +1358,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listRemoteAccessVpns($publicIpId, $account = "", $domainId = "", $keyword = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listRemoteAccessVpns", array(
+        return $this->request("listRemoteAccessVpns", array(
             'publicipid' => $publicIpId,
             'account' => $account,
             'domainid' => $domainId,
@@ -1381,7 +1381,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function addVpnUser($password, $userName, $account = "", $domainId = "") {
-        $this->request("addVpnUser", array(
+        return $this->request("addVpnUser", array(
             'password' => $password,
             'username' => $userName,
             'account' => $account,
@@ -1400,7 +1400,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function removeVpnUser($userName, $account = "", $domainId = "") {
-        $this->request("removeVpnUser", array(
+        return $this->request("removeVpnUser", array(
             'username' => $userName,
             'account' => $account,
             'domainid' => $domainId,
@@ -1424,7 +1424,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listVpnUsers($account = "", $domainId = "", $id = "", $keyword = "", $page = "", $pageSize = "", $userName = "", $page = "") {
-        $this->request("listVpnUsers", array(
+        return $this->request("listVpnUsers", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -1447,7 +1447,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function associateIpAddress($zoneId, $account = "", $domainId = "", $networkId = "") {
-        $this->request("associateIpAddress", array(
+        return $this->request("associateIpAddress", array(
             'zoneid' => $zoneId,
             'account' => $account,
             'domainid' => $domainId,
@@ -1462,7 +1462,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function disassociateIpAddress($id) {
-        $this->request("disassociateIpAddress", array(
+        return $this->request("disassociateIpAddress", array(
             'id' => $id,
         ));
     }
@@ -1489,7 +1489,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listPublicIpAddresses($account = "", $allocatedOnly = "", $domainId = "", $forVirtualNetwork = "", $id = "", $ipAddress = "", $keyword = "", $page = "", $pageSize = "", $vlanId = "", $zoneId = "", $page = "") {
-        $this->request("listPublicIpAddresses", array(
+        return $this->request("listPublicIpAddresses", array(
             'account' => $account,
             'allocatedonly' => $allocatedOnly,
             'domainid' => $domainId,
@@ -1520,7 +1520,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listPortForwardingRules($account = "", $domainId = "", $id = "", $ipAddressId = "", $keyword = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listPortForwardingRules", array(
+        return $this->request("listPortForwardingRules", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -1545,7 +1545,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createPortForwardingRule($ipAddressId, $privatePort, $protocol, $publicPort, $virtualMachineId) {
-        $this->request("createPortForwardingRule", array(
+        return $this->request("createPortForwardingRule", array(
             'ipaddressid' => $ipAddressId,
             'privateport' => $privatePort,
             'protocol' => $protocol,
@@ -1561,7 +1561,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deletePortForwardingRule($id) {
-        $this->request("deletePortForwardingRule", array(
+        return $this->request("deletePortForwardingRule", array(
             'id' => $id,
         ));
     }
@@ -1576,7 +1576,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function enableStaticNat($ipAddressId, $virtualMachineId) {
-        $this->request("enableStaticNat", array(
+        return $this->request("enableStaticNat", array(
             'ipaddressid' => $ipAddressId,
             'virtualmachineid' => $virtualMachineId,
         ));
@@ -1593,7 +1593,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createIpForwardingRule($ipAddressId, $protocol, $startPort, $endPort = "") {
-        $this->request("createIpForwardingRule", array(
+        return $this->request("createIpForwardingRule", array(
             'ipaddressid' => $ipAddressId,
             'protocol' => $protocol,
             'startport' => $startPort,
@@ -1608,7 +1608,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteIpForwardingRule($id) {
-        $this->request("deleteIpForwardingRule", array(
+        return $this->request("deleteIpForwardingRule", array(
             'id' => $id,
         ));
     }
@@ -1630,7 +1630,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listIpForwardingRules($account = "", $domainId = "", $id = "", $ipAddressId = "", $keyword = "", $page = "", $pageSize = "", $virtualMachineId = "", $page = "") {
-        $this->request("listIpForwardingRules", array(
+        return $this->request("listIpForwardingRules", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -1651,7 +1651,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function disableStaticNat($ipAddressId) {
-        $this->request("disableStaticNat", array(
+        return $this->request("disableStaticNat", array(
             'ipaddressid' => $ipAddressId,
         ));
     }
@@ -1672,7 +1672,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createLoadBalancerRule($algorithm, $name, $privatePort, $publicIpId, $publicPort, $description = "") {
-        $this->request("createLoadBalancerRule", array(
+        return $this->request("createLoadBalancerRule", array(
             'algorithm' => $algorithm,
             'name' => $name,
             'privateport' => $privatePort,
@@ -1689,7 +1689,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteLoadBalancerRule($id) {
-        $this->request("deleteLoadBalancerRule", array(
+        return $this->request("deleteLoadBalancerRule", array(
             'id' => $id,
         ));
     }
@@ -1703,7 +1703,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function removeFromLoadBalancerRule($id, $virtualMachineIds) {
-        $this->request("removeFromLoadBalancerRule", array(
+        return $this->request("removeFromLoadBalancerRule", array(
             'id' => $id,
             'virtualmachineids' => $virtualMachineIds,
         ));
@@ -1718,7 +1718,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function assignToLoadBalancerRule($id, $virtualMachineIds) {
-        $this->request("assignToLoadBalancerRule", array(
+        return $this->request("assignToLoadBalancerRule", array(
             'id' => $id,
             'virtualmachineids' => $virtualMachineIds,
         ));
@@ -1744,7 +1744,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listLoadBalancerRules($account = "", $domainId = "", $id = "", $keyword = "", $name = "", $page = "", $pageSize = "", $publicIpId = "", $virtualMachineId = "", $page = "") {
-        $this->request("listLoadBalancerRules", array(
+        return $this->request("listLoadBalancerRules", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -1771,7 +1771,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listLoadBalancerRuleInstances($id, $applied = "", $keyword = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listLoadBalancerRuleInstances", array(
+        return $this->request("listLoadBalancerRuleInstances", array(
             'id' => $id,
             'applied' => $applied,
             'keyword' => $keyword,
@@ -1792,7 +1792,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateLoadBalancerRule($id, $algorithm = "", $description = "", $name = "") {
-        $this->request("updateLoadBalancerRule", array(
+        return $this->request("updateLoadBalancerRule", array(
             'id' => $id,
             'algorithm' => $algorithm,
             'description' => $description,
@@ -1808,7 +1808,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function registerSSHKeyPair($name, $publicKey) {
-        $this->request("registerSSHKeyPair", array(
+        return $this->request("registerSSHKeyPair", array(
             'name' => $name,
             'publickey' => $publicKey,
         ));
@@ -1825,7 +1825,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createSSHKeyPair($name, $account = "", $domainId = "") {
-        $this->request("createSSHKeyPair", array(
+        return $this->request("createSSHKeyPair", array(
             'name' => $name,
             'account' => $account,
             'domainid' => $domainId,
@@ -1842,7 +1842,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteSSHKeyPair($name, $account = "", $domainId = "") {
-        $this->request("deleteSSHKeyPair", array(
+        return $this->request("deleteSSHKeyPair", array(
             'name' => $name,
             'account' => $account,
             'domainid' => $domainId,
@@ -1861,7 +1861,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listSSHKeyPairs($fingerprint = "", $keyword = "", $name = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listSSHKeyPairs", array(
+        return $this->request("listSSHKeyPairs", array(
             'fingerprint' => $fingerprint,
             'keyword' => $keyword,
             'name' => $name,
@@ -1881,7 +1881,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createInstanceGroup($name, $account = "", $domainId = "") {
-        $this->request("createInstanceGroup", array(
+        return $this->request("createInstanceGroup", array(
             'name' => $name,
             'account' => $account,
             'domainid' => $domainId,
@@ -1895,7 +1895,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteInstanceGroup($id) {
-        $this->request("deleteInstanceGroup", array(
+        return $this->request("deleteInstanceGroup", array(
             'id' => $id,
         ));
     }
@@ -1908,7 +1908,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateInstanceGroup($id, $name = "") {
-        $this->request("updateInstanceGroup", array(
+        return $this->request("updateInstanceGroup", array(
             'id' => $id,
             'name' => $name,
         ));
@@ -1930,7 +1930,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listInstanceGroups($account = "", $domainId = "", $id = "", $keyword = "", $name = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listInstanceGroups", array(
+        return $this->request("listInstanceGroups", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -1963,7 +1963,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function createNetwork($displayText, $name, $networkOfferingId, $zoneId, $account = "", $domainId = "", $endIp = "", $gateway = "", $isDefault = "", $isShared = "", $netmask = "", $networkDomain = "", $startIp = "", $vlan = "") {
-        $this->request("createNetwork", array(
+        return $this->request("createNetwork", array(
             'displaytext' => $displayText,
             'name' => $name,
             'networkofferingid' => $networkOfferingId,
@@ -1988,7 +1988,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function deleteNetwork($id) {
-        $this->request("deleteNetwork", array(
+        return $this->request("deleteNetwork", array(
             'id' => $id,
         ));
     }
@@ -2014,7 +2014,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listNetworks($account = "", $domainId = "", $id = "", $isDefault = "", $isShared = "", $isSystem = "", $keyword = "", $page = "", $pageSize = "", $trafficType = "", $type = "", $zoneId = "", $page = "") {
-        $this->request("listNetworks", array(
+        return $this->request("listNetworks", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -2038,7 +2038,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function restartNetwork($id) {
-        $this->request("restartNetwork", array(
+        return $this->request("restartNetwork", array(
             'id' => $id,
         ));
     }
@@ -2052,7 +2052,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function updateNetwork($id, $displayText = "", $name = "") {
-        $this->request("updateNetwork", array(
+        return $this->request("updateNetwork", array(
             'id' => $id,
             'displaytext' => $displayText,
             'name' => $name,
@@ -2067,7 +2067,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listHypervisors($zoneId = "", $page = "") {
-        $this->request("listHypervisors", array(
+        return $this->request("listHypervisors", array(
             'zoneid' => $zoneId,
             'page' => $page,
         ));
@@ -2088,7 +2088,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listZones($available = "", $domainId = "", $id = "", $keyword = "", $page = "", $pageSize = "", $page = "") {
-        $this->request("listZones", array(
+        return $this->request("listZones", array(
             'available' => $available,
             'domainid' => $domainId,
             'id' => $id,
@@ -2123,7 +2123,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listNetworkOfferings($availability = "", $displayText = "", $guestIpType = "", $id = "", $isDefault = "", $isShared = "", $keyword = "", $name = "", $page = "", $pageSize = "", $specifyVlan = "", $trafficType = "", $zoneId = "", $page = "") {
-        $this->request("listNetworkOfferings", array(
+        return $this->request("listNetworkOfferings", array(
             'availability' => $availability,
             'displaytext' => $displayText,
             'guestiptype' => $guestIpType,
@@ -2148,7 +2148,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listCapabilities($page = "") {
-        $this->request("listCapabilities", array(
+        return $this->request("listCapabilities", array(
             'page' => $page,
         ));
     }
@@ -2174,7 +2174,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function listResourceLimits($account = "", $domainId = "", $id = "", $keyword = "", $page = "", $pageSize = "", $resourceType = "", $page = "") {
-        $this->request("listResourceLimits", array(
+        return $this->request("listResourceLimits", array(
             'account' => $account,
             'domainid' => $domainId,
             'id' => $id,
@@ -2193,7 +2193,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function getCloudIdentifier($userId) {
-        $this->request("getCloudIdentifier", array(
+        return $this->request("getCloudIdentifier", array(
             'userid' => $userId,
         ));
     }
@@ -2208,7 +2208,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function login($userName, $password, $domain = "") {
-        $this->request("login", array(
+        return $this->request("login", array(
             'username' => $userName,
             'password' => $password,
             'domain' => $domain,
@@ -2221,7 +2221,7 @@ class CloudStackClient extends BaseCloudStackClient {
     */
     
     public function logout() {
-        $this->request("logout", array(
+        return $this->request("logout", array(
         ));
     }
     
