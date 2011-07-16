@@ -43,6 +43,15 @@ class BaseCloudStackClient {
     }
 
     public function request($command, $args = array()) {
+        foreach ($args as $key => $value) {
+            if ($value == "") {
+                unset($args[$key]);
+            }
+        }
+
+        echo "command = $command\n";
+        print_r($args);
+        
         if (empty($command)) {
             throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);
         }

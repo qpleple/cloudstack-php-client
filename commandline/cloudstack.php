@@ -29,7 +29,7 @@ try {
     err($e->getMessage());
 }
 
-//check(property_exists($result, strtolower($command)), sprintf("Incorrect command. Received %s", var_dump_str($result)));
+var_dump($result);
 
 /**************************
   Helpers
