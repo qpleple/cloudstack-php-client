@@ -78,7 +78,7 @@ class BaseCloudStackClient {
         if (empty($data)) {
             throw new CloudStackClientException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
-        echo $data['body'] . "\n";
+        //echo $data['body'] . "\n";
         $result = @json_decode($data['body']);
         if (empty($result)) {
             throw new CloudStackClientException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
@@ -94,6 +94,20 @@ class BaseCloudStackClient {
             }
         }
         
-        return $result->{$propertyResponse};
+        $response = $result->{$propertyResponse};
+        
+        // list handling
+        preg_match('/list(\w+)s/', strtolower($command), $listMatches);
+        if (!empty($listMatches)) {
+            $objectName = $listMatches[1];
+            if (property_exists($response, $objectName)) {
+                $resultArray = $response->{$objectName};
+                if (is_array($resultArray)) {
+                    return $resultArray;
+                }
+            }
+        }
+        
+        return $response;
     }
 }
