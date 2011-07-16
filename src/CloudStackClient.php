@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__FILE__) . "/CloudStackClient.php";
+require_once dirname(__FILE__) . "/BaseCloudStackClient.php";
 
 class CloudStackClient extends BaseCloudStackClient {
     /**
