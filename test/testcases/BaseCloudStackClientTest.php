@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__FILE__) . "/../../src/BaseCloudStackClient.php";
 require_once 'PHPUnit/Framework/TestCase.php';
+define("CONFIG_FILE", dirname(__FILE__) . "/../../config.php");
 
 Class BaseCloudStackClientTest extends PHPUnit_Framework_TestCase {
     /***************
@@ -8,13 +9,6 @@ Class BaseCloudStackClientTest extends PHPUnit_Framework_TestCase {
      ***************/
     public function setExpectedExceptionCode($code) {
         $this->setExpectedException('CloudStackClientException', "", $code);
-    }
-    
-    protected static function getMethod($name) {
-        $klass = new ReflectionClass('BaseCloudStackClient');
-        $method = $klass->getMethod($name);
-        $method->setAccessible(true);
-        return $method;
     }
     
     /***************
@@ -51,7 +45,7 @@ Class BaseCloudStackClientTest extends PHPUnit_Framework_TestCase {
         $cloudstack = new BaseCloudStackClient("http://foo/", "-", "-");
         $this->assertEquals("http://foo", $cloudstack->endpoint);
         
-        $config = require dirname(__FILE__) . "/../config.php";
+        $config = require CONFIG_FILE;
         $cloudstack = new BaseCloudStackClient($config['endpoint'], $config['api_key'], $config['secret_key']);
         
         $this->assertNotEmpty($cloudstack);
@@ -78,24 +72,25 @@ Class BaseCloudStackClientTest extends PHPUnit_Framework_TestCase {
     public function test_no_command() {
         $this->setExpectedExceptionCode(NO_COMMAND);
         $cloudstack = new BaseCloudStackClient("http://google.com/", "slqkdjqslkdjlqskjd", "qlskdjlskqjdlkqsjdlkjq");
-        self::getMethod('request')->invokeArgs($cloudstack, array(""));
+        $cloudstack->request("");
     }
 
     public function test_request_args_null() {
         $this->setExpectedExceptionCode(WRONG_REQUEST_ARGS);
         $cloudstack = new BaseCloudStackClient("http://google.com/", "slqkdjqslkdjlqskjd", "qlskdjlskqjdlkqsjdlkjq");
-        self::getMethod('request')->invokeArgs($cloudstack, array("command-name-non-empty", null));
+        $cloudstack->request("command-name-non-empty", null);
     }
 
     public function test_request_args_string() {
         $this->setExpectedExceptionCode(WRONG_REQUEST_ARGS);
         $cloudstack = new BaseCloudStackClient("http://google.com/", "slqkdjqslkdjlqskjd", "qlskdjlskqjdlkqsjdlkjq");
-        self::getMethod('request')->invokeArgs($cloudstack, array("command-name-non-empty", "foo"));
+        $cloudstack->request("command-name-non-empty", "foo");
     }
     
     public function test_request() {
+        $this->setExpectedExceptionCode(NO_VALID_JSON_RECEIVED);
         $cloudstack = new BaseCloudStackClient("http://google.com/", "slqkdjqslkdjlqskjd", "qlskdjlskqjdlkqsjdlkjq");
-        self::getMethod('request')->invokeArgs($cloudstack, array("command-name-non-empty", array()));
+        $cloudstack->request("command-name-non-empty", array());
     }
 
 }

@@ -42,7 +42,7 @@ class BaseCloudStackClient {
         return urlencode($base64encoded);
     }
 
-    protected function request($command, $args = array()) {
+    public function request($command, $args = array()) {
         if (empty($command)) {
             throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);
         }
@@ -76,19 +76,19 @@ class BaseCloudStackClient {
         $code =$httpRequest->getResponseCode();
         $data = $httpRequest->getResponseData();
         if (empty($data)) {
-            throw new CloudStackClientException(NO_DATA_RECEIVED);
+            throw new CloudStackClientException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
         
         $result = @json_decode($data['body']);
         if (empty($result)) {
-            throw new CloudStackClientException(NO_VALID_JSON_RECEIVED);
+            throw new CloudStackClientException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
         }
         
         // Error handling
         if ($code > 204) {
             $propertyName = strtolower($command) . "response";
-            if (!property_exists($propertyName, $result)) {
-                throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $result));
+            if (!property_exists($result, $propertyName)) {
+                throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $data['body']));
             }
             $response = $result->{$propertyName};
 

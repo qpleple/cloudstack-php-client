@@ -24,5 +24,7 @@ define("WRONG_REQUEST_ARGS_MSG", "Arguments for the request must be in an array.
 define("NOT_A_CLOUDSTACK_SERVER", 1006);
 define("NOT_A_CLOUDSTACK_SERVER_MSG", "The response is not a CloudStack server response. Check your endpoint. Received: %s");
 
+define("NO_VALID_JSON_RECEIVED", 1007);
+define("NO_VALID_JSON_RECEIVED_MSG", "The server did not issue a json response.");
 
 class CloudStackClientException extends Exception { }
