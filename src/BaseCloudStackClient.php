@@ -49,8 +49,8 @@ class BaseCloudStackClient {
             }
         }
 
-        echo "command = $command\n";
-        print_r($args);
+        //echo "command = $command\n";
+        //print_r($args);
         
         if (empty($command)) {
             throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);
@@ -87,7 +87,7 @@ class BaseCloudStackClient {
         if (empty($data)) {
             throw new CloudStackClientException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
-        //echo $data['body'] . "\n";
+        // echo $data['body'] . "\n";
         $result = @json_decode($data['body']);
         if (empty($result)) {
             throw new CloudStackClientException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
