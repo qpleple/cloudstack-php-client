@@ -43,15 +43,6 @@ class BaseCloudStackClient {
     }
 
     public function request($command, $args = array()) {
-        foreach ($args as $key => $value) {
-            if ($value == "") {
-                unset($args[$key]);
-            }
-        }
-
-        //echo "command = $command\n";
-        //print_r($args);
-        
         if (empty($command)) {
             throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);
         }
@@ -65,6 +56,7 @@ class BaseCloudStackClient {
                 unset($args[$key]);
             }
         }
+        
         // Building the query
         $args['apikey'] = $this->apiKey;
         $args['command'] = $command;
@@ -87,7 +79,7 @@ class BaseCloudStackClient {
         if (empty($data)) {
             throw new CloudStackClientException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
-        // echo $data['body'] . "\n";
+        //echo $data['body'] . "\n";
         $result = @json_decode($data['body']);
         if (empty($result)) {
             throw new CloudStackClientException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
@@ -105,7 +97,8 @@ class BaseCloudStackClient {
         
         $response = $result->{$propertyResponse};
         
-        // list handling
+        // list handling : most of lists are on the same pattern as listVirtualMachines :
+        // { "listvirtualmachinesresponse" : { "virtualmachine" : [ ... ] } }
         preg_match('/list(\w+)s/', strtolower($command), $listMatches);
         if (!empty($listMatches)) {
             $objectName = $listMatches[1];
@@ -113,6 +106,16 @@ class BaseCloudStackClient {
                 $resultArray = $response->{$objectName};
                 if (is_array($resultArray)) {
                     return $resultArray;
+                }
+            } else {
+                // sometimes, the 's' is kept, as in :
+                // { "listasyncjobsresponse" : { "asyncjobs" : [ ... ] } }
+                $objectName = $listMatches[1] . "s";
+                if (property_exists($response, $objectName)) {
+                    $resultArray = $response->{$objectName};
+                    if (is_array($resultArray)) {
+                        return $resultArray;
+                    }
                 }
             }
         }

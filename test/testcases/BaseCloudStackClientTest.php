@@ -1,19 +1,7 @@
 <?php
-require_once dirname(__FILE__) . "/../../src/BaseCloudStackClient.php";
-require_once 'PHPUnit/Framework/TestCase.php';
-define("CONFIG_FILE", dirname(__FILE__) . "/../../config.php");
+require_once dirname(__FILE__) . "/CloudStackClientTestCase.php";
 
-Class BaseCloudStackClientTest extends PHPUnit_Framework_TestCase {
-    /***************
-      Helpers
-     ***************/
-    public function setExpectedExceptionCode($code) {
-        $this->setExpectedException('CloudStackClientException', "", $code);
-    }
-    
-    /***************
-      Tests
-     ***************/
+Class BaseCloudStackClientTest extends CloudStackClientTestCase {
     public function test_endpoint_empty() {
         $this->setExpectedExceptionCode(ENDPOINT_EMPTY);
         new BaseCloudStackClient("", "-", "-");
