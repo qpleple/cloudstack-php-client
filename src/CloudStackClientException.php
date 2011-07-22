@@ -1,5 +1,13 @@
 <?php
-
+/*
+ * This file is part of the CloudStack PHP Client.
+ *
+ * (c) Quentin Pleplé <quentin.pleple@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+ 
 define("ENDPOINT_EMPTY", 1000);
 define("ENDPOINT_EMPTY_MSG", "No endpoint provided.");
 
