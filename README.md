@@ -3,6 +3,9 @@ CloudStack PHP Client
 
 PHP client library for the CloudStack User API v2.2 (Reference : http://download.cloud.com/releases/2.2.0/api_2.2.8/TOC_User.html)
 
+Generate with the CloudStack client generator [qpleple/cloudstack-client-generator](https://github.com/qpleple/cloudstack-client-generator),
+others languages are available. Check out this project to know more about it.
+
 Examples
 --------
 
