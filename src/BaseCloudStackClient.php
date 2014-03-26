@@ -1,6 +1,5 @@
 <?php
-
-/*
+/**
  * This file is part of the CloudStack PHP Client.
  *
  * (c) Quentin Pleplé <quentin.pleple@gmail.com>
@@ -9,13 +8,40 @@
  * file that was distributed with this source code.
  */
 
+/**
+ * Pull in exception class definiations
+ */
 require_once dirname(__FILE__) . "/CloudStackClientException.php";
 
+/**
+ * BaseCloudstackClient class
+ */
 class BaseCloudStackClient {
+    /**
+     * CloudStack API client key
+     * @var string
+     */
     public $apiKey;
+
+    /**
+     * CloudStack API client secret key
+     * @var string
+     */
     public $secretKey;
+
+    /**
+     * CloudStack API client endpoint
+     * @var string
+     */
     public $endpoint; // Does not ends with a "/"
 
+    /**
+     * Creates a new CloudStack Client Object
+     * @param string $endpoint  CloudStack API endpoint url
+     * @param string $apiKey    CloudStack API key
+     * @param string $secretKey CloudStack API secret key
+     * @throws CloudStackClientException on error
+     */
     public function __construct($endpoint, $apiKey, $secretKey) {
         // API endpoint
         if (empty($endpoint)) {
@@ -42,6 +68,12 @@ class BaseCloudStackClient {
         $this->secretKey = $secretKey;
     }
 
+    /**
+     * Generate API Signature
+     * @param  string $queryString CloudStack API query string to sign
+     * @return string              Properly formatted CloudStack API signature
+     * @throws CloudStackClientException on error
+     */
     public function getSignature($queryString) {
         if (empty($queryString)) {
             throw new CloudStackClientException(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
@@ -51,6 +83,13 @@ class BaseCloudStackClient {
         return urlencode(base64_encode($hash));
     }
 
+    /**
+     * Execute CloudStack API request
+     * @param  string $command API command to execute
+     * @param  array  $args    Array of comand arguments
+     * @return mixed           CloudStack API response
+     * @throws CloudStackClientException on error
+     */
     public function request($command, $args = array()) {
         if (empty($command)) {
             throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);

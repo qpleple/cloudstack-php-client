@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+    <title>CloudStack PHP Client</title>
+    <parser>
+        <target>docs</target>
+        <markers>
+            <item>TODO</item>
+            <item>FIXME</item>
+            <item>NOTE</item>
+        </markers>markers>
+        <extensions>
+            <extension>php</extension>
+        </extensions>
+        <visibility></visibility>
+    </parser>
+    <transformer>
+        <target>docs</target>
+    </transformer>
+    <transformations>
+        <template name="clean" />
+    </transformations>
+    <files>
+        <file>src/CloudStackClientException.php</file>
+        <file>src/BaseCloudStackClient.php</file>
+        <file>src/CloudStackClient.php</file>
+    </files>
+</phpdoc>
