@@ -112,3 +112,13 @@ define("MISSING_ARGUMENT", 1008);
  * Exception error message text
  */
 define("MISSING_ARGUMENT_MSG", "Argument missing: %s");
+
+/**
+ * Expcetion error code
+ */
+define("WRONG_ARGUMENT_TYPE", 1009);
+
+/**
+ * Exception error message text
+ */
+define("WRONG_ARGUMENT_TYPE_MSG", "Wrong argument type for %s - Expected: %s Got: %s");

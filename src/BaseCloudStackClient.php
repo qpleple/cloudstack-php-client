@@ -43,7 +43,7 @@ class BaseCloudStackClient {
      * @throws CloudStackClientException on error
      */
     public function __construct($endpoint, $apiKey, $secretKey) {
-        // API endpoint
+        /* API endpoint */
         if (empty($endpoint)) {
             throw new CloudStackClientException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
         }
@@ -52,16 +52,16 @@ class BaseCloudStackClient {
             throw new CloudStackClientException(sprintf(ENDPOINT_NOT_URL_MSG, $endpoint), ENDPOINT_NOT_URL);
         }
 
-        // $endpoint does not ends with a "/"
+        /* ensure endpoint does not have a trailing slash */
         $this->endpoint = substr($endpoint, -1) == "/" ? substr($endpoint, 0, -1) : $endpoint;
 
-        // API key
+        /* API key */
         if (empty($apiKey)) {
             throw new CloudStackClientException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
         }
         $this->apiKey = $apiKey;
 
-        // API secret
+        /* API secret */
         if (empty($secretKey)) {
             throw new CloudStackClientException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
         }
@@ -84,36 +84,68 @@ class BaseCloudStackClient {
     }
 
     /**
+     * Convert paramaters to strings
+     * @param  string $mixed  Value to convert to string
+     * @return string|false   String value on success false on error
+     */
+    public function getStringValue($mixed) {
+        switch(gettype($mixed)) {
+            case 'boolean':
+                if ($mixed === true) {
+                    return "true";
+                }
+                return "false";
+            break;
+            case 'integer':
+            case 'double':
+                return strval($mixed);
+            break;
+            case 'string':
+                return $mixed;
+            break;
+        }
+    }
+
+    /**
      * Execute CloudStack API request
      * @param  string $command API command to execute
      * @param  array  $args    Array of comand arguments
      * @return mixed           CloudStack API response
      * @throws CloudStackClientException on error
      */
-    public function request($command, $args = array()) {
+    public function request($command, array $args = array()) {
         if (empty($command)) {
             throw new CloudStackClientException(NO_COMMAND_MSG, NO_COMMAND);
         }
-        
+
         if (!is_array($args)) {
             throw new CloudStackClientException(sprintf(WRONG_REQUEST_ARGS_MSG, $args), WRONG_REQUEST_ARGS);
         }
-        
+
+        /* init paramaters */
+        $params = array();
+
+        /* build paramaters from passed arguments */
         foreach ($args as $key => $value) {
-            if ($value == "") {
-                unset($args[$key]);
+            /* ensure we only add strings */
+            $pvalue = $this->getstringvalue($value);
+            /* check new value */
+            if (!is_string($pvalue)) {
+                throw new CloudStackClientException(sprintf(WRONG_ARGUMENT_TYPE_MSG, $key, 'string', gettype($value)), WRONG_ARGUMENT_TYPE);
+            }
+            /* check length */
+            if (strlen($pvalue)) {
+                $params[$key] = $pvalue;
             }
         }
 
-        // Building the query
-        $args['apikey'] = $this->apiKey;
-        $args['command'] = $command;
-        $args['response'] = "json";
-        ksort($args);
-        $query = str_replace("+", "%20", http_build_query($args));
+        /* merge sanitized paramaters with  */
+        $params = array_merge($params, array('apikey' => $this->apiKey, 'command' => $command, 'response' => 'json'));
+        ksort($params);
+        $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
         $query = sprintf("%s&signature=%s", $query, $this->getSignature(strtolower($query)));
 
-        // Initialize curl
+        /* Initialize curl */
         $ch = curl_init();
         $curl_opts = array(
             CURLOPT_URL => $this->endpoint,
@@ -123,13 +155,13 @@ class BaseCloudStackClient {
         );
         curl_setopt_array($ch, $curl_opts);
 
-        // Execute curl to get data and return code
+        /* Execute curl to get data and return code */
         $data = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        // Close curl - free handle
+
+        /* Close curl - free handle */
         curl_close($ch);
 
-        //echo "data == $data\n";
         if (empty($data)) {
             throw new CloudStackClientException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
@@ -141,13 +173,13 @@ class BaseCloudStackClient {
 
         $propertyResponse = sprintf("%sresponse", strtolower($command));
 
-        // standard presentation of errors
+        /* standard presentation of errors */
         if (property_exists($result, "errorresponse") && property_exists($result->errorresponse, "errortext")) {
             throw new CloudStackClientException($result->errorresponse->errortext);
         }
 
         if (!property_exists($result, $propertyResponse)) {
-            // some commands drop the trailing 's' in the response: listPools becomes 'listpoolresponse'
+            /* some commands drop the trailing 's' in the response: listPools becomes 'listpoolresponse' */
             $propertyResponse = sprintf("%sresponse", substr(strtolower($command), 0, -1));
             if (!property_exists($result, $propertyResponse)) {
                 throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $data));
@@ -156,13 +188,13 @@ class BaseCloudStackClient {
 
         $response = $result->{$propertyResponse};
 
-        // sometimes we get errorcode and errortext inside the command response
+        /* sometimes we get errorcode and errortext inside the command response */
         if (property_exists($response, "errorcode") && property_exists($response, "errortext")) {
             throw new CloudStackClientException($response->errortext);
         }
 
-        // list handling : most of lists are on the same pattern as listVirtualMachines :
-        // { "listvirtualmachinesresponse" : { "virtualmachine" : [ ... ] } }
+        /* list handling : most of lists are on the same pattern as listVirtualMachines :
+           { "listvirtualmachinesresponse" : { "virtualmachine" : [ ... ] } } */
         preg_match('/list(\w+)s/', strtolower($command), $listMatches);
         if (!empty($listMatches)) {
             $objectName = $listMatches[1];
@@ -172,8 +204,8 @@ class BaseCloudStackClient {
                     return $resultArray;
                 }
             } else {
-                // sometimes, the 's' is kept, as in :
-                // { "listasyncjobsresponse" : { "asyncjobs" : [ ... ] } }
+                /* sometimes, the 's' is kept, as in :
+                   { "listasyncjobsresponse" : { "asyncjobs" : [ ... ] } } */
                 $objectName = sprintf("%ss", $listMatches[1]);
                 if (property_exists($response, $objectName)) {
                     $resultArray = $response->{$objectName};
