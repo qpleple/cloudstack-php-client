@@ -104,6 +104,7 @@ class BaseCloudStackClient {
                 return $mixed;
             break;
         }
+        return false;
     }
 
     /**
@@ -128,14 +129,14 @@ class BaseCloudStackClient {
         /* build paramaters from passed arguments */
         foreach ($args as $key => $value) {
             /* ensure we only add strings */
-            $pvalue = $this->getstringvalue($value);
+            $pvalue = $this->getStringValue($value);
             /* check new value */
-            if (!is_string($pvalue)) {
+            if ($pvalue === false || !is_string($pvalue)) {
                 throw new CloudStackClientException(sprintf(WRONG_ARGUMENT_TYPE_MSG, $key, 'string', gettype($value)), WRONG_ARGUMENT_TYPE);
             }
-            /* check length */
+            /* check length and add all keys lower case */
             if (strlen($pvalue)) {
-                $params[$key] = $pvalue;
+                $params[strtolower($key)] = $pvalue;
             }
         }
 
