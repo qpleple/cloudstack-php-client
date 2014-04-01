@@ -3,8 +3,8 @@ CloudStack PHP Client
 
 PHP client library for the CloudStack User API v4.3 ([reference](https://cloudstack.apache.org/docs/api/apidocs-4.3/TOC_User.html))
 
-Generate with the CloudStack client generator [qpleple/cloudstack-client-generator](https://github.com/qpleple/cloudstack-client-generator),
-others languages are available. Check out this project to know more about it.
+Generate with the CloudStack client generator [leprechau/cloudstack-client-generator](https://github.com/leprechau/cloudstack-client-generator),
+others languages are available. Check out this project adn the parent fork to know more about it.
 
 Examples
 --------
