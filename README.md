@@ -16,26 +16,33 @@ The code generated can is tagged for [phpdoc](https://github.com/phpDocumentor/p
 PHP Library Usage
 -----------------
 
-Initialization
+###Initialization###
 
+```php
     $cloudstack = new CloudStackClient(API_ENDPOINT, API_KEY, SECRET_KEY);
+```
 
-Lists
+###Lists##
 
+```php
     $vms = $cloudstack->listVirtualMachines();
     foreach ($vms as $vm) {
-        echo("{$vm->id} : {$vm->name} {$vm->state}<br>");
+        printf("%s : %s %s", $vm->id, $vm->name, $vm->state);
     }
+```
 
-Asynchronous tasks
+###Asynchronous tasks###
 
+```php
     $job = $cloudstack->deployVirtualMachine(1, 259, 1);
-    echo("VM being deployed. Job id = {$job->jobid}<br>");
+    printf("VM being deployed. Job id = %s", $job->jobid);
 
-    echo("All jobs :<br>");
+    print "All jobs";
+
     foreach ($cloudstack->listAsyncJobs() as $job) {
-        echo("{$job->jobid} : {$job->cmd}, status = {$job->jobstatus}<br>");
+        printf("%s : %s, status = %s", $job->jobid, $job->cmd, $job->jobstatus);
     }
+```
 
 Code Generation
 ---------------
