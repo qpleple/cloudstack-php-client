@@ -9,7 +9,9 @@ This project was originally forked from the following projects:
 
 This project combines these two tools into one project.  The code generation is no longer done via scraping of the HTML documentation.  We now use the provided ```listApis``` call in the CloudStack API to generate the libraries.
 
-There is also an enhanced command line testing tool located in ```commandline/commandline.php``` that can be used to execute CloudStack APIs from the console.
+There is also an enhanced command line testing tool located in `commandline/commandline.php` that can be used to execute CloudStack APIs from the console.
+
+The code generated can is tagged for [phpdoc](https://github.com/phpDocumentor/phpDocumentor2) and there is an included `phpdoc.dist.xml` so generating your own library documentation should be quite simple.
 
 PHP Library Usage
 -----------------
