@@ -4,8 +4,8 @@
 	backupGlobals="false"
 	backupStaticAttributes="false"
 	stopOnError="true"
-    stopOnFailure="true"
-    >
+	stopOnFailure="true"
+>
 
 	<testsuite name="CloudStack PHP Client Test Suite">
 		<directory>testcases</directory>
