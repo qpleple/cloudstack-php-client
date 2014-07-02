@@ -80,7 +80,7 @@ class BaseCloudStackClient {
             throw new CloudStackClientException(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
         }
 
-        $hash = @hash_hmac("SHA1", $queryString, $this->secretKey, true);
+        $hash = @hash_hmac("SHA1", strtolower($queryString), $this->secretKey, true);
         return urlencode(base64_encode($hash));
     }
 
@@ -141,11 +141,15 @@ class BaseCloudStackClient {
             }
         }
 
-        /* merge sanitized paramaters with  */
+        /* merge sanitized paramaters */
         $params = array_merge($params, array('apikey' => $this->apiKey, 'command' => $command, 'response' => 'json'));
+
+        /* sort paramaters */
         ksort($params);
+
+        /* build and sign query string */
         $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-        $query = sprintf("%s&signature=%s", $query, $this->getSignature(strtolower($query)));
+        $query = sprintf("%s&signature=%s", $query, $this->getSignature($query));
 
         /* Initialize curl */
         $ch = curl_init();
