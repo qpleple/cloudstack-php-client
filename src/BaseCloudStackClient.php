@@ -49,12 +49,12 @@ class BaseCloudStackClient {
             throw new CloudStackClientException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
         }
 
-        if (!preg_match("|^http://.*$|", $endpoint)) {
+        if (!preg_match('/^http[s]:\/\/.*$/', $endpoint)) {
             throw new CloudStackClientException(sprintf(ENDPOINT_NOT_URL_MSG, $endpoint), ENDPOINT_NOT_URL);
         }
 
         /* ensure endpoint does not have a trailing slash */
-        $this->endpoint = substr($endpoint, -1) == "/" ? substr($endpoint, 0, -1) : $endpoint;
+        $this->endpoint = substr($endpoint, -1) == '/' ? substr($endpoint, 0, -1) : $endpoint;
 
         /* API key */
         if (empty($apiKey)) {
@@ -80,7 +80,7 @@ class BaseCloudStackClient {
             throw new CloudStackClientException(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
         }
 
-        $hash = @hash_hmac("SHA1", strtolower($queryString), $this->secretKey, true);
+        $hash = @hash_hmac('SHA1', strtolower($queryString), $this->secretKey, true);
         return urlencode(base64_encode($hash));
     }
 
@@ -93,9 +93,9 @@ class BaseCloudStackClient {
         switch(gettype($mixed)) {
             case 'boolean':
                 if ($mixed === true) {
-                    return "true";
+                    return 'true';
                 }
-                return "false";
+                return 'false';
             break;
             case 'integer':
             case 'double':
@@ -149,13 +149,13 @@ class BaseCloudStackClient {
 
         /* build and sign query string */
         $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-        $query = sprintf("%s&signature=%s", $query, $this->getSignature($query));
+        $query = sprintf('%s&signature=%s', $query, $this->getSignature($query));
 
         /* Initialize curl */
         $ch = curl_init();
         $curl_opts = array(
             CURLOPT_URL => $this->endpoint,
-            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => $query,
             CURLOPT_RETURNTRANSFER => true,
         );
@@ -177,25 +177,25 @@ class BaseCloudStackClient {
             throw new CloudStackClientException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
         }
 
-        $propertyResponse = sprintf("%sresponse", strtolower($command));
+        $propertyResponse = sprintf('%sresponse', strtolower($command));
 
         /* standard presentation of errors */
-        if (property_exists($result, "errorresponse") && property_exists($result->errorresponse, "errortext")) {
+        if (property_exists($result, 'errorresponse') && property_exists($result->errorresponse, 'errortext')) {
             throw new CloudStackClientException($result->errorresponse->errortext);
         }
 
         if (!property_exists($result, $propertyResponse)) {
             /* some commands drop the trailing 's' in the response: listPools becomes 'listpoolresponse' */
-            $propertyResponse = sprintf("%sresponse", substr(strtolower($command), 0, -1));
+            $propertyResponse = sprintf('%sresponse', substr(strtolower($command), 0, -1));
             if (!property_exists($result, $propertyResponse)) {
-                throw new CloudStackClientException(sprintf("Unable to parse the response. Got code %d and message: %s", $code, $data));
+                throw new CloudStackClientException(sprintf('Unable to parse the response. Got code %d and message: %s', $code, $data));
             }
         }
 
         $response = $result->{$propertyResponse};
 
         /* sometimes we get errorcode and errortext inside the command response */
-        if (property_exists($response, "errorcode") && property_exists($response, "errortext")) {
+        if (property_exists($response, 'errorcode') && property_exists($response, 'errortext')) {
             throw new CloudStackClientException($response->errortext);
         }
 
@@ -212,7 +212,7 @@ class BaseCloudStackClient {
             } else {
                 /* sometimes, the 's' is kept, as in :
                    { "listasyncjobsresponse" : { "asyncjobs" : [ ... ] } } */
-                $objectName = sprintf("%ss", $listMatches[1]);
+                $objectName = sprintf('%ss', $listMatches[1]);
                 if (property_exists($response, $objectName)) {
                     $resultArray = $response->{$objectName};
                     if (is_array($resultArray)) {

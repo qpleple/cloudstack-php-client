@@ -115,9 +115,19 @@ define("MISSING_ARGUMENT", 1008);
 define("MISSING_ARGUMENT_MSG", "Argument missing: %s");
 
 /**
+ * Exception error code
+ */
+define("NO_DATA_RECEIVED", 1009);
+
+/**
+ * Exception error message text
+ */
+define("NO_DATA_RECEIVED_MSG", "The server did not return any data");
+
+/**
  * Expcetion error code
  */
-define("WRONG_ARGUMENT_TYPE", 1009);
+define("WRONG_ARGUMENT_TYPE", 1010);
 
 /**
  * Exception error message text
