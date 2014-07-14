@@ -112,7 +112,7 @@ define("MISSING_ARGUMENT", 1008);
 /**
  * Exception error message text
  */
-define("MISSING_ARGUMENT_MSG", "Argument missing: %s");
+define("MISSING_ARGUMENT_MSG", "Missing argument: %s");
 
 /**
  * Exception error code
@@ -122,7 +122,7 @@ define("NO_DATA_RECEIVED", 1009);
 /**
  * Exception error message text
  */
-define("NO_DATA_RECEIVED_MSG", "The server did not return any data");
+define("NO_DATA_RECEIVED_MSG", "The server did not return any data.");
 
 /**
  * Expcetion error code
