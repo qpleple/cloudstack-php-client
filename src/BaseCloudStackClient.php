@@ -49,7 +49,7 @@ class BaseCloudStackClient {
             throw new CloudStackClientException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
         }
 
-        if (!preg_match('/^http[s]:\/\/.*$/', $endpoint)) {
+        if (!preg_match('/^(http|https):\/\/.*$/', $endpoint)) {
             throw new CloudStackClientException(sprintf(ENDPOINT_NOT_URL_MSG, $endpoint), ENDPOINT_NOT_URL);
         }
 
@@ -151,15 +151,14 @@ class BaseCloudStackClient {
         $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
         $query = sprintf('%s&signature=%s', $query, $this->getSignature($query));
 
-        /* Initialize curl */
+        /* initialize curl */
         $ch = curl_init();
-        $curl_opts = array(
+        curl_setopt_array($ch, array(
             CURLOPT_URL => $this->endpoint,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => $query,
             CURLOPT_RETURNTRANSFER => true,
-        );
-        curl_setopt_array($ch, $curl_opts);
+        ));
 
         /* Execute curl to get data and return code */
         $data = curl_exec($ch);

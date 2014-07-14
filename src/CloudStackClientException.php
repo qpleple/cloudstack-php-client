@@ -32,7 +32,7 @@ define("ENDPOINT_NOT_URL", 1001);
 /**
  * Exception error message text
  */
-define("ENDPOINT_NOT_URL_MSG", "The endpoint must be a URL (starting by http://): \"%s\"");
+define("ENDPOINT_NOT_URL_MSG", "The endpoint must be a URL (starting wih http:// or https://). Given: \"%s\"");
 
 /**
  * Expcetion error code
