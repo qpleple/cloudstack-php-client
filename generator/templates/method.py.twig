@@ -8,11 +8,30 @@
     file that was distributed with this source code.
 #}
 {% autoescape false %}
-    def {{ method.name }}(self, {% for param in method.params %}{{ param.name }}{% if param.required != true %} = ""{% endif %}{% if not loop.last %}, {% endif %}
-{% endfor %}):
+{# define method #}
+    def {{ method.name }}(self{# comment to prevent a newline #}
+{# append required paramaters first #}
+{% if (method.required > 0) or (method.optional > 0) %}{{", "}}{% endif %}
+{% set count = 1 %}
+{% for param in method.params %}
+{% if param.required == true %}{{ param.name }}{% if count < method.required %}{{ ", " }}{% endif %}
+{% set count = count + 1 %}
+{% endif %}
+{% endfor %}
+{# append optional arguments if needed #}
+{% if method.optional > 0 %}{% if method.required > 0 %}, {% endif %}
+{% set count = 1%}
+{% for param in method.params %}
+{% if param.required != true %}{{ param.name }} = ""{% if count < method.optional %}{{ ", "}}{% endif %}
+{% set count = count + 1 %}
+{% endif %}
+{% endfor %}
+{% endif %}):
+{# function description #}
         '''
         {{ method.description | raw }}
         '''
+{# function body #}
         return self.request("{{ method.name }}", {
 {% for param in method.params %}
             '{{ param.name }}' : {{ param.name }},

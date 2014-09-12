@@ -40,7 +40,7 @@
 {# end required #}
 {# append optional arguments if needed #}
 {% if method.optional > 0 %}{% if method.required > 0 %}, {% endif %}array $optArgs = array(){% endif %}) {
-{# generate required paramager checks #}
+{# generate required paramater checks #}
 {% for param in method.params %}
 {% if param.required == true %}
         if (empty(${{ param.name }})) {
