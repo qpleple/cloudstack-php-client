@@ -43,11 +43,11 @@ class Lib {
     function __construct() {
         // Initialize templating engine
         Twig_Autoloader::register();
-        $loader = new Twig_Loader_Filesystem(dirname(__FILE__) . "/../templates");
+        $loader = new Twig_Loader_Filesystem(__DIR__ . "/../templates");
         $this->twig = new Twig_Environment($loader);
         $this->twig->addExtension(new Twig_Extensions_Extension_Text());
         /* load config and create cloudstack client connection */
-        $this->config = require dirname(__FILE__) . "/../../config.php";
+        $this->config = require __DIR__ . "/../../config.php";
         $this->cloudstack = new BaseCloudStackClient($this->config['endpoint'], $this->config['api_key'], $this->config['secret_key']);
     }
 

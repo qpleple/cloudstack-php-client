@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * This file is part of the CloudStack PHP Client.
  *
  * (c) Quentin Pleplé <quentin.pleple@gmail.com>
@@ -10,7 +10,7 @@
  */
 
 /**
- * Pull in base client and exceptoion classes
+ * Pull in base client and exception classes
  */
 require_once dirname(__FILE__) . "/BaseCloudStackClient.php";
 require_once dirname(__FILE__) . "/CloudStackClientException.php";
@@ -43,6 +43,7 @@ class CloudStackClient extends BaseCloudStackClient {
      *     @type string $account list resources by account. Must be used with the domainId parameter.
      *     @type string $projectid list objects by project
      * }
+     * @return mixed
      */
     public function listNetworkACLs(array $optArgs = array()) {
         return $this->request("listNetworkACLs",
@@ -60,6 +61,7 @@ class CloudStackClient extends BaseCloudStackClient {
      *     @type string $domainid the domain ID of the account.
      *     @type string $account the account of the condition. Must be used with the domainId parameter.
      * }
+     * @return mixed
      */
     public function createCondition($counterid, $threshold, $relationaloperator, array $optArgs = array()) {
         if (empty($counterid)) {
@@ -84,6 +86,7 @@ class CloudStackClient extends BaseCloudStackClient {
      * Reconnects a host.
      *
      * @param string $id the host ID
+     * @return mixed
      */
     public function reconnectHost($id) {
         if (empty($id)) {

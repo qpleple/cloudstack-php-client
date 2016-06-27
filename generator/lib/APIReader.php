@@ -11,11 +11,18 @@
 
 class APIReader
 {
+    /** @var Lib */
     protected $lib;
+    
     protected $config;
     protected $extension;
 
-    function __construct($lib)
+    /**
+     * APIReader constructor.
+     * @param Lib $lib
+     * @throws Exception
+     */
+    function __construct(Lib $lib)
     {
         $this->lib = $lib;
         $this->config = $lib->config;
