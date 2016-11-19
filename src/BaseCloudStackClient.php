@@ -72,9 +72,14 @@ class BaseCloudStackClient {
         $args['command'] = $command;
         $args['response'] = "json";
         ksort($args);
+        $param = array();
+        foreach ($args as $k => $v) {
+                $param[] = $k . "=" . str_replace("+", "%20", urlencode($v));
+        }
+        $queryToSign=implode("&", $param);
         $query = http_build_query($args);
         $query = str_replace("+", "%20", $query);
-        $query .= "&signature=" . $this->getSignature(strtolower($query));
+        $query .= "&signature=" . $this->getSignature(strtolower($queryToSign));
     
         $httpRequest = new HttpRequest();
         $httpRequest->setMethod(HTTP_METH_POST);
