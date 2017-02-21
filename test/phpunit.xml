@@ -8,7 +8,7 @@
 >
 
 	<testsuite name="CloudStack PHP Client Test Suite">
-		<directory>testcases</directory>
+		<directory>./testcases</directory>
 	</testsuite>
 
 </phpunit>

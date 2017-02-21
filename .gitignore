@@ -1,8 +1,5 @@
-generated*
-config.php
-test/test.php
-docs/*
 /.idea
 /*.iml
 /composer.lock
 /vendor
+/tmp
