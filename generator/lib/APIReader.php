@@ -75,6 +75,7 @@ class APIReader
         }
 
         $this->lib->render("class." . $this->extension . ".twig", array(
+            'capabilities' => $this->fetchCapabilities(),
             "methods" => $methodsData,
             "config" => $this->config,
         ));
@@ -128,4 +129,8 @@ class APIReader
         return $methodData;
     }
 
+    private function fetchCapabilities()
+    {
+        return $this->lib->cloudstack->request('listCapabilities');
+    }
 }
