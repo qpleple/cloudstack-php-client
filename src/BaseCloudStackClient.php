@@ -96,14 +96,11 @@ class BaseCloudStackClient {
                     return 'true';
                 }
                 return 'false';
-            break;
             case 'integer':
             case 'double':
                 return strval($mixed);
-            break;
             case 'string':
                 return $mixed;
-            break;
         }
         return false;
     }

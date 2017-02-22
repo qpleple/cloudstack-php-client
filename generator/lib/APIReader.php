@@ -11,11 +11,18 @@
 
 class APIReader
 {
+    /** @var Lib */
     protected $lib;
+    
     protected $config;
     protected $extension;
 
-    function __construct($lib)
+    /**
+     * APIReader constructor.
+     * @param Lib $lib
+     * @throws Exception
+     */
+    function __construct(Lib $lib)
     {
         $this->lib = $lib;
         $this->config = $lib->config;
@@ -68,6 +75,7 @@ class APIReader
         }
 
         $this->lib->render("class." . $this->extension . ".twig", array(
+            'capabilities' => $this->fetchCapabilities(),
             "methods" => $methodsData,
             "config" => $this->config,
         ));
@@ -121,4 +129,8 @@ class APIReader
         return $methodData;
     }
 
+    private function fetchCapabilities()
+    {
+        return $this->lib->cloudstack->request('listCapabilities');
+    }
 }

@@ -9,27 +9,15 @@
  * file that was distributed with this source code.
  */
 
-/**
- * Templating library
- * see http://www.twig-project.org/
- */
-require_once dirname(__FILE__) . "/Twig/Autoloader.php";
-Twig_Autoloader::register();
-
-/**
- * Twig Extentions
- * see https://github.com/fabpot/Twig-extensions
- */
-require_once dirname(__FILE__) . "/Twig-extensions/Twig/Extensions/Autoloader.php";
-Twig_Extensions_Autoloader::register();
+require __DIR__.'/../../vendor/autoload.php';
 
 /**
  * Our reading and parsing functions
  */
-require_once dirname(__FILE__) . "/APIReader.php";
+require_once __DIR__ . "/APIReader.php";
 
 /* Base CloudStack Client */
-require_once dirname(__FILE__) . "/../../src/BaseCloudStackClient.php";
+require_once __DIR__ . "/../../src/BaseCloudStackClient.php";
 
 /**
 * Initiate external libraries and proxies some methods
@@ -42,12 +30,11 @@ class Lib {
 
     function __construct() {
         // Initialize templating engine
-        Twig_Autoloader::register();
-        $loader = new Twig_Loader_Filesystem(dirname(__FILE__) . "/../templates");
+        $loader = new Twig_Loader_Filesystem(__DIR__ . "/../templates");
         $this->twig = new Twig_Environment($loader);
         $this->twig->addExtension(new Twig_Extensions_Extension_Text());
         /* load config and create cloudstack client connection */
-        $this->config = require dirname(__FILE__) . "/../../config.php";
+        $this->config = require __DIR__ . "/../../config.php";
         $this->cloudstack = new BaseCloudStackClient($this->config['endpoint'], $this->config['api_key'], $this->config['secret_key']);
     }
 

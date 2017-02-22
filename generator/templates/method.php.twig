@@ -9,12 +9,12 @@
 #}
 {% autoescape false %}
     /**
-     * {% filter wordwrapStd(80, "\n     * ", true) %}{{ method.description | raw }}{{ "\n" }}{% endfilter %}
+     * {% filter wordwrap(80, "\n     * ", true) %}{{ method.description | raw }}{{ "\n" }}{% endfilter %}
      *
 {# document all required paramaters #}
 {% for param in method.params %}
 {% if param.required == true %}
-     * @param string ${{ param.name }} {% filter wordwrapStd(80, "\n     * ", true) %}{{ param.description | raw }}{{ "\n" }}{% endfilter %}
+     * @param string ${{ param.name }} {% filter wordwrap(80, "\n     * ", true) %}{{ param.description | raw }}{{ "\n" }}{% endfilter %}
 {% endif %}
 {% endfor %}
 {# end required paramaters #}
@@ -23,12 +23,15 @@
 {# document all optional paramaters #}
 {% for param in method.params %}
 {% if param.required != true %}
-     *     @type string ${{ param.name }} {% filter wordwrapStd(80, "\n     *     ", true) %}{{ param.description | raw }}{{ "\n" }}{% endfilter %}
+     *     @type string ${{ param.name }} {% filter wordwrap(80, "\n     *     ", true) %}{{ param.description | raw }}{{ "\n" }}{% endfilter %}
 {% endif %}
 {% endfor %}
 {# end optional arguments #}
      * }
+{% endif %}{% if method.required > 0 %}
+     * @throws \CloudStackClientException
 {% endif %}
+     * @return \stdClass
      */
     public function {{ method.name }}({# only define required paramaters in function #}
 {% set count = 1 %}
@@ -39,27 +42,26 @@
 {% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
-{% if method.optional > 0 %}{% if method.required > 0 %}, {% endif %}array $optArgs = array(){% endif %}) {
+{% if method.optional > 0 %}{% if method.required > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
 {# generate required paramater checks #}
 {% for param in method.params %}
 {% if param.required == true %}
         if (empty(${{ param.name }})) {
-            throw new CloudStackClientException(sprintf(MISSING_ARGUMENT_MSG, "{{ param.name }}"), MISSING_ARGUMENT);
+            throw new CloudStackClientException(sprintf(MISSING_ARGUMENT_MSG, '{{ param.name }}'), MISSING_ARGUMENT);
         }
 {% endif %}
 {% endfor %}
 {# end paramater checks #}
-        return $this->request("{{ method.name }}",
-{% if (method.optional > 0) and (method.required > 0) %}
-{# generate return array merge of required and optional paramaters #}
-            array_merge(array(
-{% elseif method.required > 0 %}
-{# no merge ... just a simple array #}
-            array(
-{% else %}
-{# no merge ... no array ... only optional arguments here #}
-            $optArgs
+        return $this->request('{{ method.name }}'{% if method.optional == 0 and method.required == 0 %});{% else %},
+{% if method.optional > 0 and method.required > 0 %}
+    {# generate return array merge of required and optional paramaters #}
+        [{% elseif method.required > 0 %}
+    {# no merge ... just a simple array #}
+        [{% elseif method.optional > 0 %}
+    {# no merge ... no array ... only optional arguments here #}
+        $optArgs{% endif %}
 {% endif %}
+
 {% set count = 1 %}
 {% for param in method.params %}
 {% if param.required == true %}
@@ -70,13 +72,14 @@
 {% endfor %}
 {% if (method.optional > 0) and (method.required > 0) %}
 {# generate return array merge of required and optional paramaters #}
-            ), $optArgs)
+            ] + $optArgs
+        );
 {% elseif method.required > 0 %}
 {# no merge ... just close array #}
-            )
-{% else %}
-{# nothing here #}
-{% endif %}
+            ]
         );
+{% elseif method.optional > 0 %}
+        );
+{% endif %}
     }
 {% endautoescape %}

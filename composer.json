@@ -1,0 +1,25 @@
+{
+  "name": "cloudstack-php/client",
+  "type": "library",
+  "description": "PHP client library for the CloudStack User API",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Quentin Pleplé",
+      "email": "quentin.pleple@gmail.com"
+    },
+    {
+      "name": "Aaron Hurt",
+      "email": "ahurt@anbcs.com"
+    },
+    {
+      "name": "Daniel Carbone",
+      "email": "daniel.p.carbone@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "twig/twig": "<=2.0",
+    "twig/extensions": "<=2.0"
+  }
+}
