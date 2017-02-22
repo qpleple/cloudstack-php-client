@@ -21,6 +21,9 @@ class Generator
     /** @var \MyENA\CloudStackClientGenerator\Generator\CloudStackConfiguration */
     protected $cloudstackConfiguration;
 
+    /** @var array */
+    protected $responseTypeHash = [];
+
     /**
      * Generator constructor.
      *
@@ -47,25 +50,6 @@ class Generator
 
     public function generate()
     {
-        $apiData = $this->fetchApiData();
-        $capabilities = $this->fetchCapabilities();
-
-        $this->writeOutStaticTemplates($capabilities);
-
-        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
-
-        file_put_contents(
-            $srcDir.'/CloudStackClient.php',
-            $this->twig->load('class.php.twig')->render([
-                'config' => $this->configuration,
-                'capabilities' => $capabilities,
-                'methods' => $apiData,
-            ])
-        );
-    }
-
-    protected function writeOutStaticTemplates($capabilities)
-    {
         $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
         if (!is_dir($srcDir) && false === (bool)mkdir($srcDir))
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $srcDir));
@@ -73,6 +57,24 @@ class Generator
         $filesDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'files');
         if (!is_dir($filesDir) && false === (bool)mkdir($filesDir))
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $filesDir));
+
+        $responseDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'Response');
+        if (!is_dir($responseDir) && false === (bool)mkdir($responseDir))
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $responseDir));
+
+        $apiData = $this->fetchApiData();
+        $capabilities = $this->fetchCapabilities();
+
+        $this->writeOutStaticTemplates($capabilities);
+        $this->writeOutClient($apiData, $capabilities);
+        $this->writeOutResponseModels($apiData, $capabilities);
+    }
+
+    protected function writeOutStaticTemplates(\stdClass $capabilities)
+    {
+        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
+        $filesDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'files');
+        $responseDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'Response');
 
         $args = ['config' => $this->configuration, 'capabilities' => $capabilities];
 
@@ -105,6 +107,62 @@ class Generator
             $filesDir.'/constants.php',
             $this->twig->load('constants.php.twig')->render($args)
         );
+
+        file_put_contents(
+            $responseDir.'/AbstractResponse.php',
+            $this->twig->load('abstractResponse.php.twig')->render($args)
+        );
+    }
+
+    protected function writeOutClient(array $apiData, \stdClass $capabilities)
+    {
+        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
+
+        file_put_contents(
+            $srcDir.'/CloudStackClient.php',
+            $this->twig->load('class.php.twig')->render([
+                'config' => $this->configuration,
+                'capabilities' => $capabilities,
+                'methods' => $apiData,
+            ])
+        );
+    }
+
+    protected function writeOutResponseModels(array $apiData, \stdClass $capabilities)
+    {
+        $responseDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'Response');
+
+        $template = $this->twig->load('response.php.twig');
+        foreach ($apiData as $api)
+        {
+            $className = ucfirst($api['responseClassName']);
+
+            file_put_contents(
+                $responseDir.'/'.$className.'.php',
+                $template->render([
+                    'responseClassName' => $className,
+                    'response' => $api['memberVariables'],
+                    'config' => $this->configuration,
+                    'capabilities' => $capabilities,
+                ])
+            );
+        }
+
+        foreach ($this->responseTypeHash as $className => $memberVariables)
+        {
+            if (substr($className, -8) != "Response")
+            {
+                file_put_contents(
+                    $responseDir.'/'.ucfirst($className).'.php',
+                    $template->render([
+                        'responseClassName' => ucfirst($className),
+                        'response' => $memberVariables,
+                        'config' => $this->configuration,
+                        'capabilities' => $capabilities,
+                    ])
+                );
+            }
+        }
     }
 
     /**
@@ -127,10 +185,18 @@ class Generator
                 'description' => trim($api->description),
                 'required' => 0,
                 'optional' => 0,
-                'params' => array()
+                'params' => [],
+                'response' => $api->response,
+                'list' => false !== strpos($api->name, 'list'),
+                'responseClassName' => ucfirst(trim($api->name) . 'Response'),
             );
 
-            // loop through paramaters
+            if (!isset($this->responseTypeHash[$data['responseClassName']])) {
+                $this->responseTypeHash[$data['responseClassName']] = $this->getResponseDataHelper($api->response);
+            }
+            $data['memberVariables'] = $this->responseTypeHash[$data['responseClassName']];
+
+            // loop through parameters
             foreach($api->params as $param) {
                 // increase counts
                 if ($param->required == true) {
@@ -140,25 +206,66 @@ class Generator
                 }
                 // special case for missing descriptions
                 switch ($param->name) {
-                    case "pagesize":
-                        $param->description = "the number of entries per page";
+                    case 'pagesize':
+                        $param->description = 'the number of entries per page';
                         break;
-                    case "page":
-                        $param->description = "the page number of the result set";
+                    case 'page':
+                        $param->description = 'the page number of the result set';
                         break;
                 }
-                // build paramater data
-                $data['params'][] = array(
-                    "name" => trim($param->name),
-                    "description" => trim($param->description),
-                    "required" => (bool) $param->required,
-                );
+                // build parameter data
+                $data['params'][] = [
+                    'name' => trim($param->name),
+                    'description' => trim($param->description),
+                    'required' => (bool) $param->required,
+                ];
             }
 
             $methods[$api->name] = $data;
         }
 
         return $methods;
+    }
+
+    protected function getResponseDataHelper($responses) {
+        $responsemeta = array();
+        $params = array();
+        foreach ($responses as $response) {
+            $val = array();
+            if (!property_exists($response, 'name')) {
+                // blank objects, why do you exist?
+                continue;
+            }
+            $val['name'] = $name = trim($response->name);
+            $val['type'] = $type = trim($response->type);
+            $val['description'] = $description = trim($response->description);
+            if (isset($params[$name])) {
+                // there are dupes, this squashes those
+                continue;
+            }
+            $params[$name] = true;
+            if ($type == "set" || $type == "list" || $type == "map" || $type == "responseobject"
+                || $type == "uservmresponse") {
+                $type = $val['type'] = "array";
+                if (!property_exists($response, 'response')) {
+                    $val['class'] = 'string';
+                } else {
+                    if (!isset($this->responseTypeHash[$name])) {
+                        $this->responseTypeHash[$name] = $this->getResponseDataHelper($response->response);
+                    }
+                    $val['class'] = $name;
+                }
+            } elseif ($type == "imageformat" || $type == "storagepoolstatus"
+                      || $type == "hypervisortype" || $type == "status"
+                      || $type == "type" || $type == "scopetype" || $type == "state"
+                      || $type == "url" || $type == "uuid") {
+                $val['type'] = $type = "string";
+            } elseif ($type == "integer" || $type == "long" || $type == "short" || $type == "int") {
+                $type = $val['type'] = 'int';
+            }
+            $responsemeta[] = $val;
+        }
+        return $responsemeta;
     }
 
     /**

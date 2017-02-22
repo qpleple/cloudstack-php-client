@@ -1,10 +1,11 @@
-{# 
+{#
     This file is part of the CloudStack Client Generator.
-    
+
     (c) Quentin Pleplé <quentin.pleple@gmail.com>
     (c) Aaron Hurt <ahurt@anbcs.com>
+    (c) Nathan Johnson <nathan@nathanjohnson.info>
     (c) Daniel Carbone <daniel.p.carbone@gmail.com>
-    
+
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
@@ -32,7 +33,7 @@
 {% endif %}{% if method.required > 0 %}
      * @throws \RuntimeException
 {% endif %}
-     * @return \stdClass
+     * @return {% if config.namespace != '' %}{{ config.namespace }}\\{% endif %}Response\{{ method.responseClassName }}{% if method.list %}[]{% endif %}
      */
     public function {{ method.name }}({# only define required paramaters in function #}
 {% set count = 1 %}
@@ -92,6 +93,18 @@
         );
 {% endif %}
 
-        return $this->decodeBody($this->doRequest($req), '{{ method.name }}');
+{% if method.list %}
+        $items = $this->decodeBody($this->doRequest($req), '{{ method.name }}');
+        $models = [];
+        unset($items['count']);
+        $items = reset($items);
+        foreach($items as $k => $item)
+        {
+            $models[] = new Response\{{ method.responseClassName }}($item);
+        }
+        return $models;
+{% else %}
+        return new Response\{{ method.responseClassName }}($this->decodeBody($this->doRequest($req), '{{ method.name }}'));
+{% endif %}
     }
 {% endautoescape %}

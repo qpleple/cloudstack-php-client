@@ -33,7 +33,7 @@ $generator->generate();
 
 If you do not specify anything for `output_dir`, all generated files will be placed under [output](./output)
 
-There are 2 directories and 7 files created by this generated process, however you will only directly interact with 3:
+There are 3 directories of files created by this generated process, however you will only directly interact with 3:
 
 - `composer.json` : This will be in the root of the `output_dir`, and should be edited for your specific implementation
 - `src/CloudStackClient.php` : This is the class that you will execute all api calls from
@@ -93,8 +93,7 @@ Here is an example of a method generated that has one required (`$id`) and one o
      *     @type string $forced Force stop the VM (vm is marked as Stopped even when command fails to be send to the backend).  The caller knows the VM is stopped.
      * }
      * @throws \RuntimeException
-     * @return \stdClass
-     */
+     * @return Response\StopVirtualMachineResponse     */
     public function stopVirtualMachine($id, array $optArgs = []) {
         if (empty($id)) {
             throw new \RuntimeException(sprintf(MISSING_ARGUMENT_MSG, 'id'), MISSING_ARGUMENT);
@@ -110,6 +109,6 @@ Here is an example of a method generated that has one required (`$id`) and one o
             )
         );
 
-        return $this->decodeBody($this->doRequest($req), 'stopVirtualMachine');
+        return new Response\StopVirtualMachineResponse($this->decodeBody($this->doRequest($req), 'stopVirtualMachine'));
     }
 ```
