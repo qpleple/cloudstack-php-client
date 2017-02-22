@@ -33,7 +33,7 @@ use Psr\Http\Message\UriInterface;
  */
 class CloudStackUri implements UriInterface
 {
-    /** @var \CloudStackConfiguration|\MyENA\CloudStackClientGenerator\Configuration */
+    /** @var CloudStackConfiguration */
     private $configuration;
 
     /** @var string */
@@ -57,7 +57,7 @@ class CloudStackUri implements UriInterface
     /**
      * CloudStackUri constructor.
      *
-     * @param \CloudStackConfiguration $configuration
+     * @param CloudStackConfiguration $configuration
      */
     public function __construct(CloudStackConfiguration $configuration)
     {
@@ -285,7 +285,7 @@ class CloudStackUri implements UriInterface
             return $clone;
         }
 
-        throw new InvalidArgumentException(URI_INVALID_SCHEME_MSG, URI_INVALID_SCHEME);
+        throw new \InvalidArgumentException(URI_INVALID_SCHEME_MSG, URI_INVALID_SCHEME);
     }
 
     /**
@@ -361,7 +361,7 @@ class CloudStackUri implements UriInterface
     {
         if (null !== $port && (!is_int($port) || 0 >= $port || 65535 < $port))
         {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 sprintf(URI_INVALID_PORT_MSG, is_int($port) ? $port : gettype($port)),
                 URI_INVALID_PORT
             );
@@ -410,7 +410,7 @@ class CloudStackUri implements UriInterface
             return $clone;
         }
 
-        throw new InvalidArgumentException(sprintf(URI_INVALID_PATH_MSG, gettype($path)), URI_INVALID_PATH);
+        throw new \InvalidArgumentException(sprintf(URI_INVALID_PATH_MSG, gettype($path)), URI_INVALID_PATH);
     }
 
     /**
@@ -445,7 +445,7 @@ class CloudStackUri implements UriInterface
             return $clone;
         }
 
-        throw new InvalidArgumentException(sprintf(URI_INVALID_QUERY_MSG, gettype($query)), URI_INVALID_QUERY);
+        throw new \InvalidArgumentException(sprintf(URI_INVALID_QUERY_MSG, gettype($query)), URI_INVALID_QUERY);
     }
 
     /**
