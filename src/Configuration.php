@@ -38,9 +38,6 @@ class Configuration implements LoggerAwareInterface
     /** @var bool */
     protected $echoSource = true;
 
-    /** @var \Http\Client\HttpClient */
-    protected $httpClient = null;
-
     /** @var \DateTime */
     protected $now;
 
@@ -282,6 +279,10 @@ class Configuration implements LoggerAwareInterface
     public function setOutputDir($outputDir)
     {
         $this->outputDir = $outputDir;
+
+        if (!is_dir($outputDir) || !is_writable($outputDir))
+            throw new \RuntimeException(sprintf('Unable to locate dir "%s" or it is not writable', $outputDir));
+
         return $this;
     }
 
@@ -303,44 +304,8 @@ class Configuration implements LoggerAwareInterface
         return $this;
     }
 
-    /**
-     * @return \Http\Client\HttpClient
-     */
-    public function getHttpClient()
-    {
-        return $this->httpClient;
-    }
-
-    /**
-     * @param \Http\Client\HttpClient $httpClient
-     * @return Configuration
-     */
-    public function setHttpClient(HttpClient $httpClient)
-    {
-        $this->httpClient = $httpClient;
-        return $this;
-    }
-
     protected function postConstructValidation()
     {
-        static $knownClients = array(
-            '\\Http\\Client\\Curl\\Client',
-            '\\Http\\Adapter\\Guzzle6\\Client',
-            '\\Http\\Adapter\\Guzzle5\\Client',
-            '\\Http\\Adapter\\Buzz\\Client'
-        );
-        foreach($knownClients as $clientClass)
-        {
-            if (class_exists($clientClass, true))
-            {
-                $this->httpClient = new $clientClass;
-                break;
-            }
-        }
-
-        if (null === $this->httpClient)
-            throw new \RuntimeException(HTTPCLIENT_EMPTY_MSG, HTTPCLIENT_EMPTY);
-
         if ('' === $this->host)
             throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
 

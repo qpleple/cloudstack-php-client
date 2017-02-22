@@ -30,7 +30,7 @@
 {# end optional arguments #}
      * }
 {% endif %}{% if method.required > 0 %}
-     * @throws \CloudStackClientException
+     * @throws \RuntimeException
 {% endif %}
      * @return \stdClass
      */
@@ -48,39 +48,50 @@
 {% for param in method.params %}
 {% if param.required == true %}
         if (empty(${{ param.name }})) {
-            throw new CloudStackClientException(sprintf(MISSING_ARGUMENT_MSG, '{{ param.name }}'), MISSING_ARGUMENT);
+            throw new \RuntimeException(sprintf(MISSING_ARGUMENT_MSG, '{{ param.name }}'), MISSING_ARGUMENT);
         }
 {% endif %}
 {% endfor %}
 {# end paramater checks #}
-        return $this->request('{{ method.name }}'{% if method.optional == 0 and method.required == 0 %});{% else %},
+        $req = new CloudStackRequest(
+            $this->configuration,
+            new CloudStackRequestBody(
+                $this->configuration,
+                '{{ method.name }}'{% if method.optional == 0 and method.required == 0 %}
+            )
+        );{% else %},
 {% if method.optional > 0 and method.required > 0 %}
     {# generate return array merge of required and optional paramaters #}
-        [{% elseif method.required > 0 %}
+            [{% elseif method.required > 0 %}
     {# no merge ... just a simple array #}
-        [{% elseif method.optional > 0 %}
+            [{% elseif method.optional > 0 %}
     {# no merge ... no array ... only optional arguments here #}
-        $optArgs{% endif %}
+            $optArgs{% endif %}
 {% endif %}
 
 {% set count = 1 %}
 {% for param in method.params %}
 {% if param.required == true %}
-                '{{ param.name }}' => ${{ param.name }}{# determine line ending based on count #}
+                    '{{ param.name }}' => ${{ param.name }}{# determine line ending based on count #}
 {% if count < method.required %}{{ ",\n" }}{% else %}{{ "\n" }}{% endif %}
 {% set count = count + 1 %}
 {% endif %}
 {% endfor %}
 {% if (method.optional > 0) and (method.required > 0) %}
 {# generate return array merge of required and optional paramaters #}
-            ] + $optArgs
+                ] + $optArgs
+            )
         );
 {% elseif method.required > 0 %}
 {# no merge ... just close array #}
-            ]
+                ]
+            )
         );
 {% elseif method.optional > 0 %}
+            )
         );
 {% endif %}
+
+        return $this->decodeBody($this->doRequest($req), '{{ method.name }}');
     }
 {% endautoescape %}

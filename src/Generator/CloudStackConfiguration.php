@@ -27,7 +27,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     protected $pathPrefix = 'client/api';
 
     /** @var \Http\Client\HttpClient */
-    protected $httpClient = null;
+    public $HttpClient = null;
 
     /**
      * CloudStackConfiguration constructor.
@@ -190,16 +190,16 @@ class CloudStackConfiguration implements LoggerAwareInterface
      */
     public function getHttpClient()
     {
-        return $this->httpClient;
+        return $this->HttpClient;
     }
 
     /**
-     * @param \Http\Client\HttpClient $httpClient
+     * @param \Http\Client\HttpClient $HttpClient
      * @return CloudStackConfiguration
      */
-    public function setHttpClient(HttpClient $httpClient)
+    public function setHttpClient(HttpClient $HttpClient)
     {
-        $this->httpClient = $httpClient;
+        $this->HttpClient = $HttpClient;
         return $this;
     }
 
@@ -230,12 +230,12 @@ class CloudStackConfiguration implements LoggerAwareInterface
         {
             if (class_exists($clientClass, true))
             {
-                $this->httpClient = new $clientClass;
+                $this->HttpClient = new $clientClass;
                 break;
             }
         }
 
-        if (null === $this->httpClient)
+        if (null === $this->HttpClient)
             throw new \RuntimeException(HTTPCLIENT_EMPTY_MSG, HTTPCLIENT_EMPTY);
 
         if ('' === $this->host)
