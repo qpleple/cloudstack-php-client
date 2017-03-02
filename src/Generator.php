@@ -228,7 +228,7 @@ class Generator
     }
 
     protected function getResponseDataHelper($responses) {
-        $responsemeta = array();
+        $responseMeta = array();
         $params = array();
         foreach ($responses as $response) {
             $val = array();
@@ -244,8 +244,8 @@ class Generator
                 continue;
             }
             $params[$name] = true;
-            if ($type == "set" || $type == "list" || $type == "map" || $type == "responseobject"
-                || $type == "uservmresponse") {
+            
+            if (in_array($type, ["set", "list", "map", "responseobject", "uservmresponse"])) {
                 $type = $val['type'] = "array";
                 if (!property_exists($response, 'response')) {
                     $val['class'] = 'string';
@@ -255,17 +255,14 @@ class Generator
                     }
                     $val['class'] = $name;
                 }
-            } elseif ($type == "imageformat" || $type == "storagepoolstatus"
-                      || $type == "hypervisortype" || $type == "status"
-                      || $type == "type" || $type == "scopetype" || $type == "state"
-                      || $type == "url" || $type == "uuid") {
+            } elseif (in_array($type, ["imageformat", "storagepoolstatus", "hypervisortype", "status", "type", "scopetype", "state", "url", "uuid"])) {
                 $val['type'] = $type = "string";
-            } elseif ($type == "integer" || $type == "long" || $type == "short" || $type == "int") {
+            } elseif (in_array($type, ["integer", "long", "short", "int"])) {
                 $type = $val['type'] = 'int';
             }
-            $responsemeta[] = $val;
+            $responseMeta[] = $val;
         }
-        return $responsemeta;
+        return $responseMeta;
     }
 
     /**
