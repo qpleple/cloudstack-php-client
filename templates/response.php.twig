@@ -33,6 +33,7 @@
 class {{ responseClassName }} extends AbstractResponse {
     {% for prop in response %}
     {% set type = prop.type %}
+    {% set class = prop.class %}
 
     /**
      *  @SWG\Property(
@@ -46,17 +47,17 @@ class {{ responseClassName }} extends AbstractResponse {
 {% set type='bool' %}
 {% elseif type == "array" %}
      *    type="array",
-{% if prop.class == "string" %}
+{% if class == "string" %}
      *    @SWG\Items(type="string"),
 {% else %}
-     *    @SWG\Items(ref="#/definitions/{{ prop['class'] }}"),
+     *    @SWG\Items(ref="#/definitions/{{ class }}"),
 {% endif %}
 {% else %}
      *    type="{{ type }}",
 {% endif %}
      *    description="{{ prop.description }}"
      *  )
-     *  @var {{ type }} {{ prop.name }} {{ prop.description }}
+     *  @var {% if (type != 'array' or class == 'string') %}{{ type }}{% else %}{{ (class ~ '[]')|capitalize }}{% endif %} {{ prop.name }} {{ prop.description }}
      */
     public ${{ prop.name }};
 {% endfor %}
