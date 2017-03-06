@@ -58,7 +58,7 @@ class Generator
         if (!is_dir($filesDir) && false === (bool)mkdir($filesDir))
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $filesDir));
 
-        $responseDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'Response');
+        $responseDir = sprintf('%s/%s', $srcDir, 'Response');
         if (!is_dir($responseDir) && false === (bool)mkdir($responseDir))
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $responseDir));
 
@@ -74,7 +74,7 @@ class Generator
     {
         $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
         $filesDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'files');
-        $responseDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'Response');
+        $responseDir = sprintf('%s/%s', $srcDir, 'Response');
 
         $args = ['config' => $this->configuration, 'capabilities' => $capabilities];
 
@@ -130,7 +130,8 @@ class Generator
 
     protected function writeOutResponseModels(array $apiData, \stdClass $capabilities)
     {
-        $responseDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'Response');
+        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
+        $responseDir = sprintf('%s/%s', $srcDir, 'Response');
 
         $template = $this->twig->load('response.php.twig');
         foreach ($apiData as $api)
