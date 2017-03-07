@@ -41,7 +41,7 @@ class CloudStackRequest implements RequestInterface
     private $configuration;
 
     /** @var array */
-    private $_normalizedHeaders = ['accept' => 'Accept'];
+    private $_normalizedHeaders = ['accept' => 'Accept', 'content-type' => 'Content-Type'];
 
     // PSR-7 properties below
 
