@@ -14,14 +14,14 @@ class CloudStackRequest implements RequestInterface
     private $configuration;
 
     /** @var array */
-    private $_normalizedHeaders = ['accept' => 'Accept'];
+    private $_normalizedHeaders = ['accept' => 'Accept', 'content-type' => 'Content-Type'];
 
     // PSR-7 properties below
 
     /** @var string */
     private $protocolVersion = '1.1';
     /** @var array */
-    private $headers = [];
+    private $headers = ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
     /** @var \Psr\Http\Message\StreamInterface */
     private $body = null;
     /** @var string */
@@ -40,6 +40,7 @@ class CloudStackRequest implements RequestInterface
     public function __construct(CloudStackConfiguration $configuration, CloudStackRequestBody $body = null)
     {
         $this->configuration = $configuration;
+
         if (null !== $body)
             $this->body = $body;
     }
