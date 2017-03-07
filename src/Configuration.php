@@ -27,15 +27,9 @@ class Configuration implements LoggerAwareInterface
     /** @var string */
     protected $pathPrefix = 'client/api';
     /** @var string */
-    protected $language = 'php';
-    /** @var string */
-    protected $classname = 'CloudStackClient';
-    /** @var string */
     protected $namespace = '';
     /** @var string */
     protected $outputDir = __DIR__.'/../output';
-    /** @var bool */
-    protected $echoSource = true;
 
     /** @var \DateTime */
     protected $now;
@@ -212,42 +206,6 @@ class Configuration implements LoggerAwareInterface
     /**
      * @return string
      */
-    public function getLanguage()
-    {
-        return $this->language;
-    }
-
-    /**
-     * @param string $language
-     * @return Configuration
-     */
-    public function setLanguage($language)
-    {
-        $this->language = $language;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getClassname()
-    {
-        return $this->classname;
-    }
-
-    /**
-     * @param string $classname
-     * @return Configuration
-     */
-    public function setClassname($classname)
-    {
-        $this->classname = $classname;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
     public function getNamespace()
     {
         return $this->namespace;
@@ -282,24 +240,6 @@ class Configuration implements LoggerAwareInterface
         if (!is_dir($outputDir) || !is_writable($outputDir))
             throw new \RuntimeException(sprintf('Unable to locate dir "%s" or it is not writable', $outputDir));
 
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isEchoSource()
-    {
-        return $this->echoSource;
-    }
-
-    /**
-     * @param bool $echoSource
-     * @return Configuration
-     */
-    public function setEchoSource($echoSource)
-    {
-        $this->echoSource = $echoSource;
         return $this;
     }
 
