@@ -1,6 +1,5 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
-use Http\Client\HttpClient;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
