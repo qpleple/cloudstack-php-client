@@ -39,9 +39,11 @@ abstract class AbstractResponse
      */
     public function __construct(array $data = [])
     {
-        foreach($data as $k => $v)
+        foreach($data as $key => $value)
         {
-            $this->$k = $v;
+            if (property_exists($this, $key)) {
+                $this->{$key} = $value;
+            }
         }
     }
 }

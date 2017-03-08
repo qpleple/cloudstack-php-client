@@ -62,5 +62,30 @@ class {{ responseClassName }} extends AbstractResponse {
     public ${{ prop.name }};
 {% endfor %}
 
+{% set nestedObjProps = [] %}
+{% for prop in response %}
+    {% if prop.type == 'array' and prop.class != 'string' %}
+        {% set nestedObjProps = nestedObjProps|merge([prop.name]) %}
+    {% endif  %}
+{% endfor %}
+
+    public function __construct(array $data = [])
+    {
+{% if nestedObjProps != [] %}
+        foreach ($data as $key => $value) {
+            if (in_array($key, ['{{ nestedObjProps|join("', '") }}'])) {
+                $this->$key = [];
+                $className = "{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}Response\\$key";
+                foreach ($value as $objData) {
+                    $this->{$key}[] = new $className($objData);
+                }
+            } else {
+                $this->$key = $value;
+            }
+        }
+{% else %}
+        parent::__construct($data);
+{% endif %}
+    }
 }
 {% endautoescape %}
