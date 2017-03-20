@@ -73,9 +73,9 @@ class {{ responseClassName }} extends AbstractResponse {
     {
 {% if nestedObjProps != [] %}
         foreach ($data as $key => $value) {
-            if (in_array($key, ['{{ nestedObjProps|join("', '") }}'])) {
+            if (in_array($key, ['{{ nestedObjProps|join("','") }}'])) {
                 $this->$key = [];
-                $className = "{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}Response\\$key";
+                $className = "{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}Response\\" . ucfirst($key);
                 foreach ($value as $objData) {
                     $this->{$key}[] = new $className($objData);
                 }
