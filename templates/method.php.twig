@@ -34,7 +34,7 @@
 {% endif %}{% if method.required > 0 %}
      * @throws \RuntimeException
 {% endif %}
-     * @return {% if config.namespace != '' %}{{ config.namespace }}\{% endif %}Response\{{ method.responseClassName }}{% if method.list %}[]{% endif %}
+     * @return {% if config.namespace != '' %}\{{ config.namespace }}\{% endif %}Response\{{ method.responseClassName }}{% if method.list %}[]{% endif %}
 
      */
     public function {{ method.name }}({# only define required paramaters in function #}
