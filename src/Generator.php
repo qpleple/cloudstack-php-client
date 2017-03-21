@@ -79,6 +79,11 @@ class Generator
         $args = ['config' => $this->configuration, 'capabilities' => $capabilities];
 
         file_put_contents(
+            $this->configuration->getOutputDir().'/LICENSE',
+            file_get_contents(__DIR__.'/../LICENSE')
+        );
+
+        file_put_contents(
             $this->configuration->getOutputDir().'/composer.json',
             $this->twig->load('composer.json.twig')->render($args)
         );
