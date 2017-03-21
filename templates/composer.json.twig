@@ -47,7 +47,7 @@
     },
     "autoload": {
         "psr-4": {
-            "{{ config.namespace|replace({'\\': '\\\\'}) }}": "src/"
+            "{% if config.namespace != '' %}{{ config.namespace|replace({'\\': '\\\\'}) }}\\{% endif %}": "src/"
         },
         "files": [
             "files/constants.php"
