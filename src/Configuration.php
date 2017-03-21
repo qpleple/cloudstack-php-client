@@ -217,7 +217,7 @@ class Configuration implements LoggerAwareInterface
      */
     public function setNamespace($namespace)
     {
-        $this->namespace = $namespace;
+        $this->namespace = preg_replace('/[\\\]{2,}/', '\\', trim($namespace, " \t\r\n\0\x0B\\"));
         return $this;
     }
 
