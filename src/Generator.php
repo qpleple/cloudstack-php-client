@@ -220,12 +220,14 @@ class Generator
                         break;
                 }
                 // build parameter data
-                $data['params'][] = [
+                $data['params'][trim($param->name)] = [
                     'name' => trim($param->name),
                     'description' => trim($param->description),
                     'required' => (bool) $param->required,
                 ];
             }
+
+            ksort($data['params'], SORT_NATURAL);
 
             $methods[$api->name] = $data;
         }
@@ -252,7 +254,7 @@ class Generator
             $params[$name] = true;
             
             if (in_array($type, ["set", "list", "map", "responseobject", "uservmresponse"])) {
-                $type = $val['type'] = "array";
+                $val['type'] = "array";
                 if (!property_exists($response, 'response')) {
                     $val['class'] = 'string';
                 } else {
@@ -262,12 +264,15 @@ class Generator
                     $val['class'] = $name;
                 }
             } elseif (in_array($type, ["imageformat", "storagepoolstatus", "hypervisortype", "status", "type", "scopetype", "state", "url", "uuid"])) {
-                $val['type'] = $type = "string";
+                $val['type'] = "string";
             } elseif (in_array($type, ["integer", "long", "short", "int"])) {
-                $type = $val['type'] = 'int';
+                $val['type'] = 'int';
             }
-            $responseMeta[] = $val;
+            $responseMeta[$val['name']] = $val;
         }
+
+        ksort($responseMeta, SORT_NATURAL);
+
         return $responseMeta;
     }
 

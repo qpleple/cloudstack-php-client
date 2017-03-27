@@ -71,9 +71,10 @@ class {{ responseClassName }} extends AbstractResponse {
     {% endif  %}
 {% endfor %}
 
+{% if nestedObjProps != [] %}
+
     public function __construct(array $data = [])
     {
-{% if nestedObjProps != [] %}
         foreach ($data as $key => $value) {
             if (in_array($key, ['{{ nestedObjProps|join("','") }}'])) {
                 $this->$key = [];
@@ -85,9 +86,9 @@ class {{ responseClassName }} extends AbstractResponse {
                 $this->$key = $value;
             }
         }
-{% else %}
-        parent::__construct($data);
-{% endif %}
     }
+
+{% endif %}
+
 }
 {% endautoescape %}
