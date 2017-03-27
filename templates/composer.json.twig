@@ -45,6 +45,9 @@
 
         "php-http/client-implementation": "@stable"
     },
+    "require-dev": {
+        "php-http/guzzle6-adapter": "1.1.*"
+    },
     "autoload": {
         "psr-4": {
             "{% if config.namespace != '' %}{{ config.namespace|replace({'\\': '\\\\'}) }}\\{% endif %}": "src/"
