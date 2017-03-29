@@ -9,107 +9,93 @@
 
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
-#}
+#}{% spaceless %}
+{% set params = api.parameters %}
+{% set requiredParams = params.required %}
+{% set optionalParams = params.optional %}
+{% set requiredParamLength = requiredParams|length %}
+{% set optionalParamLength = optionalParams|length %}
+{% endspaceless %}
 {% autoescape false %}
     /**
-     * {% filter wordwrap(80, "\n     * ", true) %}{{ method.description | raw }}{{ "\n" }}{% endfilter %}
+     * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description | raw }}{{ "\n" }}{% endfilter %}
      *
 {# document all required paramaters #}
-{% for param in method.params %}
-{% if param.required == true %}
-     * @param string ${{ param.name }} {% filter wordwrap(80, "\n     * ", true) %}{{ param.description | raw }}{{ "\n" }}{% endfilter %}
-{% endif %}
+{% for param in requiredParams %}
+     * @param string ${{ param.name }} {{ param.description|raw }}
 {% endfor %}
 {# end required paramaters #}
-{% if method.optional > 0 %}
+{% if optionalParamLength > 0 %}
      * @param array  $optArgs {
 {# document all optional paramaters #}
-{% for param in method.params %}
-{% if param.required != true %}
-     *     @type string ${{ param.name }} {% filter wordwrap(80, "\n     *     ", true) %}{{ param.description | raw }}{{ "\n" }}{% endfilter %}
-{% endif %}
+{% for param in optionalParams %}
+     *     @type string ${{ param.name }} {% filter wordwrap(80, "\n     *     ", true) %}{{ param.description|raw }}{{ "\n" }}{% endfilter %}
 {% endfor %}
 {# end optional arguments #}
      * }
-{% endif %}{% if method.required > 0 %}
-     * @throws \RuntimeException
 {% endif %}
-     * @return {% if config.namespace != '' %}\{{ config.namespace }}\{% endif %}Response\{{ method.responseClassName }}{% if method.list %}[]{% endif %}
+     * @return {% if config.namespace != '' %}\{{ config.namespace }}\{% endif %}Response\{% if api.isAsync %}AsyncJobStartResponse{% else %}{{ api.response.className }}{% if api.list %}[]{% endif %}{% endif %}
 
      */
-    public function {{ method.name }}({# only define required paramaters in function #}
-{% set count = 1 %}
-{% for param in method.params %}
-{% if param.required == true %}${{ param.name }}{% if count < method.required %}{{ ", " }}{% endif %}
-{% set count = count + 1 %}
-{% endif %}
-{% endfor %}
+    public function {{ api.name }}({# only define required paramaters in function #}
+{% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}${{ param.name }}{% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
-{% if method.optional > 0 %}{% if method.required > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
+{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
 {# generate required paramater checks #}
-{% for param in method.params %}
-{% if param.required == true %}
-        if (empty(${{ param.name }})) {
-            throw new \RuntimeException(sprintf(MISSING_ARGUMENT_MSG, '{{ param.name }}'), MISSING_ARGUMENT);
-        }
-{% endif %}
-{% endfor %}
 {# end paramater checks #}
         $req = new CloudStackRequest(
             $this->configuration,
             new CloudStackRequestBody(
                 $this->configuration,
-                '{{ method.name }}'{% if method.optional == 0 and method.required == 0 %}
+                '{{ api.name }}'{% if requiredParamLength == 0 and optionalParamLength == 0 %}
             )
         );{% else %},
-{% if method.optional > 0 and method.required > 0 %}
+{% if requiredParamLength > 0 and optionalParamLength > 0 %}
     {# generate return array merge of required and optional paramaters #}
-            [{% elseif method.required > 0 %}
+            [{% elseif requiredParamLength > 0 %}
     {# no merge ... just a simple array #}
-            [{% elseif method.optional > 0 %}
+            [{% elseif optionalParamLength > 0 %}
     {# no merge ... no array ... only optional arguments here #}
             $optArgs{% endif %}
 {% endif %}
 
 {% set count = 1 %}
-{% for param in method.params %}
-{% if param.required == true %}
+{% for param in requiredParams %}
                     '{{ param.name }}' => ${{ param.name }}{# determine line ending based on count #}
-{% if count < method.required %}{{ ",\n" }}{% else %}{{ "\n" }}{% endif %}
-{% set count = count + 1 %}
-{% endif %}
+{% if loop.index0 < requiredParamLength %}{{ ",\n" }}{% else %}{{ "\n" }}{% endif %}
 {% endfor %}
-{% if (method.optional > 0) and (method.required > 0) %}
+{% if requiredParamLength > 0 and optionalParamLength > 0 %}
 {# generate return array merge of required and optional paramaters #}
                 ] + $optArgs
             )
         );
-{% elseif method.required > 0 %}
+{% elseif requiredParamLength > 0 %}
 {# no merge ... just close array #}
                 ]
             )
         );
-{% elseif method.optional > 0 %}
+{% elseif optionalParamLength > 0 %}
             )
         );
 {% endif %}
 
-{% if method.list %}
-        $items = $this->decodeBody($this->doRequest($req), '{{ method.name }}');
+{% if api.isAsync %}
+        return new Response\AsyncJobStartResponse($this->decodeBody($this->doRequest($req), '{{ api.name }}'), '{{ api.response.FQName|replace({"\\": "\\\\"}) }}');
+{% elseif api.isList %}
+        $items = $this->decodeBody($this->doRequest($req), '{{ api.name }}');
         $models = [];
 
         if ($items) {
             unset($items['count']);
-            $items = reset($items);
-            foreach($items as $item) {
-                $models[] = new Response\{{ method.responseClassName }}($item);
+            foreach(reset($items) as $item) {
+                $models[] = new Response\{{ api.response.className }}($item);
             }
         }
 
         return $models;
 {% else %}
-        return new Response\{{ method.responseClassName }}($this->decodeBody($this->doRequest($req), '{{ method.name }}'));
+        return new Response\{{ api.response.className }}($this->decodeBody($this->doRequest($req), '{{ api.name }}'));
 {% endif %}
     }
 {% endautoescape %}

@@ -1,5 +1,6 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
+use MyENA\CloudStackClientGenerator\Generator\API;
 use MyENA\CloudStackClientGenerator\Generator\CloudStackConfiguration;
 use MyENA\CloudStackClientGenerator\Generator\CloudStackRequest;
 use MyENA\CloudStackClientGenerator\Generator\CloudStackRequestBody;
@@ -21,8 +22,11 @@ class Generator
     /** @var \MyENA\CloudStackClientGenerator\Generator\CloudStackConfiguration */
     protected $cloudstackConfiguration;
 
-    /** @var array */
-    protected $responseTypeHash = [];
+    /** @var API[] */
+    protected $apis = [];
+
+    /** @var \MyENA\CloudStackClientGenerator\Generator\API\ObjectVariable[] */
+    protected $sharedObjectMap = [];
 
     /**
      * Generator constructor.
@@ -44,8 +48,10 @@ class Generator
         );
 
         $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
-        $this->twig = new \Twig_Environment($twigLoader);
+        $this->twig = new \Twig_Environment($twigLoader, ['debug' => true]);
         $this->twig->addExtension(new \Twig_Extensions_Extension_Text());
+        $this->twig->addExtension(new \Twig_Extension_Escaper());
+        $this->twig->addExtension(new \Twig_Extension_Debug());
     }
 
     public function generate()
@@ -62,12 +68,16 @@ class Generator
         if (!is_dir($responseDir) && false === (bool)mkdir($responseDir))
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $responseDir));
 
-        $apiData = $this->fetchApiData();
+        $typesDir = sprintf('%s/%s', $responseDir, 'Types');
+        if (!is_dir($typesDir) && false === (bool)mkdir($typesDir))
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $typesDir));
+
+        $this->compileAPIs();
         $capabilities = $this->fetchCapabilities();
 
         $this->writeOutStaticTemplates($capabilities);
-        $this->writeOutClient($apiData, $capabilities);
-        $this->writeOutResponseModels($apiData, $capabilities);
+        $this->writeOutClient($capabilities);
+        $this->writeOutResponseModels($capabilities);
     }
 
     protected function writeOutStaticTemplates(\stdClass $capabilities)
@@ -75,6 +85,7 @@ class Generator
         $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
         $filesDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'files');
         $responseDir = sprintf('%s/%s', $srcDir, 'Response');
+        $typesDir = sprintf('%s/%s', $responseDir, 'Types');
 
         $args = ['config' => $this->configuration, 'capabilities' => $capabilities];
 
@@ -117,64 +128,207 @@ class Generator
             $responseDir.'/AbstractResponse.php',
             $this->twig->load('abstractResponse.php.twig')->render($args)
         );
+
+        file_put_contents(
+            $responseDir.'/AsyncJobStartResponse.php',
+            $this->twig->load('asyncJobStartResponse.php.twig')->render($args)
+        );
+
+        file_put_contents(
+            $typesDir.'/DateType.php',
+            $this->twig->load('dateType.php.twig')->render($args)
+        );
     }
 
-    protected function writeOutClient(array $apiData, \stdClass $capabilities)
+    protected function writeOutClient(\stdClass $capabilities)
     {
         $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
 
         file_put_contents(
             $srcDir.'/CloudStackClient.php',
-            $this->twig->load('class.php.twig')->render([
+            $this->twig->load('client.php.twig')->render([
                 'config' => $this->configuration,
                 'capabilities' => $capabilities,
-                'methods' => $apiData,
+                'apis' => $this->apis,
             ])
         );
     }
 
-    protected function writeOutResponseModels(array $apiData, \stdClass $capabilities)
+    protected function writeOutResponseModels(\stdClass $capabilities)
     {
         $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
         $responseDir = sprintf('%s/%s', $srcDir, 'Response');
 
-        $template = $this->twig->load('response.php.twig');
-        foreach ($apiData as $api)
+        $template = $this->twig->load('responseObject.php.twig');
+
+        foreach($this->apis as $name => $api)
         {
-            $className = ucfirst($api['responseClassName']);
+            $response = $api->getResponse();
+            $className = $response->getClassName();
 
             file_put_contents(
                 $responseDir.'/'.$className.'.php',
                 $template->render([
-                    'responseClassName' => $className,
-                    'response' => $api['memberVariables'],
+                    'obj' => $response,
                     'config' => $this->configuration,
                     'capabilities' => $capabilities,
                 ])
             );
         }
 
-        foreach ($this->responseTypeHash as $className => $memberVariables)
+        foreach($this->sharedObjectMap as $name => $class)
         {
-            if (substr($className, -8) != "Response")
-            {
-                file_put_contents(
-                    $responseDir.'/'.ucfirst($className).'.php',
-                    $template->render([
-                        'responseClassName' => ucfirst($className),
-                        'response' => $memberVariables,
-                        'config' => $this->configuration,
-                        'capabilities' => $capabilities,
-                    ])
-                );
-            }
+            $className = $class->getClassName();
+            file_put_contents(
+                $responseDir.'/'.$className.'.php',
+                $template->render([
+                    'obj' => $class,
+                    'config' => $this->configuration,
+                    'capabilities' => $capabilities,
+                ])
+            );
         }
     }
 
     /**
-     * @return array
+     * @param \stdClass $def
+     * @return \MyENA\CloudStackClientGenerator\Generator\API\Variable
      */
-    protected function fetchApiData()
+    protected function buildVariable(\stdClass $def)
+    {
+        if (!isset($def->name))
+            return null;
+
+        $var = new API\Variable();
+
+        $var->setName(trim($def->name));
+        $var->setType($def->type);
+
+        if (isset($def->description))
+            $var->setDescription(trim($def->description));
+        if (isset($def->required))
+            $var->setRequired((bool)$def->required);
+        if (isset($def->length))
+            $var->setLength((int)$def->length);
+        if (isset($def->since))
+            $var->setSince($def->since);
+        if (isset($def->related))
+            $var->setRelatedString($def->related);
+
+        if ('' === $var->getDescription())
+        {
+            switch ($var->getName()) {
+                case 'pagesize':
+                    $var->setDescription('the number of entries per page');
+                    break;
+                case 'page':
+                    $var->setDescription('the page number of the result set');
+                    break;
+            }
+        }
+
+        return $var;
+    }
+
+    /**
+     * @param \MyENA\CloudStackClientGenerator\Generator\API\ObjectVariable $object
+     * @param array $defs
+     */
+    protected function parseObjectProperties(API\ObjectVariable $object, array $defs)
+    {
+        $properties = $object->getProperties();
+
+        foreach($defs as $def)
+        {
+            $name = trim($def->name);
+
+            if (null === $properties->get($name))
+            {
+                $var = $this->buildVariable($def);
+                if (null === $var)
+                    continue;
+
+                $properties->add($var);
+            }
+        }
+
+        $properties->nameSort();
+    }
+
+    /**
+     * @param API $api
+     * @param array $params
+     */
+    protected function parseParameters(API $api, array $params)
+    {
+        foreach($params as $param)
+        {
+            // blank objects, why do you exist?
+            if (!isset($param->name))
+                continue;
+
+            if (null !== ($var = $this->buildVariable($param)))
+                $api->getParameters()->add($var);
+        }
+    }
+
+    /**
+     * @param API $api
+     * @param array $response
+     */
+    protected function parseResponse(API $api, array $response)
+    {
+        $obj = new API\ObjectVariable($this->configuration);
+        $obj->setName($api->getName());
+        $obj->setDescription($api->getDescription());
+        $obj->setSince($api->getSince());
+        $obj->setRelated($api->getRelated());
+
+        foreach($response as $prop)
+        {
+            if (isset($prop->response))
+                $var = $this->buildSharedObject($prop);
+            else
+                $var = $this->buildVariable($prop);
+
+            if (null === $var)
+                continue;
+
+            $obj->getProperties()->add($var);
+        }
+
+        $api->setResponse($obj);
+    }
+
+    /**
+     * @param \stdClass $def
+     * @return \MyENA\CloudStackClientGenerator\Generator\API\ObjectVariable
+     */
+    protected function buildSharedObject(\stdClass $def)
+    {
+        $name = trim($def->name);
+
+        if (isset($this->sharedObjectMap[$name]))
+        {
+            $this->parseObjectProperties($this->sharedObjectMap[$name], $def->response);
+
+            return $this->sharedObjectMap[$name];
+        }
+
+        $obj = new API\ObjectVariable($this->configuration);
+        $obj->setName($name);
+        $obj->setType($def->type);
+        $obj->setDescription($def->type);
+        $obj->setShared(true);
+
+        $this->parseObjectProperties($obj, $def->response);
+
+        $this->sharedObjectMap[$obj->getName()] = $obj;
+
+        return $obj;
+    }
+
+    protected function compileAPIs()
     {
         $r = new CloudStackRequest(
             $this->cloudstackConfiguration,
@@ -183,97 +337,25 @@ class Generator
 
         $data = $this->doRequest($r)->listapisresponse;
 
-        $methods = [];
-        foreach($data->api as $api)
+        foreach($data->api as $apiDef)
         {
-            $data = array(
-                'name' => trim($api->name),
-                'description' => trim($api->description),
-                'required' => 0,
-                'optional' => 0,
-                'params' => [],
-                'response' => $api->response,
-                'list' => false !== strpos($api->name, 'list'),
-                'responseClassName' => ucfirst(trim($api->name) . 'Response'),
-            );
+            $api = new API();
 
-            if (!isset($this->responseTypeHash[$data['responseClassName']])) {
-                $this->responseTypeHash[$data['responseClassName']] = $this->getResponseDataHelper($api->response);
-            }
-            $data['memberVariables'] = $this->responseTypeHash[$data['responseClassName']];
+            $api->setName(trim($apiDef->name));
+            $api->setDescription(trim($apiDef->description));
+            $api->setAsync((bool)$apiDef->isasync);
+            if (isset($apiDef->since))
+                $api->setSince($apiDef->since);
+            if (isset($apiDef->related))
+                $api->setRelatedString($apiDef->related);
 
-            // loop through parameters
-            foreach($api->params as $param) {
-                // increase counts
-                if ($param->required == true) {
-                    $data['required']++;
-                } else {
-                    $data['optional']++;
-                }
-                // special case for missing descriptions
-                switch ($param->name) {
-                    case 'pagesize':
-                        $param->description = 'the number of entries per page';
-                        break;
-                    case 'page':
-                        $param->description = 'the page number of the result set';
-                        break;
-                }
-                // build parameter data
-                $data['params'][trim($param->name)] = [
-                    'name' => trim($param->name),
-                    'description' => trim($param->description),
-                    'required' => (bool) $param->required,
-                ];
-            }
+            $this->parseParameters($api, $apiDef->params);
+            $this->parseResponse($api, $apiDef->response);
 
-            ksort($data['params'], SORT_NATURAL);
+            $api->getParameters()->nameSort();
 
-            $methods[$api->name] = $data;
+            $this->apis[$api->getName()] = $api;
         }
-
-        return $methods;
-    }
-
-    protected function getResponseDataHelper($responses) {
-        $responseMeta = array();
-        $params = array();
-        foreach ($responses as $response) {
-            $val = array();
-            if (!property_exists($response, 'name')) {
-                // blank objects, why do you exist?
-                continue;
-            }
-            $val['name'] = $name = trim($response->name);
-            $val['type'] = $type = trim($response->type);
-            $val['description'] = $description = trim($response->description);
-            if (isset($params[$name])) {
-                // there are dupes, this squashes those
-                continue;
-            }
-            $params[$name] = true;
-            
-            if (in_array($type, ["set", "list", "map", "responseobject", "uservmresponse"])) {
-                $val['type'] = "array";
-                if (!property_exists($response, 'response')) {
-                    $val['class'] = 'string';
-                } else {
-                    if (!isset($this->responseTypeHash[$name])) {
-                        $this->responseTypeHash[$name] = $this->getResponseDataHelper($response->response);
-                    }
-                    $val['class'] = $name;
-                }
-            } elseif (in_array($type, ["imageformat", "storagepoolstatus", "hypervisortype", "status", "type", "scopetype", "state", "url", "uuid"])) {
-                $val['type'] = "string";
-            } elseif (in_array($type, ["integer", "long", "short", "int"])) {
-                $val['type'] = 'int';
-            }
-            $responseMeta[$val['name']] = $val;
-        }
-
-        ksort($responseMeta, SORT_NATURAL);
-
-        return $responseMeta;
     }
 
     /**

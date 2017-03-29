@@ -30,10 +30,16 @@
  */
 
 /**
- * AbstractResponse class
+ * Class {{ obj.className }}
+ * @SWG\Definition(definition="{{ obj.className }}")
  */
-abstract class AbstractResponse
-{
-    // Nothing here yet, but just in case...
+class {{ obj.className }} extends AbstractResponse {
+
+{% for prop in obj.properties %}
+{{ prop.propertyDocBloc }}
+    public ${{ prop.name }};
+
+{% endfor %}
+{{ obj.buildConstructor }}
 }
 {% endautoescape %}

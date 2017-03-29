@@ -50,10 +50,72 @@ class CloudStackClient {
         $this->configuration = $configuration;
     }
 
-{% for method in methods %}
-{% include "method.php.twig" with {'method' : method, 'config' : config} %}
+{% for api in apis %}
+{% include "method.php.twig" with {'api' : api, 'config' : config} %}
 
 {% endfor %}
+
+    /**
+     * Will wait until either $tries threshold is met or async job completes, successful or otherwise.
+     *
+     * @param Response\AsyncJobStartResponse $startResponse
+     * @param int $sleep
+     * @param int $tries
+     * @return null|object
+     * @throws \InvalidArgumentException
+     */
+    public function waitForAsync(Response\AsyncJobStartResponse $startResponse, $sleep = 2, $tries = 120)
+    {
+        // Some basic validation
+        if (!is_int($sleep) || 0 >= $sleep)
+        {
+            throw new \InvalidArgumentException(sprintf(
+                '%s::waitForAsyncResponse - $sleep must be positive integer, %s seen.',
+                get_class($this),
+                is_int($sleep) ? $sleep : gettype($sleep)
+            ));
+        }
+
+        if (!is_int($tries) || (-1 > $tries || 0 === $tries)) {
+            throw new \InvalidArgumentException(sprintf(
+                '%s:waitForAsyncResponse - $tries must be positive integer or -1 for infinite, %s seen.',
+                get_class($this),
+                is_int($tries) ? $tries : gettype($tries)
+            ));
+        }
+
+        $wait = function() use ($sleep) { sleep($sleep); };
+
+        $attempts = 0;
+        while(true)
+        {
+            $result = $this->queryAsyncJobResult($startResponse->jobid);
+
+            if (2 === $result->jobstatus || 2 === $result->jobprocstatus)
+                throw new \RuntimeException($result->jobresult['errortext'], $result->jobresult['errorcode']);
+
+            if (0 === $result->jobstatus)
+            {
+                if (-1 !== $tries && $attempts > $tries)
+                    return null;
+
+                $wait();
+            }
+            else
+            {
+                $resultData = $result->jobresult;
+                if (0 < count($resultData))
+                {
+                    $class = $startResponse->getResponseClassName();
+                    return new $class(reset($resultData));
+                }
+
+                return null;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * @param \Psr\Http\Message\RequestInterface $req
