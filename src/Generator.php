@@ -168,6 +168,8 @@ class Generator
             $response = $api->getResponse();
             $className = $response->getClassName();
 
+            $api->getResponse()->getProperties()->nameSort();
+
             file_put_contents(
                 $responseDir.'/'.$className.'.php',
                 $template->render([
@@ -353,8 +355,6 @@ class Generator
 
             $this->parseParameters($api, $apiDef->params);
             $this->parseResponse($api, $apiDef->response);
-
-            $api->getParameters()->nameSort();
 
             $this->apis[$api->getName()] = $api;
         }
