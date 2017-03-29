@@ -18,7 +18,7 @@
 {% endspaceless %}
 {% autoescape false %}
     /**
-     * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description|raw|capitalize }}{{ "\n" }}{% endfilter %}
+     * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description|raw|ucfirst }}{{ "\n" }}{% endfilter %}
 {% if api.since != '0.0' %}
      *
      * @since {{ api.since }}
@@ -26,14 +26,14 @@
      *
 {# document all required paramaters #}
 {% for param in requiredParams %}
-     * @param string ${{ param.name }} {{ param.description|raw }}
+     * @param string ${{ param.name }} {{ param.description|raw|ucfirst }}
 {% endfor %}
 {# end required paramaters #}
 {% if optionalParamLength > 0 %}
      * @param array  $optArgs {
 {# document all optional paramaters #}
 {% for param in optionalParams %}
-     *     @type string ${{ param.name }} {% filter wordwrap(80, "\n     *     ", true) %}{{ param.description|raw }}{{ "\n" }}{% endfilter %}
+     *     @type string ${{ param.name }} {{ param.description|raw|ucfirst }}
 {% endfor %}
 {# end optional arguments #}
      * }

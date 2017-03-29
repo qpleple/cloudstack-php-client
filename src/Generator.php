@@ -50,8 +50,14 @@ class Generator
         $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
         $this->twig = new \Twig_Environment($twigLoader, ['debug' => true]);
         $this->twig->addExtension(new \Twig_Extensions_Extension_Text());
-        $this->twig->addExtension(new \Twig_Extension_Escaper());
-        $this->twig->addExtension(new \Twig_Extension_Debug());
+        $this->twig->addFilter(
+            'ucfirst',
+                new \Twig_SimpleFilter(
+                    'ucfirst',
+                        function($in) { return ucfirst($in); },
+                    ['is_safe' => ['html']]
+                )
+        );
     }
 
     public function generate()
@@ -298,6 +304,8 @@ class Generator
 
             $obj->getProperties()->add($var);
         }
+
+        $obj->getProperties()->nameSort();
 
         $api->setResponse($obj);
     }
