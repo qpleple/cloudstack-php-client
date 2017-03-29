@@ -73,6 +73,8 @@ class Generator
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $typesDir));
 
         $this->compileAPIs();
+        ksort($this->apis, SORT_NATURAL);
+
         $capabilities = $this->fetchCapabilities();
 
         $this->writeOutStaticTemplates($capabilities);
@@ -166,6 +168,8 @@ class Generator
             $response = $api->getResponse();
             $className = $response->getClassName();
 
+            $api->getResponse()->getProperties()->nameSort();
+
             file_put_contents(
                 $responseDir.'/'.$className.'.php',
                 $template->render([
@@ -178,6 +182,8 @@ class Generator
 
         foreach($this->sharedObjectMap as $name => $class)
         {
+            $class->getProperties()->nameSort();
+
             $className = $class->getClassName();
             file_put_contents(
                 $responseDir.'/'.$className.'.php',
@@ -251,8 +257,6 @@ class Generator
                 $properties->add($var);
             }
         }
-
-        $properties->nameSort();
     }
 
     /**
@@ -351,8 +355,6 @@ class Generator
 
             $this->parseParameters($api, $apiDef->params);
             $this->parseResponse($api, $apiDef->response);
-
-            $api->getParameters()->nameSort();
 
             $this->apis[$api->getName()] = $api;
         }
