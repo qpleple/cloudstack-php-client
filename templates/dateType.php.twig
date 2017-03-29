@@ -68,10 +68,13 @@ class DateType extends \DateTime {
             // try to create DateTime object
             $d = static::createFromFormat($format, $in);
             if ($d) {
-                // Store input
-                $d->rawValue = $in;
+                $date = new DateType();
+                $date->setTimestamp($d->getTimeStamp());
+                $date->setTimezone($d->getTimezone());
+                // Store the raw date input
+                $date->rawValue = $in;
 
-                return $d;
+                return $date;
             }
         }
 
