@@ -18,7 +18,11 @@
 {% endspaceless %}
 {% autoescape false %}
     /**
-     * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description | raw }}{{ "\n" }}{% endfilter %}
+     * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description|raw|capitalize }}{{ "\n" }}{% endfilter %}
+{% if api.since != '0.0' %}
+     *
+     * @since {{ api.since }}
+{% endif %}
      *
 {# document all required paramaters #}
 {% for param in requiredParams %}
