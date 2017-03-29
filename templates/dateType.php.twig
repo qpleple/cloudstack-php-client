@@ -33,7 +33,7 @@
  * Class DateType
  * @package {% if config.namespace != '' %}\{{ config.namespace }}\{% endif %}Types
  */
-class DateType extends \DateTime {
+class DateType extends \DateTime implements \JsonSerializable {
 
     const FORMAT_OLD = 'Y-m-d';
     const FORMAT_NEW = 'Y-m-d\TH:m:s';
@@ -88,6 +88,15 @@ class DateType extends \DateTime {
      * @return string
      */
     public function __toString() {
+        return $this->rawValue;
+    }
+
+    /**
+     * Returns whatever input was given
+     *
+     * @return string
+     */
+    public function jsonSerialize() {
         return $this->rawValue;
     }
 }
