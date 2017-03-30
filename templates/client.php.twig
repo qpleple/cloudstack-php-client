@@ -56,8 +56,8 @@ class CloudStackClient {
 {% endfor %}
 
     /**
-     * @param $vmId
-     * @return ConsoleProxyResponse
+     * @param string $vmId
+     * @return Response\AccessVmConsoleProxyResponse
      */
     public function accessVmConsoleProxy($vmId) {
         $command = new CloudStackConsoleCommand($this->configuration, 'access', ['vm' => $vmId]);
@@ -66,7 +66,7 @@ class CloudStackClient {
 
         $body = $response->getBody();
 
-        $model = new ConsoleProxyAccessResponse();
+        $model = new Response\AccessVmConsoleProxyResponse();
         $data = '';
         while (!$body->eof() && $b = $body->read(8192)) {
             $data .= $b;

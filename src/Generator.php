@@ -124,7 +124,7 @@ class Generator
         );
 
         file_put_contents(
-            $responseDir.'/ConsoleProxyAccessResponse.php',
+            $responseDir.'/AccessVmConsoleProxyResponse.php',
             $this->twig->load('responseAccessVmConsoleProxy.twig')->render($args)
         );
 
