@@ -33,7 +33,7 @@
  * Class {{ obj.className }}
  * @SWG\Definition(definition="{{ obj.className }}")
  */
-class {{ obj.className }} extends AbstractResponse {
+class {{ obj.className }} {
 
 {% for prop in obj.properties %}
 {{ prop.propertyDocBloc }}

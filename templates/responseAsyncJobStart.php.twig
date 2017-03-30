@@ -30,10 +30,49 @@
  */
 
 /**
- * AbstractResponse class
+ * Class AsyncJobStartResponse
+ * @SWG\Definition(definition="AsyncJobStartResponse")
  */
-abstract class AbstractResponse
-{
-    // Nothing here yet, but just in case...
+class AsyncJobStartResponse {
+
+    /**
+     * @SWG\Property(type="string")
+     * @var string
+     */
+    public $id;
+
+    /**
+     * @SWG\Property(type="string", description="Async Job ID")
+     * @var string
+     */
+    public $jobid;
+
+    /**
+     * Holds the FQ ClassName of the object to construct if the async job is successful.
+     * @var string
+     */
+    private $responseClassName;
+
+    /**
+     * AsyncJobStartResponse Constructor
+     * @param array $data
+     */
+    public function __construct(array $data, $responseClassName) {
+        if (isset($data['id']) && is_string($data['id'])) {
+            $this->id = trim($data['id']);
+        }
+        if (isset($data['jobid']) && is_string($data['jobid'])) {
+            $this->jobid = trim($data['jobid']);
+        }
+
+        $this->responseClassName = $responseClassName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getResponseClassName() {
+        return $this->responseClassName;
+    }
 }
 {% endautoescape %}

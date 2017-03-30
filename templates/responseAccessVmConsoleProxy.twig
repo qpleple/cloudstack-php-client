@@ -30,49 +30,29 @@
  */
 
 /**
- * Class AsyncJobStartResponse
- * @SWG\Definition(definition="AsyncJobStartResponse")
+ * Class AccessVmConsoleProxyResponse
  */
-class AsyncJobStartResponse extends AbstractResponse {
+class AccessVmConsoleProxyResponse {
 
     /**
-     * @SWG\Property(type="string")
      * @var string
      */
-    public $id;
+    public $iframe;
 
     /**
-     * @SWG\Property(type="string", description="Async Job ID")
-     * @var string
-     */
-    public $jobid;
-
-    /**
-     * Holds the FQ ClassName of the object to construct if the async job is successful.
-     * @var string
-     */
-    private $responseClassName;
-
-    /**
-     * AsyncJobStartResponse Constructor
-     * @param array $data
-     */
-    public function __construct(array $data, $responseClassName) {
-        if (isset($data['id']) && is_string($data['id'])) {
-            $this->id = trim($data['id']);
-        }
-        if (isset($data['jobid']) && is_string($data['jobid'])) {
-            $this->jobid = trim($data['jobid']);
-        }
-
-        $this->responseClassName = $responseClassName;
-    }
-
-    /**
+     * Attempt to pull just the console proxy address out of the response iframe.
      * @return string
      */
-    public function getResponseClassName() {
-        return $this->responseClassName;
+    public function getIframeSrc() {
+        if (is_string($this->iframe)) {
+            preg_match('{<frame src=([\'"])([^\1]+)\1}', $this->iframe, $matches);
+
+            if (3 === count($matches)) {
+                return $matches[2];
+            }
+        }
+
+        return '';
     }
 }
 {% endautoescape %}

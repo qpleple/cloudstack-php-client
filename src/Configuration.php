@@ -1,5 +1,6 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
+use Http\Client\HttpClient;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -18,14 +19,21 @@ class Configuration implements LoggerAwareInterface
     protected $apiKey = '';
     /** @var string */
     protected $secretKey = '';
+    
     /** @var string  */
     protected $scheme = 'http';
     /** @var string */
     protected $host = '';
     /** @var int */
     protected $port = 0;
+
     /** @var string */
-    protected $pathPrefix = 'client/api';
+    protected $pathPrefix = 'client';
+    /** @var string */
+    protected $apiPath = 'api';
+    /** @var string */
+    protected $consolePath = 'console';
+    
     /** @var string */
     protected $namespace = '';
     /** @var string */
@@ -33,6 +41,9 @@ class Configuration implements LoggerAwareInterface
 
     /** @var \DateTime */
     protected $now;
+    
+    /** @var \Http\Client\HttpClient */
+    public $HttpClient = null;
 
     /**
      * Configuration constructor.
@@ -47,29 +58,14 @@ class Configuration implements LoggerAwareInterface
         else
             $this->logger = $logger;
 
-        foreach($config as $k => $v)
-        {
-            if ('endpoint' === $k)
-            {
-                $url = parse_url($v);
-                if (false === $url || !isset($url['host']))
-                    throw new \InvalidArgumentException('"endpoint" is not a valid URL value.');
+        if (isset($config['endpoint'])) {
+            throw new \InvalidArgumentException('The "endpoint" configuration parameter is deprecated, please use the component url params');
+        }
 
-                $this->setHost($url['host']);
-
-                if (isset($url['scheme']))
-                    $this->setScheme($url['scheme']);
-                if (isset($url['port']))
-                    $this->setPort($url['port']);
-                if (isset($url['path']))
-                    $this->setPathPrefix($url['path']);
-            }
-            else if (false === strpos($k, '_'))
-            {
+        foreach($config as $k => $v) {
+            if (false === strpos($k, '_')) {
                 $this->{'set'.ucfirst($k)}($v);
-            }
-            else
-            {
+            } else {
                 $this->{'set'.implode('', array_map('ucfirst', explode('_', $k)))}($v);
             }
         }
@@ -199,7 +195,39 @@ class Configuration implements LoggerAwareInterface
      */
     public function setPathPrefix($pathPrefix)
     {
-        $this->pathPrefix = $pathPrefix;
+        $this->pathPrefix = trim($pathPrefix, " \t\n\r\0\x0B/");
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApiPath() {
+        return $this->apiPath;
+    }
+
+    /**
+     * @var string $apiPath;
+     * @return Configuration
+     */
+    public function setApiPath($apiPath) {
+        $this->apiPath = trim($apiPath, " \t\r\n\0\x0B/");
+        return $this;
+    }
+
+    /*
+     * @return string
+     */
+    public function getConsolePath() {
+        return $this->consolePath;
+    }
+
+    /**
+     * @param string $consolePath
+     * @return Configuration
+     */
+    public function setConsolePath($consolePath) {
+        $this->consolePath = trim($consolePath, " \t\n\r\0\x0B/");
         return $this;
     }
 
@@ -243,8 +271,48 @@ class Configuration implements LoggerAwareInterface
         return $this;
     }
 
+    /**
+     * @param \Http\Client\HttpClient $HttpClient
+     * @return Configuration
+     */
+    public function setHttpClient(HttpClient $HttpClient)
+    {
+        $this->HttpClient = $HttpClient;
+        return $this;
+    }
+
+    /**
+     * @param string $query
+     * @return string
+     * @throws \Exception
+     */
+    public function buildSignature($query)
+    {
+        if ('' === $query)
+            throw new \Exception(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
+
+        $hash = @hash_hmac('SHA1', strtolower($query), $this->getSecretKey(), true);
+        return urlencode(base64_encode($hash));
+    }
+
     protected function postConstructValidation()
     {
+        static $knownClients = array(
+            '\\Http\\Client\\Curl\\Client',
+            '\\Http\\Adapter\\Guzzle6\\Client',
+            '\\Http\\Adapter\\Guzzle5\\Client',
+            '\\Http\\Adapter\\Buzz\\Client'
+        );
+
+        foreach($knownClients as $clientClass)
+        {
+            if (class_exists($clientClass, true))
+            {
+                $this->HttpClient = new $clientClass;
+                break;
+            }
+        }
+
         if ('' === $this->host)
             throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
 

@@ -1,9 +1,8 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
 use MyENA\CloudStackClientGenerator\Generator\API;
-use MyENA\CloudStackClientGenerator\Generator\CloudStackConfiguration;
+use MyENA\CloudStackClientGenerator\Generator\CloudStackApiCommand;
 use MyENA\CloudStackClientGenerator\Generator\CloudStackRequest;
-use MyENA\CloudStackClientGenerator\Generator\CloudStackRequestBody;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -19,9 +18,6 @@ class Generator
     /** @var \Twig_Environment */
     protected $twig;
 
-    /** @var \MyENA\CloudStackClientGenerator\Generator\CloudStackConfiguration */
-    protected $cloudstackConfiguration;
-
     /** @var API[] */
     protected $apis = [];
 
@@ -36,16 +32,6 @@ class Generator
     public function __construct(Configuration $configuration)
     {
         $this->configuration = $configuration;
-
-        $this->cloudstackConfiguration = new CloudStackConfiguration(
-            [
-                'api_key' => $configuration->getApiKey(),
-                'secret_key' => $configuration->getSecretKey(),
-                'host' => $configuration->getHost(),
-                'port' => $configuration->getPort(),
-            ],
-            $configuration->getLogger()
-        );
 
         $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
         $this->twig = new \Twig_Environment($twigLoader, ['debug' => true]);
@@ -133,18 +119,38 @@ class Generator
         );
 
         file_put_contents(
-            $responseDir.'/AbstractResponse.php',
-            $this->twig->load('abstractResponse.php.twig')->render($args)
+            $responseDir.'/AsyncJobStartResponse.php',
+            $this->twig->load('responseAsyncJobStart.php.twig')->render($args)
         );
 
         file_put_contents(
-            $responseDir.'/AsyncJobStartResponse.php',
-            $this->twig->load('asyncJobStartResponse.php.twig')->render($args)
+            $responseDir.'/ConsoleProxyAccessResponse.php',
+            $this->twig->load('responseAccessVmConsoleProxy.twig')->render($args)
+        );
+
+        file_put_contents(
+            $srcDir.'/AbstractCloudStackCommand.php',
+            $this->twig->load('commandAbstract.php.twig')->render($args)
+        );
+
+        file_put_contents(
+            $srcDir.'/CloudStackApiCommand.php',
+            $this->twig->load('commandApi.php.twig')->render($args)
+        );
+
+        file_put_contents(
+            $srcDir.'/CloudStackConsoleCommand.php',
+            $this->twig->load('commandConsole.php.twig')->render($args)
         );
 
         file_put_contents(
             $typesDir.'/DateType.php',
             $this->twig->load('dateType.php.twig')->render($args)
+        );
+
+        file_put_contents(
+            $srcDir.'/Helpers.php',
+            $this->twig->load('helpers.php.twig')->render($args)
         );
     }
 
@@ -340,10 +346,7 @@ class Generator
 
     protected function compileAPIs()
     {
-        $r = new CloudStackRequest(
-            $this->cloudstackConfiguration,
-            new CloudStackRequestBody($this->cloudstackConfiguration, 'listApis')
-        );
+        $r = new CloudStackRequest(new CloudStackApiCommand($this->configuration, 'listApis'));
 
         $data = $this->doRequest($r)->listapisresponse;
 
@@ -373,10 +376,7 @@ class Generator
      */
     protected function fetchCapabilities()
     {
-        $r = new CloudStackRequest(
-            $this->cloudstackConfiguration,
-            new CloudStackRequestBody($this->cloudstackConfiguration, 'listCapabilities')
-        );
+        $r = new CloudStackRequest(new CloudStackApiCommand($this->configuration, 'listCapabilities'));
 
         $data = $this->doRequest($r);
 
@@ -389,7 +389,7 @@ class Generator
      */
     protected function doRequest(RequestInterface $request)
     {
-        $resp = $this->cloudstackConfiguration->HttpClient->sendRequest($request);
+        $resp = $this->configuration->HttpClient->sendRequest($request);
 
         if (200 !== $resp->getStatusCode())
             throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);

@@ -38,8 +38,8 @@ use Psr\Log\NullLogger;
 /**
  * Class CloudStackConfiguration
  */
-class CloudStackConfiguration implements LoggerAwareInterface
-{
+class CloudStackConfiguration implements LoggerAwareInterface {
+
     use LoggerAwareTrait;
 
     /** @var string */
@@ -52,8 +52,13 @@ class CloudStackConfiguration implements LoggerAwareInterface
     protected $host = '';
     /** @var int */
     protected $port = null;
+
     /** @var string */
-    protected $pathPrefix = 'client/api';
+    protected $pathPrefix = 'client';
+    /** @var string */
+    protected $apiPath = 'api';
+    /** @var string */
+    protected $consolePath = 'console';
 
     /** @var \Http\Client\HttpClient */
     public $HttpClient = null;
@@ -64,36 +69,21 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param array $config
      * @param \Psr\Log\LoggerInterface|null $logger
      */
-    public function __construct(array $config = [], LoggerInterface $logger = null)
-    {
-        if (null === $logger)
+    public function __construct(array $config = [], LoggerInterface $logger = null) {
+        if (null === $logger) {
             $this->logger = new NullLogger();
-        else
+        } else {
             $this->logger = $logger;
+        }
 
-        foreach($config as $k => $v)
-        {
-            if ('endpoint' === $k)
-            {
-                $url = parse_url($v);
-                if (false === $url || !isset($url['host']))
-                    throw new \InvalidArgumentException('"endpoint" is not a valid URL value.');
+        if (isset($config['endpoint'])) {
+            throw new \InvalidArgumentException('The "endpoint" configuration parameter is deprecated, please use the component url params');
+        }
 
-                $this->setHost($url['host']);
-
-                if (isset($url['scheme']))
-                    $this->setScheme($url['scheme']);
-                if (isset($url['port']))
-                    $this->setPort((int)$url['port']);
-                if (isset($url['path']))
-                    $this->setPathPrefix($url['path']);
-            }
-            else if (false === strpos($k, '_'))
-            {
+        foreach($config as $k => $v) {
+            if (false === strpos($k, '_')) {
                 $this->{'set'.ucfirst($k)}($v);
-            }
-            else
-            {
+            } else {
                 $this->{'set'.implode('', array_map('ucfirst', explode('_', $k)))}($v);
             }
         }
@@ -104,8 +94,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return string
      */
-    public function getApiKey()
-    {
+    public function getApiKey() {
         return $this->apiKey;
     }
 
@@ -113,8 +102,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param string $apiKey
      * @return CloudStackConfiguration
      */
-    public function setApiKey($apiKey)
-    {
+    public function setApiKey($apiKey) {
         $this->apiKey = $apiKey;
         return $this;
     }
@@ -122,8 +110,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return string
      */
-    public function getSecretKey()
-    {
+    public function getSecretKey() {
         return $this->secretKey;
     }
 
@@ -131,8 +118,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param string $secretKey
      * @return CloudStackConfiguration
      */
-    public function setSecretKey($secretKey)
-    {
+    public function setSecretKey($secretKey) {
         $this->secretKey = $secretKey;
         return $this;
     }
@@ -140,8 +126,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return string
      */
-    public function getScheme()
-    {
+    public function getScheme() {
         return $this->scheme;
     }
 
@@ -149,8 +134,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param string $scheme
      * @return CloudStackConfiguration
      */
-    public function setScheme($scheme)
-    {
+    public function setScheme($scheme) {
         $this->scheme = $scheme;
         return $this;
     }
@@ -158,8 +142,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return string
      */
-    public function getHost()
-    {
+    public function getHost() {
         return $this->host;
     }
 
@@ -167,8 +150,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param string $host
      * @return CloudStackConfiguration
      */
-    public function setHost($host)
-    {
+    public function setHost($host) {
         $this->host = $host;
         return $this;
     }
@@ -176,8 +158,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return int
      */
-    public function getPort()
-    {
+    public function getPort() {
         return $this->port;
     }
 
@@ -185,13 +166,13 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param int $port
      * @return CloudStackConfiguration
      */
-    public function setPort($port)
-    {
+    public function setPort($port) {
         $port = intval($port);
-        if (0 === $port)
+        if (0 === $port) {
             $this->port = null;
-        else
+        } else {
             $this->port = $port;
+        }
 
         return $this;
     }
@@ -199,8 +180,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return string
      */
-    public function getPathPrefix()
-    {
+    public function getPathPrefix() {
         return $this->pathPrefix;
     }
 
@@ -208,9 +188,40 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param string $pathPrefix
      * @return CloudStackConfiguration
      */
-    public function setPathPrefix($pathPrefix)
-    {
+    public function setPathPrefix($pathPrefix) {
         $this->pathPrefix = trim($pathPrefix, " \t\n\r\0\x0B/");
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApiPath() {
+        return $this->apiPath;
+    }
+
+    /**
+     * @var string $apiPath;
+     * @return CloudStackConfiguration
+     */
+    public function setApiPath($apiPath) {
+        $this->apiPath = trim($apiPath, " \t\n\r\0\x0B/");
+        return $this;
+    }
+
+    /*
+     * @return string
+     */
+    public function getConsolePath() {
+        return $this->consolePath;
+    }
+
+    /**
+     * @param string $consolePath
+     * @return CloudStackConfiguration
+     */
+    public function setConsolePath($consolePath) {
+        $this->consolePath = trim($consolePath, " \t\n\r\0\x0B/");
         return $this;
     }
 
@@ -219,10 +230,10 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @return string
      * @throws \Exception
      */
-    public function buildSignature($query)
-    {
-        if ('' === $query)
+    public function buildSignature($query) {
+        if ('' === $query) {
             throw new \Exception(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
+        }
 
         $hash = @hash_hmac('SHA1', strtolower($query), $this->getSecretKey(), true);
         return urlencode(base64_encode($hash));
@@ -231,8 +242,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     /**
      * @return \Http\Client\HttpClient
      */
-    public function getHttpClient()
-    {
+    public function getHttpClient() {
         return $this->HttpClient;
     }
 
@@ -240,14 +250,12 @@ class CloudStackConfiguration implements LoggerAwareInterface
      * @param \Http\Client\HttpClient $HttpClient
      * @return CloudStackConfiguration
      */
-    public function setHttpClient(HttpClient $HttpClient)
-    {
+    public function setHttpClient(HttpClient $HttpClient) {
         $this->HttpClient = $HttpClient;
         return $this;
     }
 
-    protected function postConstructValidation()
-    {
+    protected function postConstructValidation() {
         static $knownClients = array(
             '\\Http\\Client\\Curl\\Client',
             '\\Http\\Adapter\\Guzzle6\\Client',
@@ -255,20 +263,20 @@ class CloudStackConfiguration implements LoggerAwareInterface
             '\\Http\\Adapter\\Buzz\\Client'
         );
 
-        foreach($knownClients as $clientClass)
-        {
-            if (class_exists($clientClass, true))
-            {
+        foreach($knownClients as $clientClass) {
+            if (class_exists($clientClass, true)) {
                 $this->HttpClient = new $clientClass;
                 break;
             }
         }
 
-        if (null === $this->HttpClient)
+        if (null === $this->HttpClient) {
             throw new \RuntimeException(HTTPCLIENT_EMPTY_MSG, HTTPCLIENT_EMPTY);
+        }
 
-        if ('' === $this->host)
+        if ('' === $this->host) {
             throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
+        }
 
         if ('' === $this->apiKey)
             throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
@@ -277,4 +285,5 @@ class CloudStackConfiguration implements LoggerAwareInterface
             throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
     }
 }
+
 {% endautoescape %}

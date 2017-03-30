@@ -14,11 +14,8 @@ class CloudStackRequestBody implements StreamInterface
     /** @var int */
     private $_state;
 
-    /** @var CloudStackConfiguration */
-    private $configuration;
-
-    /** @var array */
-    private $parameters = [];
+    /** @var AbstractCloudStackCommand */
+    private $command;
 
     /** @var resource */
     private $stream = null;
@@ -27,54 +24,19 @@ class CloudStackRequestBody implements StreamInterface
     private $meta = null;
 
     /** @var int */
-    private $size = null;
+    private $size = 0;
 
     /**
      * CloudStackRequestBody constructor.
-     *
-     * @param CloudStackConfiguration $configuration
-     * @param string $command
-     * @param array $commandParameters
-     * @throws \InvalidArgumentException
+     * @param AbstractCloudStackCommand $command
      */
-    public function __construct(CloudStackConfiguration $configuration, $command, array $commandParameters = [])
+    public function __construct(AbstractCloudStackCommand $command)
     {
         // TODO: Move this out of constructor, maybe...?
 
-        $this->configuration = $configuration;
-        $this->parameters = $commandParameters;
+        $this->command = $command;
 
-        $params = [];
-        foreach($commandParameters as $k => $v)
-        {
-            $paramStr = null;
-            switch(gettype($v)) {
-                case 'boolean':
-                    $paramStr = $v ? 'true' : 'false';
-                    break;
-                case 'integer':
-                case 'double':
-                    $paramStr = strval($v);
-                    break;
-                case 'string':
-                    $paramStr = $v;
-                    break;
-            }
-
-            if (!is_string($paramStr))
-                throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, $k, 'string', gettype($v)), WRONG_ARGUMENT_TYPE);
-
-            if ('' === $paramStr)
-                continue;
-
-            $params[strtolower($k)] = $paramStr;
-        }
-
-        $params = ['apikey' => $configuration->getApiKey(), 'command' => $command, 'response' => 'json'] + $params;
-        ksort($params);
-
-        $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-        $query = sprintf('%s&signature=%s', $query, $this->configuration->buildSignature($query));
+        $query = $command->getCompiledQuery();
 
         $this->size = mb_strlen($query, '8bit');
 
@@ -175,7 +137,7 @@ class CloudStackRequestBody implements StreamInterface
         if (self::STATE_OPEN === $this->_state)
             return ftell($this->stream);
 
-        throw new \RuntimeException();
+        throw new \RuntimeException('Cannot return current position of closed body');
     }
 
     /**
@@ -236,7 +198,7 @@ class CloudStackRequestBody implements StreamInterface
         if ($this->isSeekable())
             rewind($this->stream);
         else
-           throw $this->createStateException();
+            throw $this->createStateException();
     }
 
     /**
