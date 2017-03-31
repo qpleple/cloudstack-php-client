@@ -88,7 +88,7 @@
             '{{ api.response.FQName|replace({"\\": "\\\\"}) }}'
         );
 {% elseif api.isList %}
-        $items =$this->decodeBody(
+        $items = $this->decodeBody(
             $this->doRequest(new CloudStackRequest($command)),
             '{{ api.name }}'
         );
