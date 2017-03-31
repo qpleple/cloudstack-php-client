@@ -1,5 +1,5 @@
 {
-  "name": "cloudstack-php/client",
+  "name": "myena/cloudstack-client-generator",
   "type": "library",
   "description": "PHP client library for the CloudStack User API",
   "license": "MIT",
@@ -13,13 +13,35 @@
       "email": "ahurt@anbcs.com"
     },
     {
+      "name": "Nathan Johnson",
+      "email": "nathan@nathanjohnson.info"
+    },
+    {
       "name": "Daniel Carbone",
       "email": "daniel.p.carbone@gmail.com"
     }
   ],
+
+  "autoload": {
+    "psr-4": {
+      "MyENA\\CloudStackClientGenerator\\": "src/"
+    },
+    "files": [
+      "files/constants.php"
+    ]
+  },
+
   "require": {
-    "php": ">=5.4.0",
+    "php": ">=5.6.0",
     "twig/twig": "<=2.0",
-    "twig/extensions": "<=2.0"
+    "twig/extensions": "<=2.0",
+    "psr/http-message": "1.0.*",
+    "psr/log": "1.0.*",
+
+    "php-http/guzzle6-adapter": "1.1.*"
+  },
+  "require-dev": {
+    "myena/default-logger": "@stable",
+    "phpunit/phpunit": "<=6.0"
   }
 }
