@@ -25,7 +25,7 @@ class Configuration implements LoggerAwareInterface
     /** @var string */
     protected $host = '';
     /** @var int */
-    protected $port = 0;
+    protected $port = 8080;
 
     /** @var string */
     protected $pathPrefix = 'client';

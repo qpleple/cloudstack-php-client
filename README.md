@@ -20,11 +20,15 @@ A quick example:
 ```php
 $generator = new \MyENA\CloudStackClientGenerator\Generator(new \MyENA\CloudStackClientGenerator\Configuration(
     [
-        'api_key'    => '',                                 // YOUR_API_KEY (required)
-        'secret_key' => '',                                 // YOUR_SECRET_KEY (required)
-        'endpoint'   => 'http://localhost:8080/client/api', // Your cloudstack instance address (required)
-        'output_dir' => '',                                 // Where you'd like the generated files to go (required)
-        'namespace'  => '',                                 // The namespace that will be used in the generated files (optional)
+        'api_key'      => '',               // YOUR_API_KEY (required)
+        'secret_key'   => '',               // YOUR_SECRET_KEY (required)
+        'host'         => 'localhost',      // Your CloudStack host (required)
+        'scheme'       => 'http',           // http or https (defaults to http)
+        'port'         => 8080,             // api port (defaults to 8080)
+        'path_prefix'  => 'client',         // url prefix (defaults to 'client')
+        'api_path'     => 'api',            // admin api path (defaults to 'api')
+        'output_dir'   => '',               // Where you'd like the generated files to go (defaults to ./output)
+        'namespace'    => '',               // The namespace that will be used in the generated files (optional)
     ]
 ));
 
@@ -46,10 +50,15 @@ PHP Library Usage
 
 ```php
     $configuration = new CloudStackConfiguration([
-        'api_key'    => '',                                 // YOUR_API_KEY (required)
-        'secret_key' => '',                                 // YOUR_SECRET_KEY (required)
-        'endpoint'   => 'http://localhost:8080/client/api', // Your cloudstack instance address (required),
-        'http_client' => null,                              // Any http client adapter that supports php-http/httplug
+        'api_key'      => '',               // YOUR_API_KEY (required)
+        'secret_key'   => '',               // YOUR_SECRET_KEY (required)
+        'host'         => 'localhost',      // Your CloudStack host (required)
+        'scheme'       => 'http',           // http or https (defaults to http)
+        'port'         => 8080,             // api port (defaults to 8080)
+        'path_prefix'  => 'client',         // url prefix (defaults to 'client')
+        'api_path'     => 'api',            // admin api path (defaults to 'api')
+        'console_path' => 'console'         // console api path (defaults to 'console')
+        'http_client' => null,              // Any http client adapter that supports php-http/httplug
     ]);
     
     $client = new CloudStackClient($config);
@@ -58,7 +67,7 @@ PHP Library Usage
 ###Lists##
 
 ```php
-    $vms = $cloudstack->listVirtualMachines();
+    $vms = $client->listVirtualMachines();
     foreach ($vms as $vm) {
         printf("%s : %s %s", $vm->id, $vm->name, $vm->state);
     }
@@ -67,14 +76,19 @@ PHP Library Usage
 ###Asynchronous tasks###
 
 ```php
-    $job = $cloudstack->deployVirtualMachine(1, 259, 1);
+    $job = $client->deployVirtualMachine(1, 259, 1);
     printf("VM being deployed. Job id = %s", $job->jobid);
 
     print "All jobs";
 
-    foreach ($cloudstack->listAsyncJobs() as $job) {
+    foreach ($client->listAsyncJobs() as $job) {
         printf("%s : %s, status = %s", $job->jobid, $job->cmd, $job->jobstatus);
     }
+```
+
+You may also optionally wait for a job to finish:
+```php
+    $result = $client->waitForAsync($job);
 ```
 
 Code Generation
@@ -92,23 +106,23 @@ Here is an example of a method generated that has one required (`$id`) and one o
      * @param array  $optArgs {
      *     @type string $forced Force stop the VM (vm is marked as Stopped even when command fails to be send to the backend).  The caller knows the VM is stopped.
      * }
-     * @throws \RuntimeException
-     * @return Response\StopVirtualMachineResponse     */
+     * @return Response\AsyncJobStartResponse
+     */
     public function stopVirtualMachine($id, array $optArgs = []) {
-        if (empty($id)) {
-            throw new \RuntimeException(sprintf(MISSING_ARGUMENT_MSG, 'id'), MISSING_ARGUMENT);
-        }
-        $req = new CloudStackRequest(
+        $command = new CloudStackApiCommand(
             $this->configuration,
-            new CloudStackRequestBody(
-                $this->configuration,
-                'stopVirtualMachine',
-                [
-                    'id' => $id
-                ] + $optArgs
-            )
+            'stopVirtualMachine',
+            [
+                'id' => $id,
+            ] + $optArgs
         );
 
-        return new Response\StopVirtualMachineResponse($this->decodeBody($this->doRequest($req), 'stopVirtualMachine'));
+        return new Response\AsyncJobStartResponse(
+            $this->decodeBody(
+                $this->doRequest(new CloudStackRequest($command)),
+                'stopVirtualMachine'
+            ),
+            '\\Response\\StopVirtualMachineResponseResponse'
+        );
     }
 ```
