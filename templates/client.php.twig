@@ -86,11 +86,9 @@ class CloudStackClient {
      * @return null|object
      * @throws \InvalidArgumentException
      */
-    public function waitForAsync(Response\AsyncJobStartResponse $startResponse, $sleep = 2, $tries = 120)
-    {
+    public function waitForAsync(Response\AsyncJobStartResponse $startResponse, $sleep = 2, $tries = 120) {
         // Some basic validation
-        if (!is_int($sleep) || 0 >= $sleep)
-        {
+        if (!is_int($sleep) || 0 >= $sleep) {
             throw new \InvalidArgumentException(sprintf(
                 '%s::waitForAsyncResponse - $sleep must be positive integer, %s seen.',
                 get_class($this),
@@ -106,28 +104,26 @@ class CloudStackClient {
             ));
         }
 
-        $wait = function() use ($sleep) { sleep($sleep); };
-
         $attempts = 0;
-        while(true)
-        {
+        while(true) {
             $result = $this->queryAsyncJobResult($startResponse->jobid);
 
-            if (2 === $result->jobstatus || 2 === $result->jobprocstatus)
+            if (2 === $result->jobstatus || 2 === $result->jobprocstatus) {
                 throw new \RuntimeException($result->jobresult['errortext'], $result->jobresult['errorcode']);
-
-            if (0 === $result->jobstatus)
-            {
-                if (-1 !== $tries && $attempts > $tries)
-                    return null;
-
-                $wait();
             }
-            else
-            {
+
+            if (0 === $result->jobstatus) {
+
+                if (-1 !== $tries && $attempts > $tries) {
+                    return null;
+                }
+
+                sleep($sleep);
+
+            } else {
+
                 $resultData = $result->jobresult;
-                if (0 < count($resultData))
-                {
+                if (0 < count($resultData)) {
                     $class = $startResponse->getResponseClassName();
                     return new $class(reset($resultData));
                 }
@@ -148,8 +144,9 @@ class CloudStackClient {
     {
         $resp = $this->configuration->HttpClient->sendRequest($req);
 
-        if (200 !== $resp->getStatusCode())
+        if (200 !== $resp->getStatusCode()) {
             throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
+        }
 
         return $resp;
     }
