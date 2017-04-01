@@ -18,8 +18,6 @@ class Variable
     private $required = false;
     /** @var string */
     private $since = '0.0';
-    /** @var bool */
-    private $collection = false;
     /** @var string[] */
     private $related = [];
 
