@@ -10,12 +10,7 @@
  */
 
 /**
- * CloudStackClientException extension class
- */
-class CloudStackClientException extends Exception { }
-
-/**
- * Expcetion error code
+ * Exception error code
  */
 define("ENDPOINT_EMPTY", 1000);
 
@@ -25,7 +20,7 @@ define("ENDPOINT_EMPTY", 1000);
 define("ENDPOINT_EMPTY_MSG", "No endpoint provided.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("ENDPOINT_NOT_URL", 1001);
 
@@ -35,7 +30,7 @@ define("ENDPOINT_NOT_URL", 1001);
 define("ENDPOINT_NOT_URL_MSG", "The endpoint must be a URL (starting wih http:// or https://). Given: \"%s\"");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("APIKEY_EMPTY", 1002);
 
@@ -45,7 +40,7 @@ define("APIKEY_EMPTY", 1002);
 define("APIKEY_EMPTY_MSG", "No API key provided.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("SECRETKEY_EMPTY", 1003);
 
@@ -55,7 +50,7 @@ define("SECRETKEY_EMPTY", 1003);
 define("SECRETKEY_EMPTY_MSG", "No secret key provided.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("STRTOSIGN_EMPTY", 1004);
 
@@ -65,7 +60,7 @@ define("STRTOSIGN_EMPTY", 1004);
 define("STRTOSIGN_EMPTY_MSG", "String to sign empty.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("NO_COMMAND", 1005);
 
@@ -75,7 +70,7 @@ define("NO_COMMAND", 1005);
 define("NO_COMMAND_MSG", "No command given for the request.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("WRONG_REQUEST_ARGS", 1006);
 
@@ -85,7 +80,7 @@ define("WRONG_REQUEST_ARGS", 1006);
 define("WRONG_REQUEST_ARGS_MSG", "Arguments for the request must be in an array. Given: %s");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("NOT_A_CLOUDSTACK_SERVER", 1006);
 
@@ -95,7 +90,7 @@ define("NOT_A_CLOUDSTACK_SERVER", 1006);
 define("NOT_A_CLOUDSTACK_SERVER_MSG", "The response is not a CloudStack server response. Check your endpoint. Received: %s");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("NO_VALID_JSON_RECEIVED", 1007);
 
@@ -105,7 +100,7 @@ define("NO_VALID_JSON_RECEIVED", 1007);
 define("NO_VALID_JSON_RECEIVED_MSG", "The server did not issue a json response.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("MISSING_ARGUMENT", 1008);
 
@@ -125,7 +120,7 @@ define("NO_DATA_RECEIVED", 1009);
 define("NO_DATA_RECEIVED_MSG", "The server did not return any data.");
 
 /**
- * Expcetion error code
+ * Exception error code
  */
 define("WRONG_ARGUMENT_TYPE", 1010);
 
@@ -133,3 +128,43 @@ define("WRONG_ARGUMENT_TYPE", 1010);
  * Exception error message text
  */
 define("WRONG_ARGUMENT_TYPE_MSG", "Wrong argument type for %s - Expected: %s Got: %s");
+
+/** exception message */
+define('REQUEST_BODY_DETACHED_MSG', 'Request body has been detached and is no longer usable');
+/** exception code */
+define('REQUEST_BODY_DETACHED', 1011);
+
+/** exception message */
+define('REQUEST_BODY_CLOSED_MSG', 'Request body has been closed and is no longer usable');
+/** exception code */
+define('REQUEST_BODY_CLOSED', 1012);
+
+/** exception message */
+define('REQUEST_BODY_NOT_WRITABLE_MSG', 'Request bodies are not directly writable');
+/** exception code */
+define('REQUEST_BODY_NOT_WRITABLE', 1013);
+
+/** exception message */
+define('URI_INVALID_SCHEME_MSG', 'Uri scheme must be either "http" or "https"');
+/** exception code */
+define('URI_INVALID_SCHEME', 1014);
+
+/** exception message */
+define('URI_INVALID_PORT_MSG', 'Port must be positive integer greater than 0 and less than 65535, "%s" seen.');
+/** exception code */
+define('URI_INVALID_PORT', 1015);
+
+/** exception message */
+define('URI_INVALID_PATH_MSG', 'Path must be string or null, "%s" seen.');
+/** exception code */
+define('URI_INVALID_PATH', 1016);
+
+/** exception message */
+define('URI_INVALID_QUERY_MSG', 'Query must be string or null, "%s" seen.');
+/** exception code */
+define('URI_INVALID_QUERY', 1017);
+
+/** exception message */
+define('HTTPCLIENT_EMPTY_MSG', 'No HTTP Client was provided and none could be found.');
+/** exception code */
+define('HTTPCLIENT_EMPTY', 1018);

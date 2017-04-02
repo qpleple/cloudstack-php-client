@@ -1,0 +1,114 @@
+{#
+    This file is part of the CloudStack Client Generator.
+
+    (c) Quentin Pleplé <quentin.pleple@gmail.com>
+    (c) Aaron Hurt <ahurt@anbcs.com>
+    (c) Nathan Johnson <nathan@nathanjohnson.info>
+    (c) Daniel Carbone <daniel.p.carbone@gmail.com>
+    (c) Bogdan Gabor <bgabor@ena.com>
+
+    For the full copyright and license information, please view the LICENSE
+    file that was distributed with this source code.
+#}{% spaceless %}
+{% set params = api.parameters %}
+{% set requiredParams = params.required %}
+{% set optionalParams = params.optional %}
+{% set requiredParamLength = requiredParams|length %}
+{% set optionalParamLength = optionalParams|length %}
+{% endspaceless %}
+{% autoescape false %}
+    /**
+     * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description|raw|ucfirst }}{{ "\n" }}{% endfilter %}
+{% if api.since != '0.0' %}
+     *
+     * @since {{ api.since }}
+{% endif %}
+     *
+{# document all required paramaters #}
+{% for param in requiredParams %}
+     * @param string ${{ param.name }} {{ param.description|raw|ucfirst }}
+{% endfor %}
+{# end required paramaters #}
+{% if optionalParamLength > 0 %}
+     * @param array  $optArgs {
+{# document all optional paramaters #}
+{% for param in optionalParams %}
+     *     @type string ${{ param.name }} {{ param.description|raw|ucfirst }}
+{% endfor %}
+{# end optional arguments #}
+     * }
+{% endif %}
+     * @return {% if config.namespace != '' %}\{{ config.namespace }}\{% endif %}Response\{% if api.isAsync %}AsyncJobStartResponse{% else %}{{ api.response.className }}{% if api.list %}[]{% endif %}{% endif %}
+
+     */
+    public function {{ api.name }}({# only define required paramaters in function #}
+{% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}${{ param.name }}{% endfor %}
+{# end required #}
+{# append optional arguments if needed #}
+{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
+{# generate required paramater checks #}
+{# end paramater checks #}
+        $command = new CloudStackApiCommand(
+            $this->configuration,
+            '{{ api.name }}'{% if requiredParamLength == 0 and optionalParamLength == 0 %}
+        );{% else %},
+{% if requiredParamLength > 0 and optionalParamLength > 0 %}
+    {# generate return array merge of required and optional paramaters #}
+        [{% elseif requiredParamLength > 0 %}
+    {# no merge ... just a simple array #}
+        [{% elseif optionalParamLength > 0 %}
+    {# no merge ... no array ... only optional arguments here #}
+        $optArgs{% endif %}
+{% endif %}
+
+{% set count = 1 %}
+{% for param in requiredParams %}
+                '{{ param.name }}' => ${{ param.name }}{# determine line ending based on count #}
+{% if loop.index0 < requiredParamLength %},
+{% endif %}
+{% endfor %}
+{% if requiredParamLength > 0 and optionalParamLength > 0 %}
+{# generate return array merge of required and optional paramaters #}
+            ] + $optArgs
+        );
+{% elseif requiredParamLength > 0 %}
+{# no merge ... just close array #}
+            ]
+        );
+{% elseif optionalParamLength > 0 %}
+        );
+{% endif %}
+
+{% if api.isAsync %}
+        return new Response\AsyncJobStartResponse(
+            $this->decodeBody(
+                $this->doRequest(new CloudStackRequest($command)),
+                '{{ api.name }}'
+            ),
+            '{{ api.response.FQName|replace({"\\": "\\\\"}) }}'
+        );
+{% elseif api.isList %}
+        $items = $this->decodeBody(
+            $this->doRequest(new CloudStackRequest($command)),
+            '{{ api.name }}'
+        );
+        $models = [];
+
+        if ($items) {
+            unset($items['count']);
+            foreach(reset($items) as $item) {
+                $models[] = new Response\{{ api.response.className }}($item);
+            }
+        }
+
+        return $models;
+{% else %}
+        return new Response\{{ api.response.className }}(
+            $this->decodeBody(
+                $this->doRequest(new CloudStackRequest($command)),
+                '{{ api.name }}'
+            )
+        );
+{% endif %}
+    }
+{% endautoescape %}
