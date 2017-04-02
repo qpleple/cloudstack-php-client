@@ -56,12 +56,7 @@ class ObjectVariable extends Variable
      */
     public function getFQName()
     {
-        $ns = sprintf('\\%s\\Response', $this->configuration->getNamespace());
-
-        if ($this->isShared())
-            return sprintf('%s\\%s', $ns, $this->getClassName());
-
-        return sprintf('%s\\%sResponse', $ns, $this->getClassName());
+        return sprintf('\\%s\\Response\\%s', $this->configuration->getNamespace(), $this->getClassName());
     }
 
     /**
