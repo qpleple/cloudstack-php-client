@@ -46,7 +46,7 @@ There are 3 directories of files created by this generated process, however you 
 PHP Library Usage
 -----------------
 
-###Initialization###
+### Initialization
 
 ```php
     $configuration = new CloudStackConfiguration([
@@ -64,7 +64,7 @@ PHP Library Usage
     $client = new CloudStackClient($config);
 ```
 
-###Lists##
+### Lists
 
 ```php
     $vms = $client->listVirtualMachines();
@@ -73,7 +73,7 @@ PHP Library Usage
     }
 ```
 
-###Asynchronous tasks###
+### Asynchronous tasks
 
 ```php
     $job = $client->deployVirtualMachine(1, 259, 1);
