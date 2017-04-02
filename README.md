@@ -122,7 +122,7 @@ Here is an example of a method generated that has one required (`$id`) and one o
                 $this->doRequest(new CloudStackRequest($command)),
                 'stopVirtualMachine'
             ),
-            '\\Response\\StopVirtualMachineResponseResponse'
+            '\\Response\\StopVirtualMachineResponse'
         );
     }
 ```
