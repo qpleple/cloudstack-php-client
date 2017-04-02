@@ -83,6 +83,12 @@ abstract class AbstractCloudStackCommand {
 
         $params = [];
         foreach($parameters as $k => $v) {
+            // if we see a null value, just move on.
+            if (null === $v) {
+                continue;
+            }
+
+            // otherwise, attempt to "stringify" it.
             $paramStr = null;
             switch(gettype($v)) {
                 case 'boolean':
@@ -103,7 +109,12 @@ abstract class AbstractCloudStackCommand {
             }
 
             if (!is_string($paramStr)) {
-                throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, $k, 'string', gettype($v)), WRONG_ARGUMENT_TYPE);
+                throw new \InvalidArgumentException(sprintf(
+                        WRONG_ARGUMENT_TYPE_MSG,
+                        $k,
+                        'scalar type, array, or \\stdClass object',
+                        gettype($v)
+                ), WRONG_ARGUMENT_TYPE);
             }
 
             if ('' === $paramStr) {
