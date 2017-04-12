@@ -1,12 +1,14 @@
-<?php namespace MyENA\CloudStackClientGenerator\Generator;
+<?php namespace MyENA\CloudStackClientGenerator;
 
-use MyENA\CloudStackClientGenerator\Configuration;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Stream;
+use GuzzleHttp\Psr7\Uri;
 
 /**
- * Class AbstractCloudStackCommand
- * @package MyENA\CloudStackClientGenerator\Generator
+ * Class Command
+ * @package MyENA\CloudStackClientGenerator
  */
-abstract class AbstractCloudStackCommand {
+class Command {
 
     /** @var Configuration */
     private $configuration;
@@ -24,13 +26,13 @@ abstract class AbstractCloudStackCommand {
     private $parameters = [];
 
     /**
-     * Map of key-sorted parameters with "command" key added
+     * Map of key-sorted parameters with appropriate "command" key added
      * @var array
      */
     private $compiledParameters = [];
 
     /**
-     * Ready-to-execute represetation of command
+     * Ready-to-execute representation of command
      * @var string
      */
     private $compiledQuery = '';
@@ -45,19 +47,23 @@ abstract class AbstractCloudStackCommand {
         $this->configuration = $configuration;
 
         if (!is_string($command)) {
-            throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, 'command', 'string', gettype($command)), WRONG_ARGUMENT_TYPE);
+            throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG,
+                'command',
+                'string',
+                gettype($command)), WRONG_ARGUMENT_TYPE);
         }
 
         $this->command = trim((string)$command);
 
         if ('' === $this->command) {
-            throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, 'command', 'non-empty string', ''), WRONG_ARGUMENT_TYPE);
+            throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, 'command', 'non-empty string', ''),
+                WRONG_ARGUMENT_TYPE);
         }
 
         $params = [];
-        foreach($parameters as $k => $v) {
+        foreach ($parameters as $k => $v) {
             $paramStr = null;
-            switch(gettype($v)) {
+            switch (gettype($v)) {
                 case 'boolean':
                     $paramStr = $v ? 'true' : 'false';
                     break;
@@ -71,7 +77,8 @@ abstract class AbstractCloudStackCommand {
             }
 
             if (!is_string($paramStr)) {
-                throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, $k, 'string', gettype($v)), WRONG_ARGUMENT_TYPE);
+                throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, $k, 'string', gettype($v)),
+                    WRONG_ARGUMENT_TYPE);
             }
 
             if ('' === $paramStr) {
@@ -92,14 +99,18 @@ abstract class AbstractCloudStackCommand {
     }
 
     /**
-     * @return string
+     * @inheritDoc
      */
-    abstract public function getKey();
+    public function getKey() {
+        return 'command';
+    }
 
     /**
-     * @return string
+     * @inheritDoc
      */
-    abstract public function getPath();
+    public function getPath() {
+        return $this->getConfiguration()->getApiPath();
+    }
 
     /**
      * @return string
@@ -134,6 +145,23 @@ abstract class AbstractCloudStackCommand {
         }
 
         return $this->compiledQuery;
+    }
+
+    /**
+     * @return \GuzzleHttp\Psr7\Request
+     */
+    public function createPsr7Request() {
+        static $headers = ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
+
+        $stream = fopen('php://memory', 'w+');
+        fwrite($stream, $this->getCompiledQuery());
+
+        return new Request(
+            'POST',
+            new Uri(sprintf('%s/%s', $this->configuration->getCompiledAddress(), $this->getPath())),
+            $headers,
+            new Stream($stream)
+        );
     }
 
     /**

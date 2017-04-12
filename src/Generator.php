@@ -1,8 +1,8 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
-use MyENA\CloudStackClientGenerator\Generator\API;
-use MyENA\CloudStackClientGenerator\Generator\CloudStackApiCommand;
-use MyENA\CloudStackClientGenerator\Generator\CloudStackRequest;
+use MyENA\CloudStackClientGenerator\API\API;
+use MyENA\CloudStackClientGenerator\API\ObjectVariable;
+use MyENA\CloudStackClientGenerator\API\Variable;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -10,8 +10,7 @@ use Psr\Http\Message\RequestInterface;
  *
  * @package MyENA\CloudStackClientGenerator
  */
-class Generator
-{
+class Generator {
     /** @var \MyENA\CloudStackClientGenerator\Configuration */
     protected $configuration;
 
@@ -21,49 +20,62 @@ class Generator
     /** @var API[] */
     protected $apis = [];
 
-    /** @var \MyENA\CloudStackClientGenerator\Generator\API\ObjectVariable[] */
+    /** @var \MyENA\CloudStackClientGenerator\API\ObjectVariable[] */
     protected $sharedObjectMap = [];
+
+    /** @var string */
+    protected $srcDir;
+    /** @var string */
+    protected $filesDir;
+    /** @var string */
+    protected $responseDir;
+    /** @var string */
+    protected $typesDir;
 
     /**
      * Generator constructor.
      *
      * @param \MyENA\CloudStackClientGenerator\Configuration $configuration
      */
-    public function __construct(Configuration $configuration)
-    {
+    public function __construct(Configuration $configuration) {
         $this->configuration = $configuration;
 
-        $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
+        $twigLoader = new \Twig_Loader_Filesystem(__DIR__ . '/../templates');
         $this->twig = new \Twig_Environment($twigLoader, ['debug' => true]);
         $this->twig->addExtension(new \Twig_Extensions_Extension_Text());
         $this->twig->addFilter(
             'ucfirst',
-                new \Twig_SimpleFilter(
-                    'ucfirst',
-                        function($in) { return ucfirst($in); },
-                    ['is_safe' => ['html']]
-                )
+            new \Twig_SimpleFilter(
+                'ucfirst',
+                function ($in) {
+                    return ucfirst($in);
+                },
+                ['is_safe' => ['html']]
+            )
         );
+
+        $this->srcDir = sprintf('%s/src', $this->configuration->getOutputDir());
+        if (!is_dir($this->srcDir) && false === (bool)mkdir($this->srcDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->srcDir));
+        }
+
+        $this->filesDir = sprintf('%s/files', $this->configuration->getOutputDir());
+        if (!is_dir($this->filesDir) && false === (bool)mkdir($this->filesDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->filesDir));
+        }
+
+        $this->responseDir = sprintf('%s/CloudStackResponse', $this->srcDir);
+        if (!is_dir($this->responseDir) && false === (bool)mkdir($this->responseDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseDir));
+        }
+
+        $this->typesDir = sprintf('%s/Types', $this->responseDir);
+        if (!is_dir($this->typesDir) && false === (bool)mkdir($this->typesDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->typesDir));
+        }
     }
 
-    public function generate()
-    {
-        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
-        if (!is_dir($srcDir) && false === (bool)mkdir($srcDir))
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $srcDir));
-
-        $filesDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'files');
-        if (!is_dir($filesDir) && false === (bool)mkdir($filesDir))
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $filesDir));
-
-        $responseDir = sprintf('%s/%s', $srcDir, 'Response');
-        if (!is_dir($responseDir) && false === (bool)mkdir($responseDir))
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $responseDir));
-
-        $typesDir = sprintf('%s/%s', $responseDir, 'Types');
-        if (!is_dir($typesDir) && false === (bool)mkdir($typesDir))
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $typesDir));
-
+    public function generate() {
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
 
@@ -74,92 +86,68 @@ class Generator
         $this->writeOutResponseModels($capabilities);
     }
 
-    protected function writeOutStaticTemplates(\stdClass $capabilities)
-    {
-        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
-        $filesDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'files');
-        $responseDir = sprintf('%s/%s', $srcDir, 'Response');
-        $typesDir = sprintf('%s/%s', $responseDir, 'Types');
-
+    protected function writeOutStaticTemplates(\stdClass $capabilities) {
         $args = ['config' => $this->configuration, 'capabilities' => $capabilities];
 
         file_put_contents(
-            $this->configuration->getOutputDir().'/LICENSE',
-            file_get_contents(__DIR__.'/../LICENSE')
+            $this->configuration->getOutputDir() . '/LICENSE',
+            file_get_contents(__DIR__ . '/../LICENSE')
         );
 
         file_put_contents(
-            $this->configuration->getOutputDir().'/composer.json',
+            $this->configuration->getOutputDir() . '/composer.json',
             $this->twig->load('composer.json.twig')->render($args)
         );
 
         file_put_contents(
-            $srcDir.'/CloudStackConfiguration.php',
+            $this->srcDir . '/CloudStackConfiguration.php',
             $this->twig->load('configuration.php.twig')->render($args)
         );
 
         file_put_contents(
-            $srcDir.'/CloudStackRequest.php',
-            $this->twig->load('request.php.twig')->render($args)
-        );
-
-        file_put_contents(
-            $srcDir.'/CloudStackRequestBody.php',
-            $this->twig->load('requestBody.php.twig')->render($args)
-        );
-
-        file_put_contents(
-            $srcDir.'/CloudStackUri.php',
-            $this->twig->load('uri.php.twig')->render($args)
-        );
-
-        file_put_contents(
-            $filesDir.'/constants.php',
+            $this->filesDir . '/constants.php',
             $this->twig->load('constants.php.twig')->render($args)
         );
 
         file_put_contents(
-            $responseDir.'/AsyncJobStartResponse.php',
+            $this->responseDir . '/AsyncJobStartResponse.php',
             $this->twig->load('responseAsyncJobStart.php.twig')->render($args)
         );
 
         file_put_contents(
-            $responseDir.'/AccessVmConsoleProxyResponse.php',
+            $this->responseDir . '/AccessVmConsoleProxyResponse.php',
             $this->twig->load('responseAccessVmConsoleProxy.twig')->render($args)
         );
 
         file_put_contents(
-            $srcDir.'/AbstractCloudStackCommand.php',
+            $this->srcDir . '/CloudStackCommandAbstract.php',
             $this->twig->load('commandAbstract.php.twig')->render($args)
         );
 
         file_put_contents(
-            $srcDir.'/CloudStackApiCommand.php',
+            $this->srcDir . '/CloudStackCommandApi.php',
             $this->twig->load('commandApi.php.twig')->render($args)
         );
 
         file_put_contents(
-            $srcDir.'/CloudStackConsoleCommand.php',
+            $this->srcDir . '/CloudStackCommandConsole.php',
             $this->twig->load('commandConsole.php.twig')->render($args)
         );
 
         file_put_contents(
-            $typesDir.'/DateType.php',
+            $this->typesDir . '/DateType.php',
             $this->twig->load('dateType.php.twig')->render($args)
         );
 
         file_put_contents(
-            $srcDir.'/Helpers.php',
+            $this->srcDir . '/CloudStackHelpers.php',
             $this->twig->load('helpers.php.twig')->render($args)
         );
     }
 
-    protected function writeOutClient(\stdClass $capabilities)
-    {
-        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
-
+    protected function writeOutClient(\stdClass $capabilities) {
         file_put_contents(
-            $srcDir.'/CloudStackClient.php',
+            $this->srcDir . '/CloudStackClient.php',
             $this->twig->load('client.php.twig')->render([
                 'config' => $this->configuration,
                 'capabilities' => $capabilities,
@@ -168,20 +156,15 @@ class Generator
         );
     }
 
-    protected function writeOutResponseModels(\stdClass $capabilities)
-    {
-        $srcDir = sprintf('%s/%s', $this->configuration->getOutputDir(), 'src');
-        $responseDir = sprintf('%s/%s', $srcDir, 'Response');
-
+    protected function writeOutResponseModels(\stdClass $capabilities) {
         $template = $this->twig->load('responseObject.php.twig');
 
-        foreach($this->apis as $name => $api)
-        {
+        foreach ($this->apis as $name => $api) {
             $response = $api->getResponse();
             $className = $response->getClassName();
 
             file_put_contents(
-                $responseDir.'/'.$className.'.php',
+                $this->responseDir . '/' . $className . '.php',
                 $template->render([
                     'obj' => $response,
                     'config' => $this->configuration,
@@ -190,13 +173,12 @@ class Generator
             );
         }
 
-        foreach($this->sharedObjectMap as $name => $class)
-        {
+        foreach ($this->sharedObjectMap as $name => $class) {
             $class->getProperties()->nameSort();
 
             $className = $class->getClassName();
             file_put_contents(
-                $responseDir.'/'.$className.'.php',
+                $this->responseDir . '/' . $className . '.php',
                 $template->render([
                     'obj' => $class,
                     'config' => $this->configuration,
@@ -208,31 +190,35 @@ class Generator
 
     /**
      * @param \stdClass $def
-     * @return \MyENA\CloudStackClientGenerator\Generator\API\Variable
+     * @return \MyENA\CloudStackClientGenerator\API\Variable
      */
-    protected function buildVariable(\stdClass $def)
-    {
-        if (!isset($def->name))
+    protected function buildVariable(\stdClass $def) {
+        if (!isset($def->name)) {
             return null;
+        }
 
-        $var = new API\Variable();
+        $var = new Variable();
 
         $var->setName(trim($def->name));
         $var->setType($def->type);
 
-        if (isset($def->description))
+        if (isset($def->description)) {
             $var->setDescription(trim($def->description));
-        if (isset($def->required))
+        }
+        if (isset($def->required)) {
             $var->setRequired((bool)$def->required);
-        if (isset($def->length))
+        }
+        if (isset($def->length)) {
             $var->setLength((int)$def->length);
-        if (isset($def->since))
+        }
+        if (isset($def->since)) {
             $var->setSince($def->since);
-        if (isset($def->related))
+        }
+        if (isset($def->related)) {
             $var->setRelatedString($def->related);
+        }
 
-        if ('' === $var->getDescription())
-        {
+        if ('' === $var->getDescription()) {
             switch ($var->getName()) {
                 case 'pagesize':
                     $var->setDescription('the number of entries per page');
@@ -247,22 +233,20 @@ class Generator
     }
 
     /**
-     * @param \MyENA\CloudStackClientGenerator\Generator\API\ObjectVariable $object
+     * @param \MyENA\CloudStackClientGenerator\API\ObjectVariable $object
      * @param array $defs
      */
-    protected function parseObjectProperties(API\ObjectVariable $object, array $defs)
-    {
+    protected function parseObjectProperties(ObjectVariable $object, array $defs) {
         $properties = $object->getProperties();
 
-        foreach($defs as $def)
-        {
+        foreach ($defs as $def) {
             $name = trim($def->name);
 
-            if (null === $properties->get($name))
-            {
+            if (null === $properties->get($name)) {
                 $var = $this->buildVariable($def);
-                if (null === $var)
+                if (null === $var) {
                     continue;
+                }
 
                 $properties->add($var);
             }
@@ -273,16 +257,16 @@ class Generator
      * @param API $api
      * @param array $params
      */
-    protected function parseParameters(API $api, array $params)
-    {
-        foreach($params as $param)
-        {
+    protected function parseParameters(API $api, array $params) {
+        foreach ($params as $param) {
             // blank objects, why do you exist?
-            if (!isset($param->name))
+            if (!isset($param->name)) {
                 continue;
+            }
 
-            if (null !== ($var = $this->buildVariable($param)))
+            if (null !== ($var = $this->buildVariable($param))) {
                 $api->getParameters()->add($var);
+            }
         }
     }
 
@@ -290,23 +274,23 @@ class Generator
      * @param API $api
      * @param array $response
      */
-    protected function parseResponse(API $api, array $response)
-    {
-        $obj = new API\ObjectVariable($this->configuration);
+    protected function parseResponse(API $api, array $response) {
+        $obj = new ObjectVariable($this->configuration->getNamespace());
         $obj->setName($api->getName());
         $obj->setDescription($api->getDescription());
         $obj->setSince($api->getSince());
         $obj->setRelated($api->getRelated());
 
-        foreach($response as $prop)
-        {
-            if (isset($prop->response))
+        foreach ($response as $prop) {
+            if (isset($prop->response)) {
                 $var = $this->buildSharedObject($prop);
-            else
+            } else {
                 $var = $this->buildVariable($prop);
+            }
 
-            if (null === $var)
+            if (null === $var) {
                 continue;
+            }
 
             $obj->getProperties()->add($var);
         }
@@ -318,20 +302,18 @@ class Generator
 
     /**
      * @param \stdClass $def
-     * @return \MyENA\CloudStackClientGenerator\Generator\API\ObjectVariable
+     * @return \MyENA\CloudStackClientGenerator\API\ObjectVariable
      */
-    protected function buildSharedObject(\stdClass $def)
-    {
+    protected function buildSharedObject(\stdClass $def) {
         $name = trim($def->name);
 
-        if (isset($this->sharedObjectMap[$name]))
-        {
+        if (isset($this->sharedObjectMap[$name])) {
             $this->parseObjectProperties($this->sharedObjectMap[$name], $def->response);
 
             return $this->sharedObjectMap[$name];
         }
 
-        $obj = new API\ObjectVariable($this->configuration);
+        $obj = new ObjectVariable($this->configuration->getNamespace());
         $obj->setName($name);
         $obj->setType($def->type);
         $obj->setDescription($def->type);
@@ -344,23 +326,23 @@ class Generator
         return $obj;
     }
 
-    protected function compileAPIs()
-    {
-        $r = new CloudStackRequest(new CloudStackApiCommand($this->configuration, 'listApis'));
+    protected function compileAPIs() {
+        $cmd = new Command($this->configuration, 'listApis');
 
-        $data = $this->doRequest($r)->listapisresponse;
+        $data = $this->doRequest($cmd->createPsr7Request())->listapisresponse;
 
-        foreach($data->api as $apiDef)
-        {
+        foreach ($data->api as $apiDef) {
             $api = new API();
 
             $api->setName(trim($apiDef->name));
             $api->setDescription(trim($apiDef->description));
             $api->setAsync((bool)$apiDef->isasync);
-            if (isset($apiDef->since))
+            if (isset($apiDef->since)) {
                 $api->setSince($apiDef->since);
-            if (isset($apiDef->related))
+            }
+            if (isset($apiDef->related)) {
                 $api->setRelatedString($apiDef->related);
+            }
 
             $this->parseParameters($api, $apiDef->params);
             $this->parseResponse($api, $apiDef->response);
@@ -374,11 +356,10 @@ class Generator
     /**
      * @return \stdClass
      */
-    protected function fetchCapabilities()
-    {
-        $r = new CloudStackRequest(new CloudStackApiCommand($this->configuration, 'listCapabilities'));
+    protected function fetchCapabilities() {
+        $cmd = new Command($this->configuration, 'listCapabilities');
 
-        $data = $this->doRequest($r);
+        $data = $this->doRequest($cmd->createPsr7Request());
 
         return $data->listcapabilitiesresponse;
     }
@@ -387,27 +368,23 @@ class Generator
      * @param \Psr\Http\Message\RequestInterface $request
      * @return \stdClass
      */
-    protected function doRequest(RequestInterface $request)
-    {
+    protected function doRequest(RequestInterface $request) {
         $resp = $this->configuration->HttpClient->sendRequest($request);
 
-        if (200 !== $resp->getStatusCode())
+        if (200 !== $resp->getStatusCode()) {
             throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
+        }
 
         $body = $resp->getBody();
 
-        if (0 === $body->getSize())
+        if (0 === $body->getSize()) {
             throw new \RuntimeException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
-
-        $json = '';
-        while (!$body->eof() && $data = $body->read(8192))
-        {
-            $json .= $data;
         }
 
-        $decoded = @json_decode($json);
-        if (JSON_ERROR_NONE !== json_last_error())
+        $decoded = @json_decode($body->getContents());
+        if (JSON_ERROR_NONE !== json_last_error()) {
             throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
+        }
 
         return $decoded;
     }

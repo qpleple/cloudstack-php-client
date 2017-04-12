@@ -1,73 +1,65 @@
-<?php namespace MyENA\CloudStackClientGenerator\Generator\API;
-
-use MyENA\CloudStackClientGenerator\Configuration;
+<?php namespace MyENA\CloudStackClientGenerator\API;
 
 /**
- * Class VariableObject
- * @package MyENA\CloudStackClientGenerator\Generator\API
+ * Class ObjectVariable
+ * @package MyENA\CloudStackClientGenerator\API
  */
-class ObjectVariable extends Variable
-{
+class ObjectVariable extends Variable {
     /** @var bool */
     private $shared = false;
 
-    /** @var Configuration */
-    private $configuration;
+    /** @var string */
+    private $namespace;
 
     /** @var VariableContainer */
     private $properties;
 
     /**
-     * Response constructor.
-     * @param Configuration $configuration
+     * ObjectVariable constructor.
+     * @param string $namespace
      */
-    public function __construct(Configuration $configuration)
-    {
-        $this->configuration = $configuration;
+    public function __construct($namespace) {
+        $this->namespace = $namespace;
         $this->properties = new VariableContainer();
     }
 
     /**
      * @return bool
      */
-    public function isShared()
-    {
+    public function isShared() {
         return $this->shared;
     }
 
     /**
      * @param bool $shared
      */
-    public function setShared($shared)
-    {
+    public function setShared($shared) {
         $this->shared = (bool)$shared;
     }
 
     /**
      * @return VariableContainer
      */
-    public function getProperties()
-    {
+    public function getProperties() {
         return $this->properties;
     }
 
     /**
      * @return string
      */
-    public function getFQName()
-    {
-        return sprintf('\\%s\\Response\\%s', $this->configuration->getNamespace(), $this->getClassName());
+    public function getFQName() {
+        return sprintf('\\%s\\CloudStackResponse\\%s', $this->namespace, $this->getClassName());
     }
 
     /**
      * @return string
      */
-    public function getClassName()
-    {
-        if ($this->isShared())
+    public function getClassName() {
+        if ($this->isShared()) {
             return ucfirst($this->getName());
+        }
 
-        return ucfirst($this->getName()).'Response';
+        return ucfirst($this->getName()) . 'Response';
     }
 
     /**
@@ -75,18 +67,18 @@ class ObjectVariable extends Variable
      *
      * @return string
      */
-    public function buildConstructor()
-    {
+    public function buildConstructor() {
         $dates = [];
         $objects = [];
 
-        foreach($this->getProperties() as $name => $property)
-        {
-            if ('date' === $property->getType())
+        foreach ($this->getProperties() as $name => $property) {
+            if ('date' === $property->getType()) {
                 $dates[] = $property->getName();
+            }
 
-            if ($property instanceof ObjectVariable)
+            if ($property instanceof ObjectVariable) {
                 $objects[] = $property->getName();
+            }
         }
 
         $datesCnt = count($dates);
@@ -102,11 +94,10 @@ class ObjectVariable extends Variable
 STRING;
 
         // if this is a very simple class, just return the loop and move on.
-        if (0 === $datesCnt && 0 === $objectsCnt)
-        {
-            return $c.<<<STRING
+        if (0 === $datesCnt && 0 === $objectsCnt) {
+            return $c . <<<STRING
         foreach (\$data as \$k => \$v) {
-            \$this->\$k = \$v;
+            \$this->{\$k} = \$v;
         }
     }
 STRING;
@@ -115,10 +106,10 @@ STRING;
         // otherwise, do stuff.
         // TODO: This could stand to be improved.
 
-        foreach($this->getProperties() as $name => $property)
-        {
-            if ($property->isCollection() && $property instanceof ObjectVariable)
+        foreach ($this->getProperties() as $name => $property) {
+            if ($property->isCollection() && $property instanceof ObjectVariable) {
                 $c .= "        \$this->{$name} = [];\n";
+            }
         }
 
 
@@ -126,19 +117,14 @@ STRING;
 
         $first = true;
 
-        foreach($this->getProperties() as $name => $property)
-        {
+        foreach ($this->getProperties() as $name => $property) {
             $name = $property->getName();
 
-            if (in_array($name, $dates, true))
-            {
-                if ($first)
-                {
+            if (in_array($name, $dates, true)) {
+                if ($first) {
                     $c .= '            if ';
                     $first = false;
-                }
-                else
-                {
+                } else {
                     $c .= ' else if ';
                 }
 
@@ -150,20 +136,15 @@ STRING;
 
             }
 
-            if ($property instanceof ObjectVariable)
-            {
-                if ($first)
-                {
+            if ($property instanceof ObjectVariable) {
+                if ($first) {
                     $c .= '            if ';
                     $first = false;
-                }
-                else
-                {
+                } else {
                     $c .= ' else if ';
                 }
 
-                if ($property->isCollection())
-                {
+                if ($property->isCollection()) {
                     $c .= <<<STRING
 ('{$name}' === \$k && is_array(\$v)) {
                 foreach(\$v as \$value) {
@@ -172,9 +153,7 @@ STRING;
             }
 STRING;
 
-                }
-                else
-                {
+                } else {
                     $c .= <<<STRING
 ('{$name}' === \$k && null !== \$v) {
                 \$this->{$name} = new {$property->getClassName()}(\$value);
@@ -187,7 +166,7 @@ STRING;
 
         return $c . <<<STRING
  else {
-                \$this->\$k = \$v;
+                \$this->{\$k} = \$v;
             }
         }
     }
@@ -197,16 +176,14 @@ STRING;
     /**
      * @inheritDoc
      */
-    public function getPHPType()
-    {
+    public function getPHPType() {
         return $this->getFQName();
     }
 
     /**
      * @inheritDoc
      */
-    public function getSwaggerItemsTag()
-    {
+    public function getSwaggerItemsTag() {
         return "     *  @SWG\\Items(ref=\"#/definitions/{$this->getClassName()}\"),";
     }
 }

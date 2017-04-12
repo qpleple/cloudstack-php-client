@@ -29,11 +29,14 @@
  * file that was distributed with this source code.
  */
 
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
+
 /**
- * CloudStackCommand Class
+ * CloudStackCommandAbstract Class
  * @package {% if config.namespace != '' %}\{{ config.namespace }}{% endif %}
  */
-abstract class AbstractCloudStackCommand {
+abstract class CloudStackCommandAbstract {
 
     /** @var CloudStackConfiguration */
     private $configuration;
@@ -63,8 +66,8 @@ abstract class AbstractCloudStackCommand {
     private $compiledQuery = '';
 
     /**
-     * CloudStackCommand Constructor
-     * @var CloudStackConfiguration $configuration
+     * CloudStackCommandAbstract Constructor
+     * @var \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackConfiguration $configuration
      * @var string $command
      * @var array $parameters
      */
@@ -102,10 +105,10 @@ abstract class AbstractCloudStackCommand {
                     $paramStr = $v;
                     break;
                 case 'array':
-                    $paramStr = Helpers::formatCSQueryArray($v, $k);
+                    $paramStr = CloudStackHelpers::formatCSQueryArray($v, $k);
                     break;
                 case 'object':
-                    $paramStr = Helpers::formatCSQueryArray(json_decode(json_encode($v), true), $k);
+                    $paramStr = CloudStackHelpers::formatCSQueryArray(json_decode(json_encode($v), true), $k);
             }
 
             if (!is_string($paramStr)) {
@@ -128,7 +131,7 @@ abstract class AbstractCloudStackCommand {
     }
 
     /**
-     * @return CloudStackConfiguration
+     * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackConfiguration
      */
     public function getConfiguration() {
         return $this->configuration;
@@ -177,6 +180,23 @@ abstract class AbstractCloudStackCommand {
         }
 
         return $this->compiledQuery;
+    }
+
+    /**
+     * @return \GuzzleHttp\Psr7\Request
+     */
+    public function createPsr7Request() {
+        static $headers = ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
+
+        $stream = fopen('php://memory', 'w+');
+        fwrite($stream, $this->getCompiledQuery());
+
+        return new Request(
+            'POST',
+            new Uri(sprintf('%s/%s', $this->configuration->getCompiledAddress(), $this->getPath())),
+            $headers,
+            $stream
+        );
     }
 
     /**

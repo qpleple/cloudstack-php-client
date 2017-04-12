@@ -34,6 +34,7 @@ use Psr\Http\Message\ResponseInterface;
 
 /**
  * CloudStackClient class
+ * @package \{% if config.namespace != '' %}{{ config.namespace }}{% endif %}
  */
 class CloudStackClient {
 
@@ -57,16 +58,16 @@ class CloudStackClient {
 
     /**
      * @param string $vmId
-     * @return Response\AccessVmConsoleProxyResponse
+     * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\AccessVmConsoleProxyResponse
      */
     public function accessVmConsoleProxy($vmId) {
-        $command = new CloudStackConsoleCommand($this->configuration, 'access', ['vm' => $vmId]);
+        $command = new CloudStackCommandConsole($this->configuration, 'access', ['vm' => $vmId]);
 
-        $response = $this->doRequest(new CloudStackRequest($command));
+        $response = $this->doRequest($command->createPsr7Request());
 
         $body = $response->getBody();
 
-        $model = new Response\AccessVmConsoleProxyResponse();
+        $model = new CloudStackResponse\AccessVmConsoleProxyResponse();
         $data = '';
         while (!$body->eof() && $b = $body->read(8192)) {
             $data .= $b;
@@ -80,13 +81,13 @@ class CloudStackClient {
     /**
      * Will wait until either $tries threshold is met or async job completes, successful or otherwise.
      *
-     * @param Response\AsyncJobStartResponse $startResponse
+     * @param \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\AsyncJobStartResponse $startResponse
      * @param int $sleep
      * @param int $tries
      * @return null|object
      * @throws \InvalidArgumentException
      */
-    public function waitForAsync(Response\AsyncJobStartResponse $startResponse, $sleep = 2, $tries = 120) {
+    public function waitForAsync(CloudStackResponse\AsyncJobStartResponse $startResponse, $sleep = 2, $tries = 120) {
         // Some basic validation
         if (!is_int($sleep) || 0 >= $sleep) {
             throw new \InvalidArgumentException(sprintf(
@@ -165,10 +166,7 @@ class CloudStackClient {
             throw new \RuntimeException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
         }
 
-        $data = '';
-        while (!$body->eof() && $b = $body->read(8192)) {
-            $data .= $b;
-        }
+        $data = $body->getContents();
 
         $decoded = @json_decode($data, true);
         if (JSON_ERROR_NONE !== json_last_error()) {

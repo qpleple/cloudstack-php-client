@@ -38,7 +38,7 @@
 {# end optional arguments #}
      * }
 {% endif %}
-     * @return {% if config.namespace != '' %}\{{ config.namespace }}\{% endif %}Response\{% if api.isAsync %}AsyncJobStartResponse{% else %}{{ api.response.className }}{% if api.list %}[]{% endif %}{% endif %}
+     * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\{% if api.isAsync %}AsyncJobStartResponse{% else %}{{ api.response.className }}{% if api.list %}[]{% endif %}{% endif %}
 
      */
     public function {{ api.name }}({# only define required paramaters in function #}
@@ -48,7 +48,7 @@
 {% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
 {# generate required paramater checks #}
 {# end paramater checks #}
-        $command = new CloudStackApiCommand(
+        $command = new CloudStackCommandApi(
             $this->configuration,
             '{{ api.name }}'{% if requiredParamLength == 0 and optionalParamLength == 0 %}
         );{% else %},
@@ -80,16 +80,16 @@
 {% endif %}
 
 {% if api.isAsync %}
-        return new Response\AsyncJobStartResponse(
+        return new CloudStackResponse\AsyncJobStartResponse(
             $this->decodeBody(
-                $this->doRequest(new CloudStackRequest($command)),
+                $this->doRequest($command->createPsr7Request()),
                 '{{ api.name }}'
             ),
             '{{ api.response.FQName|replace({"\\": "\\\\"}) }}'
         );
 {% elseif api.isList %}
         $items = $this->decodeBody(
-            $this->doRequest(new CloudStackRequest($command)),
+            $this->doRequest($command->createPsr7Request()),
             '{{ api.name }}'
         );
         $models = [];
@@ -97,15 +97,15 @@
         if ($items) {
             unset($items['count']);
             foreach(reset($items) as $item) {
-                $models[] = new Response\{{ api.response.className }}($item);
+                $models[] = new CloudStackResponse\{{ api.response.className }}($item);
             }
         }
 
         return $models;
 {% else %}
-        return new Response\{{ api.response.className }}(
+        return new CloudStackResponse\{{ api.response.className }}(
             $this->decodeBody(
-                $this->doRequest(new CloudStackRequest($command)),
+                $this->doRequest($command->createPsr7Request()),
                 '{{ api.name }}'
             )
         );

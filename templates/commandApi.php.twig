@@ -30,9 +30,10 @@ file that was distributed with this source code.
  */
 
 /**
- * Class CloudStackApiCommand
+ * Class ApiCommand
+ * @package {% if config.namespace != '' %}\{{ config.namespace }}{% endif %}
  */
-class CloudStackApiCommand extends AbstractCloudStackCommand {
+class CloudStackCommandApi extends CloudStackCommandAbstract {
     /**
      * @inheritDoc
      */

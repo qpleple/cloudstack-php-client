@@ -60,6 +60,9 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /** @var string */
     protected $consolePath = 'console';
 
+    /** @var string */
+    protected $compiledAddress = '';
+
     /** @var \Http\Client\HttpClient */
     public $HttpClient = null;
 
@@ -136,6 +139,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      */
     public function setScheme($scheme) {
         $this->scheme = $scheme;
+        $this->compiledAddress = '';
         return $this;
     }
 
@@ -152,6 +156,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      */
     public function setHost($host) {
         $this->host = $host;
+        $this->compiledAddress = '';
         return $this;
     }
 
@@ -174,6 +179,8 @@ class CloudStackConfiguration implements LoggerAwareInterface {
             $this->port = $port;
         }
 
+        $this->compiledAddress = '';
+
         return $this;
     }
 
@@ -190,6 +197,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      */
     public function setPathPrefix($pathPrefix) {
         $this->pathPrefix = trim($pathPrefix, " \t\n\r\0\x0B/");
+        $this->compiledAddress = '';
         return $this;
     }
 
@@ -209,7 +217,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
         return $this;
     }
 
-    /*
+    /**
      * @return string
      */
     public function getConsolePath() {
@@ -223,6 +231,23 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     public function setConsolePath($consolePath) {
         $this->consolePath = trim($consolePath, " \t\n\r\0\x0B/");
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCompiledAddress() {
+        if ('' === $this->compiledAddress) {
+            $this->compiledAddress = rtrim(sprintf(
+                '%s://%s%s/%s',
+                $this->getScheme(),
+                $this->getHost(),
+                0 === $this->port ? '' : sprintf(':%d', $this->port),
+                $this->getPathPrefix()
+            ), "/");
+        }
+
+        return $this->compiledAddress;
     }
 
     /**
