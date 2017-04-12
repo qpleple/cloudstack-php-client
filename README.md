@@ -10,8 +10,7 @@ This project was originally forked from the following projects:
 This project combines these two tools into one project.  The code generation is no longer done via scraping of the HTML
  documentation.  We now use the provided ```listApis``` call in the CloudStack API to generate the libraries.
 
-The code generated can is tagged for [phpdoc](https://github.com/phpDocumentor/phpDocumentor2) and there is an included
- `phpdoc.dist.xml` so generating your own library documentation should be quite simple.
+The code generated is tagged for [phpdoc](https://github.com/phpDocumentor/phpDocumentor2).
 
 ## Code Generation
 
@@ -106,23 +105,23 @@ Here is an example of a method generated that has one required (`$id`) and one o
      * @param array  $optArgs {
      *     @type string $forced Force stop the VM (vm is marked as Stopped even when command fails to be send to the backend).  The caller knows the VM is stopped.
      * }
-     * @return Response\AsyncJobStartResponse
+     * @return \ENA\CloudStack\CloudStackResponse\AsyncJobStartResponse
      */
     public function stopVirtualMachine($id, array $optArgs = []) {
-        $command = new CloudStackApiCommand(
+        $command = new CloudStackCommandApi(
             $this->configuration,
             'stopVirtualMachine',
             [
                 'id' => $id,
             ] + $optArgs
         );
-
-        return new Response\AsyncJobStartResponse(
+    
+        return new CloudStackResponse\AsyncJobStartResponse(
             $this->decodeBody(
-                $this->doRequest(new CloudStackRequest($command)),
+                $this->doRequest($command->createPsr7Request()),
                 'stopVirtualMachine'
             ),
-            '\\Response\\StopVirtualMachineResponse'
+            '\\ENA\\CloudStack\\CloudStackResponse\\StopVirtualMachineResponse'
         );
     }
 ```
