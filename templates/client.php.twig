@@ -125,13 +125,11 @@ class CloudStackClient {
                     // check for simple async responses (i.e.: ["success" => true])
                     $first = reset($result->jobresult);
 
-                    // denotes response contains complex object
                     if (is_array($first)) {
                         $result->jobresult = new $class($first);
+                    } else {
+                        $result->jobresult = new $class($result->jobresult);
                     }
-
-                    // denotes response contains simple object
-                    $result->jobresult = new $class($result->jobresult);
                 }
                 return $result;
             }
