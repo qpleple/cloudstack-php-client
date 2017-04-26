@@ -84,7 +84,7 @@ class CloudStackClient {
      * @param \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\AsyncJobStartResponse $startResponse
      * @param int $sleep
      * @param int $tries
-     * @return null|object
+     * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\QueryAsyncJobResultResponse|null
      * @throws \InvalidArgumentException
      */
     public function waitForAsync(CloudStackResponse\AsyncJobStartResponse $startResponse, $sleep = 2, $tries = 120) {
@@ -114,22 +114,26 @@ class CloudStackClient {
             }
 
             if (0 === $result->jobstatus) {
-
                 if (-1 !== $tries && $attempts > $tries) {
                     return null;
                 }
-
                 sleep($sleep);
-
             } else {
-
-                $resultData = $result->jobresult;
-                if (0 < count($resultData)) {
+                if (isset($result->jobresult) && is_array($result->jobresult) && 0 < count($result->jobresult)) {
                     $class = $startResponse->getResponseClassName();
-                    return new $class(reset($resultData));
-                }
 
-                return null;
+                    // check for simple async responses (i.e.: ["success" => true])
+                    $first = reset($result->jobresult);
+
+                    // denotes response contains complex object
+                    if (is_array($first)) {
+                        $result->jobresult = new $class($first);
+                    }
+
+                    // denotes response contains simple object
+                    $result->jobresult = new $class($result->jobresult);
+                }
+                return $result;
             }
         }
 
