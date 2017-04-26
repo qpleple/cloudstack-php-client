@@ -38,7 +38,7 @@ use GuzzleHttp\Psr7\Uri;
  */
 abstract class CloudStackCommandAbstract {
 
-    /** @var CloudStackConfiguration */
+    /** @var \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackConfiguration */
     private $configuration;
 
     /**
@@ -54,13 +54,19 @@ abstract class CloudStackCommandAbstract {
     private $parameters = [];
 
     /**
+     * Tracks whether we need to rebuild compiledParameters or not
+     * @var bool
+     */
+    private $parametersModified = false;
+
+    /**
      * Map of key-sorted parameters with "command" key added
      * @var array
      */
     private $compiledParameters = [];
 
     /**
-     * Ready-to-execute represetation of command
+     * Ready-to-execute representation of command
      * @var string
      */
     private $compiledQuery = '';
@@ -131,6 +137,9 @@ abstract class CloudStackCommandAbstract {
                 $valueType
             ), WRONG_ARGUMENT_TYPE);
         }
+
+        // TODO: This is potentially executed A LOT...find a better way?
+        $this->parametersModified = true;
     }
 
     /**
@@ -161,13 +170,14 @@ abstract class CloudStackCommandAbstract {
      * @return array
      */
     public function getParameters() {
-        if (0 === count($this->compiledParameters)) {
+        if ($this->parametersModified) {
             $this->compiledParameters = [
                 'apikey' => $this->configuration->getApiKey(),
                 $this->getKey() => $this->getCommand(),
                 'response' => 'json',
             ] + $this->parameters;
             ksort($this->compiledParameters);
+            $this->parametersModified = false;
         }
 
         return $this->compiledParameters;
