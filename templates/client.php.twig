@@ -143,7 +143,7 @@ class CloudStackClient {
      * @return \Psr\Http\Message\ResponseInterface
      * @throws \RuntimeException
      */
-    protected function doRequest(RequestInterface $req)
+    public function doRequest(RequestInterface $req)
     {
         $resp = $this->configuration->HttpClient->sendRequest($req);
 
@@ -160,7 +160,7 @@ class CloudStackClient {
      * @return array
      * @throws \RuntimeException
      */
-    protected function decodeBody(ResponseInterface $resp, $command)
+    public function decodeBody(ResponseInterface $resp, $command)
     {
         $body = $resp->getBody();
 
