@@ -308,6 +308,13 @@ class CloudStackConfiguration implements LoggerAwareInterface {
         if ('' === $this->secretKey)
             throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
     }
+
+    /**
+     * @return \Psr\Log\LoggerInterface|\Psr\Log\NullLogger
+     */
+    public function getLogger() {
+        return $this->logger;
+    }
 }
 
 {% endautoescape %}
