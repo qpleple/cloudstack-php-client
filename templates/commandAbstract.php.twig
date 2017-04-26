@@ -84,50 +84,53 @@ abstract class CloudStackCommandAbstract {
             throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, 'command', 'non-empty string', ''), WRONG_ARGUMENT_TYPE);
         }
 
-        $params = [];
         foreach($parameters as $k => $v) {
-            // if we see a null value, just move on.
-            if (null === $v) {
-                continue;
-            }
+            $this->setParameter($k, $v);
+        }
+    }
 
-            // otherwise, attempt to "stringify" it.
-            $paramStr = null;
-            switch(gettype($v)) {
-                case 'boolean':
-                    $paramStr = $v ? 'true' : 'false';
-                    break;
-                case 'integer':
-                case 'double':
-                    $paramStr = strval($v);
-                    break;
-                case 'string':
-                    $paramStr = $v;
-                    break;
-                case 'array':
-                    $paramStr = CloudStackHelpers::formatCSQueryArray($v, $k);
-                    break;
-                case 'object':
-                    $paramStr = CloudStackHelpers::formatCSQueryArray(json_decode(json_encode($v), true), $k);
-            }
-
-            if (!is_string($paramStr)) {
-                throw new \InvalidArgumentException(sprintf(
-                        WRONG_ARGUMENT_TYPE_MSG,
-                        $k,
-                        'scalar type, array, or \\stdClass object',
-                        gettype($v)
-                ), WRONG_ARGUMENT_TYPE);
-            }
-
-            if ('' === $paramStr) {
-                continue;
-            }
-
-            $params[strtolower($k)] = $paramStr;
+    /**
+     * Set a parameter on this command
+     *
+     * @param string $param
+     * @param mixed $value
+     * @throws \InvalidArgumentException
+     */
+    public function setParameter($param, $value) {
+        // if we see a null or empty string value, move on...
+        if (null === $value) {
+            return;
         }
 
-        $this->parameters = $params;
+        $param = str_replace(["\n", "\r", ' ', "\t", "\0", "\x0B"], '', strtolower($param));
+        if ('' === $param) {
+            throw new \InvalidArgumentException(sprintf(WRONG_ARGUMENT_TYPE_MSG, 'param', 'non-empty string', ''), WRONG_ARGUMENT_TYPE);
+        }
+
+        $valueType = gettype($value);
+
+        if ('array' === $valueType) {
+            foreach(CloudStackHelpers::formatCSQueryArray($value, $param) as $k => $v) {
+                $this->setParameter($k, $v);
+            }
+        } else if ('object' === $valueType) {
+            foreach(CloudStackHelpers::formatCSQueryArray(json_decode(json_encode($value), true), $param) as $k => $v) {
+                $this->setParameter($k, $v);
+            }
+        } else if ('string' === $valueType) {
+            $this->parameters[$param] = $value;
+        } else if ('integer' === $valueType || 'double' === $valueType) {
+            $this->parameters[$param] = (string)$value;
+        } else if ('boolean' === $valueType) {
+            $this->parameters[$param] = $value ? 'true' : 'false';
+        } else {
+            throw new \InvalidArgumentException(sprintf(
+                WRONG_ARGUMENT_TYPE_MSG,
+                $param,
+                'scalar type, array, or \\stdClass object',
+                $valueType
+            ), WRONG_ARGUMENT_TYPE);
+        }
     }
 
     /**
