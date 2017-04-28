@@ -138,8 +138,10 @@ abstract class CloudStackCommandAbstract {
             ), WRONG_ARGUMENT_TYPE);
         }
 
-        // TODO: This is potentially executed A LOT...find a better way?
-        $this->parametersModified = true;
+        if (!$this->parametersModified) {
+            $this->compiledQuery = '';
+            $this->parametersModified = true;
+        }
     }
 
     /**
@@ -188,8 +190,12 @@ abstract class CloudStackCommandAbstract {
      */
     public function getCompiledQuery() {
         if ('' === $this->compiledQuery) {
-            $query = http_build_query($this->getParameters(), '', '&', PHP_QUERY_RFC3986);
-            $this->compiledQuery = sprintf('%s&signature=%s', $query, $this->configuration->buildSignature($query));
+            $query = http_build_query($this->getParameters());
+            $this->compiledQuery = sprintf(
+                '%s&signature=%s',
+                $this->encodeQueryForRequest($query),
+                $this->configuration->buildSignature($this->encodeQueryForSignature($query))
+            );
         }
 
         return $this->compiledQuery;
@@ -217,6 +223,28 @@ abstract class CloudStackCommandAbstract {
      */
     public function __toString() {
         return $this->getCompiledQuery();
+    }
+
+    /**
+     * @param string $query
+     * @return string
+     */
+    private function encodeQueryForRequest($query) {
+        static $search = ['+'];
+        static $replace = ['%20'];
+
+        return str_replace($search, $replace, $query);
+    }
+
+    /**
+     * @param string $query
+     * @return string
+     */
+    private function encodeQueryForSignature($query) {
+        static $search = ['+', '%5B', '%5D'];
+        static $replace = ['%20', '[', ']'];
+
+        return str_replace($search, $replace, $query);
     }
 }
 {% endautoescape %}
