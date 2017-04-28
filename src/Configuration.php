@@ -301,12 +301,11 @@ class Configuration implements LoggerAwareInterface {
     }
 
     protected function postConstructValidation() {
-        static $knownClients = array(
+        static $knownClients = [
             '\\Http\\Client\\Curl\\Client',
             '\\Http\\Adapter\\Guzzle6\\Client',
-            '\\Http\\Adapter\\Guzzle5\\Client',
             '\\Http\\Adapter\\Buzz\\Client'
-        );
+        ];
 
         if (null === $this->HttpClient) {
             foreach ($knownClients as $clientClass) {

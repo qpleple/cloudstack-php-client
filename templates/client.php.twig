@@ -29,7 +29,8 @@
  * file that was distributed with this source code.
  */
 
-use Psr\Http\Message\RequestInterface;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -61,9 +62,7 @@ class CloudStackClient {
      * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\AccessVmConsoleProxyResponse
      */
     public function accessVmConsoleProxy($vmId) {
-        $command = new CloudStackCommandConsole($this->configuration, 'access', ['vm' => $vmId]);
-
-        $response = $this->doRequest($command->createPsr7Request());
+        $response = $this->doRequest(new CloudStackRequest\AccessVmConsoleProxyRequest($vmId), false);
 
         $body = $response->getBody();
 
@@ -139,19 +138,67 @@ class CloudStackClient {
     }
 
     /**
-     * @param \Psr\Http\Message\RequestInterface $req
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \RuntimeException
+     * Execute Request against CloudStack
+     * @param \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest\CloudStackRequestInterface
+     * @param bool $decode
+     * @return mixed
      */
-    protected function doRequest(RequestInterface $req)
-    {
-        $resp = $this->configuration->HttpClient->sendRequest($req);
+    public function doRequest(CloudStackRequest\CloudStackRequestInterface $request, $decode = true) {
+        $resp = $this->configuration->HttpClient->sendRequest($this->createPsr7Request($request));
 
         if (200 !== $resp->getStatusCode()) {
             throw new \RuntimeException(sprintf('Received non-200 response: %d %s', $resp->getStatusCode(), $resp->getReasonPhrase()), NO_VALID_JSON_RECEIVED);
         }
 
+        if ($decode) {
+            $responseModel = $request->getCloudStackResponseModel();
+
+            $decoded = $this->decodeBody($resp, $request->getCloudStackCommandName());
+
+            if ($request instanceof CloudStackRequest\CloudStackAsynchronousRequest) {
+                return new CloudStackResponse\AsyncJobStartResponse($decoded, $responseModel);
+            }
+
+            if ($request instanceof CloudStackRequest\CloudStackListRequest) {
+                $ret = [];
+                if ($decoded) {
+                    unset($decoded['count']);
+                    foreach(reset($decoded) as $item) {
+                        $ret[] = new $responseModel($item);
+                    }
+                }
+                return $ret;
+            }
+            return new $responseModel($decoded);
+        }
+
         return $resp;
+    }
+
+    /**
+     * @param \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest\CloudStackRequestInterface $request
+     * @return \GuzzleHttp\Psr7\Request
+     */
+    protected function createPsr7Request(CloudStackRequest\CloudStackRequestInterface $request) {
+        static $headers = ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
+
+        $stream = fopen('php://memory', 'w+');
+        fwrite($stream, $this->compileQuery($request));
+
+        if ($request instanceof CloudStackRequest\CloudStackApiCommandRequest) {
+            $path = $this->configuration->getApiPath();
+        } else if ($request instanceof CloudStackRequest\CloudStackConsoleCommandRequest) {
+            $path = $this->configuration->getConsolePath();
+        } else {
+            throw new \DomainException('Unable to determine if request is an API or Console request. Please implement the appropriate interface.');
+        }
+
+        return new Request(
+            'POST',
+            new Uri(sprintf('%s/%s', $this->configuration->getCompiledAddress(), $path)),
+            $headers,
+            $stream
+        );
     }
 
     /**
@@ -219,6 +266,97 @@ class CloudStackClient {
         }
 
         return $responseData;
+    }
+
+    /**
+     * @param \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest\CloudStackRequestInterface $request
+     * @return array
+     */
+    protected function compileParameters(CloudStackRequest\CloudStackRequestInterface $request) {
+        $params = [];
+        foreach($request->jsonSerialize() as $param => $value) {
+            $this->stringifyParameter($params, $param, $value);
+        }
+
+        $compiledParams  = [
+            'apikey' => $this->configuration->getApiKey(),
+            $request->getCloudStackCommandParameter() => $request->getCloudStackCommandName(),
+            'response' => 'json',
+        ] + $params;
+
+        ksort($compiledParams, SORT_STRING);
+
+        return $compiledParams;
+    }
+
+    /**
+     * Try and get an allowable value from a parameter
+     * @param array $params
+     * @param string $param
+     * @param mixed $value
+     */
+    protected function stringifyParameter(array &$params, $param, $value) {
+        $valueType = gettype($value);
+
+        if ('array' === $valueType) {
+            foreach(CloudStackHelpers::formatCSQueryArray($value, $param) as $k => $v) {
+                $this->stringifyParameter($params, $k, $v);
+            }
+        } else if ('object' === $valueType) {
+            foreach(CloudStackHelpers::formatCSQueryArray(json_decode(json_encode($value), true), $param) as $k => $v) {
+                $this->stringifyParameter($params, $k, $v);
+            }
+        } else if ('string' === $valueType) {
+            $params[$param] = $value;
+        } else if ('integer' === $valueType || 'double' === $valueType) {
+            $params[$param] = (string)$value;
+        } else if ('boolean' === $valueType) {
+            $params[$param] = $value ? 'true' : 'false';
+        } else {
+            throw new \InvalidArgumentException(sprintf(
+                WRONG_ARGUMENT_TYPE_MSG,
+                $param,
+                'scalar type, array, or \\stdClass object',
+                $valueType
+            ), WRONG_ARGUMENT_TYPE);
+        }
+    }
+
+    /**
+     * @param \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest\CloudStackRequestInterface $request
+     * @return string
+     */
+    protected function compileQuery(CloudStackRequest\CloudStackRequestInterface $request) {
+        $query = http_build_query($this->compileParameters($request));
+        $compiledQuery = sprintf(
+            '%s&signature=%s',
+            $this->encodeQueryForRequest($query),
+            $this->configuration->buildSignature($this->encodeQueryForSignature($query))
+        );
+
+        return $compiledQuery;
+    }
+
+    /**
+     * @param string $query
+     * @return string
+     */
+    protected function encodeQueryForRequest($query) {
+        static $search = ['+'];
+        static $replace = ['%20'];
+
+        return str_replace($search, $replace, $query);
+    }
+
+    /**
+     * @param string $query
+     * @return string
+     */
+    protected function encodeQueryForSignature($query) {
+        static $search = ['+', '%5B', '%5D'];
+        static $replace = ['%20', '[', ']'];
+
+        return str_replace($search, $replace, $query);
     }
 }
 {% endautoescape %}

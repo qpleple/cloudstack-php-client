@@ -72,14 +72,14 @@ class API {
     }
 
     /**
-     * @return \string[]
+     * @return string[]
      */
     public function getRelated() {
         return $this->related;
     }
 
     /**
-     * @param \string[] $related
+     * @param string[] $related
      */
     public function setRelated(array $related) {
         $this->related = $related;
@@ -107,6 +107,18 @@ class API {
     }
 
     /**
+     * @param int $offset
+     * @return string
+     */
+    public function getSinceTag($offset = 4) {
+        if ('0.0' === $this->since) {
+            return '';
+        }
+
+        return sprintf("%s * @since %s\n", str_repeat(' ', $offset), $this->since);
+    }
+
+    /**
      * @return VariableContainer
      */
     public function getParameters() {
@@ -121,7 +133,7 @@ class API {
     }
 
     /**
-     * @param ObjectVariable $response
+     * @param \MyENA\CloudStackClientGenerator\API\ObjectVariable $response
      */
     public function setResponse(ObjectVariable $response) {
         $this->response = $response;
@@ -132,5 +144,12 @@ class API {
      */
     public function isList() {
         return 0 === strpos($this->getName(), 'list');
+    }
+
+    /**
+     * @return string
+     */
+    public function getRequestClassName() {
+        return sprintf('%sRequest', ucfirst($this->getName()));
     }
 }
