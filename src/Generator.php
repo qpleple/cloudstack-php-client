@@ -17,6 +17,9 @@ class Generator {
     /** @var \Twig_Environment */
     protected $twig;
 
+    /** @var \stdClass */
+    protected $capabilities;
+
     /** @var API[] */
     protected $apis = [];
 
@@ -25,12 +28,17 @@ class Generator {
 
     /** @var string */
     protected $srcDir;
+
     /** @var string */
     protected $filesDir;
+
     /** @var string */
     protected $responseDir;
     /** @var string */
-    protected $typesDir;
+    protected $responseTypesDir;
+
+    /** @var string */
+    protected $requestDir;
 
     /**
      * Generator constructor.
@@ -69,9 +77,14 @@ class Generator {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseDir));
         }
 
-        $this->typesDir = sprintf('%s/Types', $this->responseDir);
-        if (!is_dir($this->typesDir) && false === (bool)mkdir($this->typesDir)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->typesDir));
+        $this->responseTypesDir = sprintf('%s/Types', $this->responseDir);
+        if (!is_dir($this->responseTypesDir) && false === (bool)mkdir($this->responseTypesDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseTypesDir));
+        }
+
+        $this->requestDir = sprintf('%s/CloudStackRequest', $this->srcDir);
+        if (!is_dir($this->requestDir)&& false === (bool)mkdir($this->requestDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->requestDir));
         }
     }
 
@@ -79,15 +92,16 @@ class Generator {
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
 
-        $capabilities = $this->fetchCapabilities();
+        $this->writeOutStaticTemplates();
+        $this->writeOutClient();
 
-        $this->writeOutStaticTemplates($capabilities);
-        $this->writeOutClient($capabilities);
-        $this->writeOutResponseModels($capabilities);
+        $this->writeOutRequestModels();
+        $this->writeOutSharedResponseModels();
+        $this->writeOutResponseModels();
     }
 
-    protected function writeOutStaticTemplates(\stdClass $capabilities) {
-        $args = ['config' => $this->configuration, 'capabilities' => $capabilities];
+    protected function writeOutStaticTemplates() {
+        $args = ['config' => $this->configuration, 'capabilities' => $this->getCapabilities()];
 
         file_put_contents(
             $this->configuration->getOutputDir() . '/LICENSE',
@@ -111,67 +125,66 @@ class Generator {
 
         file_put_contents(
             $this->responseDir . '/AsyncJobStartResponse.php',
-            $this->twig->load('responseAsyncJobStart.php.twig')->render($args)
+            $this->twig->load('responses/asyncJobStart.php.twig')->render($args)
         );
 
         file_put_contents(
             $this->responseDir . '/AccessVmConsoleProxyResponse.php',
-            $this->twig->load('responseAccessVmConsoleProxy.twig')->render($args)
+            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render($args)
         );
 
         file_put_contents(
-            $this->srcDir . '/CloudStackCommandAbstract.php',
-            $this->twig->load('commandAbstract.php.twig')->render($args)
-        );
-
-        file_put_contents(
-            $this->srcDir . '/CloudStackCommandApi.php',
-            $this->twig->load('commandApi.php.twig')->render($args)
-        );
-
-        file_put_contents(
-            $this->srcDir . '/CloudStackCommandConsole.php',
-            $this->twig->load('commandConsole.php.twig')->render($args)
-        );
-
-        file_put_contents(
-            $this->typesDir . '/DateType.php',
-            $this->twig->load('dateType.php.twig')->render($args)
+            $this->responseTypesDir . '/DateType.php',
+            $this->twig->load('responses/dateType.php.twig')->render($args)
         );
 
         file_put_contents(
             $this->srcDir . '/CloudStackHelpers.php',
             $this->twig->load('helpers.php.twig')->render($args)
         );
+
+        file_put_contents(
+            $this->requestDir.'/CloudStackRequestInterfaces.php',
+            $this->twig->load('requests/interfaces.php.twig')->render($args)
+        );
+
+        file_put_contents(
+            $this->requestDir.'/AccessVmConsoleProxyRequest.php',
+            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render($args)
+        );
     }
 
-    protected function writeOutClient(\stdClass $capabilities) {
+    protected function writeOutClient() {
         file_put_contents(
             $this->srcDir . '/CloudStackClient.php',
             $this->twig->load('client.php.twig')->render([
                 'config' => $this->configuration,
-                'capabilities' => $capabilities,
+                'capabilities' => $this->getCapabilities(),
                 'apis' => $this->apis,
             ])
         );
     }
 
-    protected function writeOutResponseModels(\stdClass $capabilities) {
-        $template = $this->twig->load('responseObject.php.twig');
+    protected function writeOutRequestModels() {
+        $capabilities = $this->getCapabilities();
+        $template = $this->twig->load('requests/model.php.twig');
 
-        foreach ($this->apis as $name => $api) {
-            $response = $api->getResponse();
-            $className = $response->getClassName();
-
+        foreach($this->apis as $api) {
+            $className = $api->getRequestClassName();
             file_put_contents(
-                $this->responseDir . '/' . $className . '.php',
+                $this->requestDir . '/' .$className . '.php',
                 $template->render([
-                    'obj' => $response,
+                    'api' => $api,
                     'config' => $this->configuration,
                     'capabilities' => $capabilities,
                 ])
             );
         }
+    }
+
+    protected function writeOutSharedResponseModels() {
+        $capabilities = $this->getCapabilities();
+        $template = $this->twig->load('responses/model.php.twig');
 
         foreach ($this->sharedObjectMap as $name => $class) {
             $class->getProperties()->nameSort();
@@ -188,11 +201,31 @@ class Generator {
         }
     }
 
+    protected function writeOutResponseModels() {
+        $capabilities = $this->getCapabilities();
+        $template = $this->twig->load('responses/model.php.twig');
+
+        foreach ($this->apis as $name => $api) {
+            $response = $api->getResponse();
+            $className = $response->getClassName();
+
+            file_put_contents(
+                $this->responseDir . '/' . $className . '.php',
+                $template->render([
+                    'obj' => $response,
+                    'config' => $this->configuration,
+                    'capabilities' => $capabilities,
+                ])
+            );
+        }
+    }
+
     /**
      * @param \stdClass $def
      * @return \MyENA\CloudStackClientGenerator\API\Variable
      */
     protected function buildVariable(\stdClass $def) {
+
         if (!isset($def->name)) {
             return null;
         }
@@ -283,7 +316,7 @@ class Generator {
 
         foreach ($response as $prop) {
             if (isset($prop->response)) {
-                $var = $this->buildSharedObject($prop);
+                $var = $this->buildSharedResponseObject($prop);
             } else {
                 $var = $this->buildVariable($prop);
             }
@@ -304,7 +337,7 @@ class Generator {
      * @param \stdClass $def
      * @return \MyENA\CloudStackClientGenerator\API\ObjectVariable
      */
-    protected function buildSharedObject(\stdClass $def) {
+    protected function buildSharedResponseObject(\stdClass $def) {
         $name = trim($def->name);
 
         if (isset($this->sharedObjectMap[$name])) {
@@ -324,6 +357,19 @@ class Generator {
         $this->sharedObjectMap[$obj->getName()] = $obj;
 
         return $obj;
+    }
+
+    /**
+     * @return \stdClass
+     */
+    protected function getCapabilities() {
+        if (!isset($this->capabilities)) {
+            $cmd = new Command($this->configuration, 'listCapabilities');
+            $data = $this->doRequest($cmd->createPsr7Request());
+            $this->capabilities = $data->listcapabilitiesresponse;
+        }
+
+        return $this->capabilities;
     }
 
     protected function compileAPIs() {
@@ -351,17 +397,6 @@ class Generator {
 
             $this->apis[$api->getName()] = $api;
         }
-    }
-
-    /**
-     * @return \stdClass
-     */
-    protected function fetchCapabilities() {
-        $cmd = new Command($this->configuration, 'listCapabilities');
-
-        $data = $this->doRequest($cmd->createPsr7Request());
-
-        return $data->listcapabilitiesresponse;
     }
 
     /**

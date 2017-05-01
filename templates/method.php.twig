@@ -26,11 +26,11 @@
      *
 {# document all required paramaters #}
 {% for param in requiredParams %}
-     * @param string ${{ param.name }} {{ param.description|raw|ucfirst }}
+     * @param {{ param.PHPTypeTagValue }} ${{ param.name }} {{ param.description|raw|ucfirst }}
 {% endfor %}
 {# end required paramaters #}
 {% if optionalParamLength > 0 %}
-     * @param array  $optArgs {
+     * @param array $optArgs {
 {# document all optional paramaters #}
 {% for param in optionalParams %}
      *     @type string ${{ param.name }} {{ param.description|raw|ucfirst }}
@@ -46,69 +46,11 @@
 {# end required #}
 {# append optional arguments if needed #}
 {% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
-{# generate required paramater checks #}
-{# end paramater checks #}
-        $command = new CloudStackCommandApi(
-            $this->configuration,
-            '{{ api.name }}'{% if requiredParamLength == 0 and optionalParamLength == 0 %}
-        );{% else %},
-{% if requiredParamLength > 0 and optionalParamLength > 0 %}
-    {# generate return array merge of required and optional paramaters #}
-        [{% elseif requiredParamLength > 0 %}
-    {# no merge ... just a simple array #}
-        [{% elseif optionalParamLength > 0 %}
-    {# no merge ... no array ... only optional arguments here #}
-        $optArgs{% endif %}
-{% endif %}
+        return $this->doRequest(new CloudStackRequest\{{ api.requestClassName }}({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}
+            ${{ param.name }}{% endfor %}{% if 0 < optionalParamLength %}{% if 0 < requiredParamLength %},{% endif %}
 
-{% set count = 1 %}
-{% for param in requiredParams %}
-                '{{ param.name }}' => ${{ param.name }}{# determine line ending based on count #}
-{% if loop.index0 < requiredParamLength %},
-{% endif %}
-{% endfor %}
-{% if requiredParamLength > 0 and optionalParamLength > 0 %}
-{# generate return array merge of required and optional paramaters #}
-            ] + $optArgs
-        );
-{% elseif requiredParamLength > 0 %}
-{# no merge ... just close array #}
-            ]
-        );
-{% elseif optionalParamLength > 0 %}
-        );
-{% endif %}
+            $optArgs{% endif %}
 
-{% if api.isAsync %}
-        return new CloudStackResponse\AsyncJobStartResponse(
-            $this->decodeBody(
-                $this->doRequest($command->createPsr7Request()),
-                '{{ api.name }}'
-            ),
-            '{{ api.response.FQName|replace({"\\": "\\\\"}) }}'
-        );
-{% elseif api.isList %}
-        $items = $this->decodeBody(
-            $this->doRequest($command->createPsr7Request()),
-            '{{ api.name }}'
-        );
-        $models = [];
-
-        if ($items) {
-            unset($items['count']);
-            foreach(reset($items) as $item) {
-                $models[] = new CloudStackResponse\{{ api.response.className }}($item);
-            }
-        }
-
-        return $models;
-{% else %}
-        return new CloudStackResponse\{{ api.response.className }}(
-            $this->decodeBody(
-                $this->doRequest($command->createPsr7Request()),
-                '{{ api.name }}'
-            )
-        );
-{% endif %}
+        ));
     }
 {% endautoescape %}

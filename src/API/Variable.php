@@ -20,6 +20,9 @@ class Variable {
     /** @var string[] */
     private $related = [];
 
+    /** @var string */
+    private $phpdocDescription;
+
     /**
      * @return string
      */
@@ -45,6 +48,7 @@ class Variable {
      * @param string $description
      */
     public function setDescription($description) {
+        unset($this->phpdocDescription);
         $this->description = $description;
     }
 
@@ -91,6 +95,18 @@ class Variable {
     }
 
     /**
+     * @param int $offset
+     * @return string
+     */
+    public function getRequiredTag($offset = 4) {
+        if ($this->required) {
+            return sprintf("%s * @required\n", str_repeat(' ', $offset));
+        }
+
+        return sprintf("%s * @optional\n", str_repeat(' ', $offset));
+    }
+
+    /**
      * @return string
      */
     public function getSince() {
@@ -105,6 +121,18 @@ class Variable {
     }
 
     /**
+     * @param int $offset
+     * @return string
+     */
+    public function getSinceTag($offset = 4) {
+        if ('0.0' === $this->since) {
+            return '';
+        }
+
+        return sprintf("%s * @since %s\n", str_repeat(' ', $offset), $this->since);
+    }
+
+    /**
      * @return bool
      */
     public function isCollection() {
@@ -114,14 +142,14 @@ class Variable {
     }
 
     /**
-     * @return \string[]
+     * @return string[]
      */
     public function getRelated() {
         return $this->related;
     }
 
     /**
-     * @param \string[] $related
+     * @param string[] $related
      */
     public function setRelated(array $related) {
         $this->related = $related;
@@ -138,7 +166,8 @@ class Variable {
      * @return string
      */
     public function getPHPType() {
-        switch (($type = $this->getType())) {
+        $type = $this->getType();
+        switch ($type) {
 
             case 'set':
             case 'list':
@@ -156,7 +185,10 @@ class Variable {
                 return 'integer';
 
             case 'date':
-                return '\\DateTime';
+            case 'tzdate':
+                return '\\DateTime|string';
+
+            case 'object': // TODO: This one might be overly greedy, currently matches "baremetalrcturl"
 
             case 'imageformat':
             case 'storagepoolstatus':
@@ -169,6 +201,11 @@ class Variable {
             case 'uuid':
                 return 'string';
 
+            // Catch these here so we can analyze outliers easier...
+            case 'string':
+            case 'boolean':
+                return $type;
+
             default:
                 return $type;
         }
@@ -177,9 +214,32 @@ class Variable {
     /**
      * @return string
      */
-    public function getPropertyDocBloc() {
-        $bloc = <<<STRING
+    public function getPHPDocDescription() {
+        if (!isset($this->phpdocDescription)) {
+            $this->phpdocDescription = implode(
+                "\n",
+                array_map(function($v) { return "     * {$v}"; },
+                    explode("\n",
+                        wordwrap($this->getDescription(), 100)
+                    )
+                )
+            );
+        }
+
+        return $this->phpdocDescription;
+    }
+
     /**
+     * @return string
+     */
+    public function getPropertyDocBloc() {
+        $bloc = "    /**\n";
+        $bloc .= "{$this->getPHPDocDescription()}\n";
+        $bloc .= "     * @var {$this->getPHPTypeTagValue()}\n";
+        $bloc .= $this->getSinceTag();
+        $bloc .= $this->getRequiredTag();
+
+        $bloc .= <<<STRING
      * @SWG\Property(
      *  type="{$this->getPHPType()}",
 STRING;
@@ -192,14 +252,9 @@ STRING;
 
      *  description="{$this->getDescription()}"
      * )
-     * @var {$this->getPHPTypeTagValue()}
      */
 STRING;
 
-    }
-
-    public function getParameterDocBloc() {
-        return '';
     }
 
     /***
@@ -216,10 +271,17 @@ STRING;
     public function getPHPTypeTagValue() {
         $tag = $this->getPHPType();
 
-        if ($this->isCollection()) {
+        if ('array' !== $tag && $this->isCollection()) {
             $tag .= '[]';
         }
 
         return $tag;
+    }
+
+    /**
+     * @return string
+     */
+    public function getValidityCheck() {
+        // TODO: needs implementing
     }
 }

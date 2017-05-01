@@ -37,14 +37,14 @@
 class AsyncJobStartResponse {
 
     /**
-     * @SWG\Property(type="string")
      * @var string
+     * @SWG\Property(type="string")
      */
     public $id;
 
     /**
-     * @SWG\Property(type="string", description="Async Job ID")
      * @var string
+     * @SWG\Property(type="string", description="Async Job ID")
      */
     public $jobid;
 
@@ -57,6 +57,7 @@ class AsyncJobStartResponse {
     /**
      * AsyncJobStartResponse Constructor
      * @param array $data
+     * @param string $responseClassName
      */
     public function __construct(array $data, $responseClassName) {
         if (isset($data['id']) && is_string($data['id'])) {
