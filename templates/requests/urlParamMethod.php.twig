@@ -33,6 +33,10 @@
                 $a[sprintf('{{ param.name }}[%d].group', $i)] = $v;
                 $i++;
             }
+{% elseif 'assignToLoadBalancerRule' == api.name and 'vmidipmap' == param.name %}
+            foreach(\{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackHelpers::formatCSQueryArray($this->{{ param.name }}, '{{ param.name }}') as $k => $v) {
+                $a[$k] = $v;
+            }
 {% elseif 'deployVirtualMachine' == api.name and 'details' == param.name %}
             foreach(\{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackHelpers::formatCSQueryArray($this->{{ param.name }}, '{{ param.name }}') as $k => $v) {
                 $a[$k] = $v;
