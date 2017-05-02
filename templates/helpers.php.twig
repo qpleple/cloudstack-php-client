@@ -40,7 +40,7 @@ abstract class CloudStackHelpers {
      * @return array
      */
     public static function formatCSQueryArray(array $data, $name) {
-        freturn static::formatCSQueryArrayHelper($data, $name, "", 0);
+        return static::formatCSQueryArrayHelper($data, $name, "", 0);
     }
 
     protected static function formatCSQueryArrayHelper(array $data, $name, $prefix, $ind) {

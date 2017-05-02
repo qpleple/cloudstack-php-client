@@ -98,6 +98,17 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
     /**
      * @return array
      */
+    public function toUrlParams() {
+        $a = [];
+        if (isset($this->vm)) {
+            $a['vm'] = $this->vm;
+        }
+        return $a;
+    }
+
+    /**
+     * @return array
+     */
     public function jsonSerialize() {
         $a = [];
         if (isset($this->vm)) {
