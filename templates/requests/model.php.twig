@@ -35,8 +35,6 @@
  * file that was distributed with this source code.
  */
 
-use {% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackHelpers;
-
 /**
  * Class {{ api.requestClassname }}
 {{ api.sinceTag(0) }} * @package \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest
@@ -93,7 +91,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         }
 
 {% endfor %}
-        $n = new static({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}
+        $n = new static({% for param in requiredParams %}{{ loop.index0 > 0 ? ',' : '' }}
             ${{ param.name }}{% endfor %}{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %},
 {% endif %}
             $data{% endif %}
