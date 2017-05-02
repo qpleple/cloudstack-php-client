@@ -117,7 +117,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * @return $this
      */
     public function set{{ prop.name|capitalize }}(${{ prop.name }}) {
-{% if 'tags' == prop.name %}
+{% if 'tags' == prop.name and 'array' == prop.phpType %}
         foreach(${{ prop.name }} as $k => $v) {
             $this->addTag($k, $v);
         }
@@ -127,9 +127,9 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         return $this;
     }
 
-{% if 'tags' == prop.name %}
+{% if 'tags' == prop.name and 'array' == prop.phpType %}
     /**
-     * @param string $value
+     * @param string $key
      * @param string $value
      * @return $this
      */
