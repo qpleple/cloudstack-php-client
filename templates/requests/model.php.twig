@@ -62,7 +62,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * }
 {% endif %}
      */
-    public function __construct ({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}${{ param.name }}{% endfor %}
+    public function __construct ({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}{% if 'array' == prop.phpType %}array {% endif %}${{ param.name }}{% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
 {% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
@@ -91,7 +91,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         }
 
 {% endfor %}
-        $n = new static({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}
+        $n = new static({% for param in requiredParams %}{{ loop.index0 > 0 ? ',' : '' }}
             ${{ param.name }}{% endfor %}{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %},
 {% endif %}
             $data{% endif %}
@@ -116,28 +116,11 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * @param {{ prop.phpTypeTagValue }} ${{ prop.name }}
      * @return $this
      */
-    public function set{{ prop.name|capitalize }}(${{ prop.name }}) {
-{% if 'tags' == prop.name and 'array' == prop.phpType %}
-        foreach(${{ prop.name }} as $k => $v) {
-            $this->addTag($k, $v);
-        }
-{% else %}
+    public function set{{ prop.name|capitalize }}({% if 'array' == prop.phpType %}array {% endif %}${{ prop.name }}) {
         $this->{{ prop.name }} = ${{ prop.name }};
-{% endif %}
         return $this;
     }
 
-{% if 'tags' == prop.name and 'array' == prop.phpType %}
-    /**
-     * @param string $key
-     * @param string $value
-     * @return $this
-     */
-    public function addTag($key, $value) {
-        $this->tags[] = ['key' => $key, 'value' => $value];
-        return $this;
-    }
-{% endif %}
 {% endfor %}
     /**
      * @return string
@@ -170,6 +153,8 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         return isset($this->{{ requiredParams|keys|join(")\n            && isset($this->") }});{% endif %}
 
     }
+
+{% include 'requests/urlParamMethod.php.twig' with {'api': api, 'config': config} %}
 
     /**
      * @return array

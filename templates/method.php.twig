@@ -42,7 +42,7 @@
 
      */
     public function {{ api.name }}({# only define required paramaters in function #}
-{% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}${{ param.name }}{% endfor %}
+{% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}{% if 'array' == param.phpType %}array {% endif %}${{ param.name }}{% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
 {% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
