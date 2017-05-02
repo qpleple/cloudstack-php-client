@@ -116,10 +116,28 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * @param {{ prop.phpTypeTagValue }} ${{ prop.name }}
      * @return $this
      */
-    public function set{{ prop.name|capitalize }}(${{ prop.name }}) {
+    public function set{{ prop.name|capitalize }}({% if 'array' == prop.phpType %}array {% endif %}${{ prop.name }}) {
+{% if 'tags' == prop.name %}
+        foreach(${{ prop.name }} as $k => $v) {
+            $this->addTag($k, $v);
+        }
+{% else %}
         $this->{{ prop.name }} = ${{ prop.name }};
+{% endif %}
         return $this;
     }
+
+{% if 'tags' == prop.name %}
+    /**
+     * @param string $value
+     * @param string $value
+     * @return $this
+     */
+    public function addTag($key, $value) {
+        $this->tags[] = ['key' => $key, 'value' => $value];
+        return $this;
+    }
+{% endif %}
 {% endfor %}
     /**
      * @return string

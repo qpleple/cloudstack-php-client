@@ -40,6 +40,10 @@ abstract class CloudStackHelpers {
      * @return array
      */
     public static function formatCSQueryArray(array $data, $name) {
+        // We only want to mess with maps here...
+        if (is_int(key($data))) {
+            return implode(',', $data);
+        }
         return static::formatCSQueryArrayHelper($data, $name, "", 0);
     }
 

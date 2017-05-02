@@ -147,7 +147,14 @@ class CloudStackClient {
         $resp = $this->configuration->HttpClient->sendRequest($this->createPsr7Request($request));
 
         if (200 !== $resp->getStatusCode()) {
-            throw new \RuntimeException(sprintf('Received non-200 response: %d %s', $resp->getStatusCode(), $resp->getReasonPhrase()), NO_VALID_JSON_RECEIVED);
+            $body = $resp->getBody();
+            $bodyContents = '';
+            if (null !== $body && 0 < $body->getSize()) {
+                while (!$body->eof()) {
+                    $bodyContents .= $body->read(8192);
+                }
+            }
+            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $bodyContents), NO_VALID_JSON_RECEIVED);
         }
 
         if ($decode) {
