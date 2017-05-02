@@ -116,7 +116,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * @param {{ prop.phpTypeTagValue }} ${{ prop.name }}
      * @return $this
      */
-    public function set{{ prop.name|capitalize }}({% if 'array' == prop.phpType %}array {% endif %}${{ prop.name }}) {
+    public function set{{ prop.name|capitalize }}(${{ prop.name }}) {
 {% if 'tags' == prop.name %}
         foreach(${{ prop.name }} as $k => $v) {
             $this->addTag($k, $v);
@@ -176,11 +176,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      */
     public function jsonSerialize() {
         $a = [];
-{% for prop in requiredParams %}
-        if (isset($this->{{ prop.name }})) {
-            $a['{{ prop.name }}'] = $this->{{ prop.name }};
-        }
-{% endfor %}{% for prop in optionalParams %}
+{% for prop in api.parameters %}
         if (isset($this->{{ prop.name }})) {
             $a['{{ prop.name }}'] = $this->{{ prop.name }};
         }

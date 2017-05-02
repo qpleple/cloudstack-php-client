@@ -305,12 +305,13 @@ class CloudStackClient {
     protected function stringifyParameter(array &$params, $param, $value) {
         $valueType = gettype($value);
 
+        if ('object' === $valueType) {
+            $value = json_decode(json_encode($value), true);
+            $valueType = gettype($value);
+        }
+
         if ('array' === $valueType) {
             foreach(CloudStackHelpers::formatCSQueryArray($value, $param) as $k => $v) {
-                $this->stringifyParameter($params, $k, $v);
-            }
-        } else if ('object' === $valueType) {
-            foreach(CloudStackHelpers::formatCSQueryArray(json_decode(json_encode($value), true), $param) as $k => $v) {
                 $this->stringifyParameter($params, $k, $v);
             }
         } else if ('string' === $valueType) {
