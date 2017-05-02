@@ -172,9 +172,9 @@ class Variable {
             case 'set':
             case 'list':
             case 'uservmresponse':
+            case 'map':
                 return 'array';
 
-            case 'map':
             case 'responseobject':
                 return 'mixed';
 

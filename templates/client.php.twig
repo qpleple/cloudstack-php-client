@@ -280,10 +280,7 @@ class CloudStackClient {
      * @return array
      */
     protected function compileParameters(CloudStackRequest\CloudStackRequestInterface $request) {
-        $params = [];
-        foreach($request->jsonSerialize() as $param => $value) {
-            $this->stringifyParameter($params, $param, $value);
-        }
+        $params = $request->toUrlParams();
 
         $compiledParams  = [
             'apikey' => $this->configuration->getApiKey(),
@@ -294,40 +291,6 @@ class CloudStackClient {
         ksort($compiledParams, SORT_STRING);
 
         return $compiledParams;
-    }
-
-    /**
-     * Try and get an allowable value from a parameter
-     * @param array $params
-     * @param string $param
-     * @param mixed $value
-     */
-    protected function stringifyParameter(array &$params, $param, $value) {
-        $valueType = gettype($value);
-
-        if ('object' === $valueType) {
-            $value = json_decode(json_encode($value), true);
-            $valueType = gettype($value);
-        }
-
-        if ('array' === $valueType) {
-            foreach(CloudStackHelpers::formatCSQueryArray($value, $param) as $k => $v) {
-                $this->stringifyParameter($params, $k, $v);
-            }
-        } else if ('string' === $valueType) {
-            $params[$param] = $value;
-        } else if ('integer' === $valueType || 'double' === $valueType) {
-            $params[$param] = (string)$value;
-        } else if ('boolean' === $valueType) {
-            $params[$param] = $value ? 'true' : 'false';
-        } else {
-            throw new \InvalidArgumentException(sprintf(
-                WRONG_ARGUMENT_TYPE_MSG,
-                $param,
-                'scalar type, array, or \\stdClass object',
-                $valueType
-            ), WRONG_ARGUMENT_TYPE);
-        }
     }
 
     /**

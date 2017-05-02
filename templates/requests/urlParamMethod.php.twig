@@ -1,0 +1,49 @@
+{#
+    This file is part of the CloudStack Client Generator.
+
+    (c) Quentin Pleplé <quentin.pleple@gmail.com>
+    (c) Aaron Hurt <ahurt@anbcs.com>
+    (c) Nathan Johnson <nathan@nathanjohnson.info>
+    (c) Daniel Carbone <daniel.p.carbone@gmail.com>
+    (c) Bogdan Gabor <bgabor@ena.com>
+
+    For the full copyright and license information, please view the LICENSE
+    file that was distributed with this source code.
+#}
+{% autoescape false %}
+    /**
+     * @return array
+     */
+    public function toUrlParams() {
+        $a = [];
+{% for param in api.parameters %}
+{% if 'map' == param.type %}
+        if (isset($this->{{ param.name }})) {
+            $i = 0;
+            foreach($this->{{ param.name }} as $k => $v) {
+{% if 'serviceproviderlist' == param.name %}
+                $a[sprintf('{{ param.name }}[%d].service', $i)] = $k;
+                $a[sprintf('{{ param.name }}[%d].provider', $i)] = $v;
+{% elseif 'usersecuritygrouplist' == param.name %}
+                $a[sprintf('{{ param.name }}[%d].account', $i)] = $k;
+                $a[sprintf('{{ param.name }}[%d].group', $i)] = $v;
+{% elseif 'details' == param.name %}
+                foreach(CloudStackHelpers::formatCSQueryArray($v, $k) as $kk => $vv) {
+                    $a[$kk] = $vv;
+                }
+{% else %}
+                $a[sprintf('{{ param.name }}[%d].key', $i)] = $k;
+                $a[sprintf('{{ param.name }}[%d].value', $i)] = $v;
+{% endif %}
+                $i++;
+            }
+        }
+{% elseif 'array' == param.phpType %}
+        if (isset($this->{{ param.name }})) {
+            $a['{{ param.name }}'] = implode(',', $this->{{ param.name }});
+        }
+{% endif %}
+{% endfor %}
+        return $a;
+    }
+{% endautoescape %}

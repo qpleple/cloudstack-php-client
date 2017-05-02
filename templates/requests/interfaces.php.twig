@@ -57,6 +57,12 @@ interface CloudStackRequestInterface extends \JsonSerializable {
      * @return bool
      */
     public function isRequestValid();
+
+    /**
+     * Must return an array of [param => value] that can be directly serialized for consumption by CloudStack
+     * @return array
+     */
+    public function toUrlParams();
 }
 
 /**
