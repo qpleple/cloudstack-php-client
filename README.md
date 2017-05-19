@@ -26,8 +26,10 @@ $generator = new \MyENA\CloudStackClientGenerator\Generator(new \MyENA\CloudStac
         'port'         => 8080,             // api port (defaults to 8080)
         'path_prefix'  => 'client',         // url prefix (defaults to 'client')
         'api_path'     => 'api',            // admin api path (defaults to 'api')
+        'console_path' => 'console',        // console api path (defaults to 'console')
         'output_dir'   => '',               // Where you'd like the generated files to go (defaults to ./output)
         'namespace'    => '',               // The namespace that will be used in the generated files (optional)
+        'http_client'  => null,             // GuzzleHttp\ClientInterface compatible client
     ]
 ));
 
@@ -56,8 +58,8 @@ PHP Library Usage
         'port'         => 8080,             // api port (defaults to 8080)
         'path_prefix'  => 'client',         // url prefix (defaults to 'client')
         'api_path'     => 'api',            // admin api path (defaults to 'api')
-        'console_path' => 'console'         // console api path (defaults to 'console')
-        'http_client' => null,              // Any http client adapter that supports php-http/httplug
+        'console_path' => 'console',        // console api path (defaults to 'console')
+        'http_client'  => null,             // GuzzleHttp\ClientInterface compatible client
     ]);
     
     $client = new CloudStackClient($config);

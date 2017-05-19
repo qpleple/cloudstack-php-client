@@ -40,13 +40,11 @@
     ],
     "require": {
         "php": ">=5.6.0",
-        "guzzlehttp/psr7": "~1.4",
+
         "psr/log": "1.0.*",
 
-        "php-http/client-implementation": "@stable"
-    },
-    "require-dev": {
-        "php-http/guzzle6-adapter": "1.1.*"
+        "guzzlehttp/psr7": "~1.4",
+        "guzzlehttp/guzzle": "~6"
     },
     "autoload": {
         "psr-4": {
@@ -56,12 +54,6 @@
             "files/constants.php",
             "src/CloudStackRequest/CloudStackRequestInterfaces.php"
         ]
-    },
-    "suggest": {
-        "php-http/guzzle6-adapter": "To enable use of Guzzle 6 http client (http://docs.php-http.org/en/latest/clients/guzzle6-adapter.html)",
-        "php-http/react-adapter": "To enable React http client (http://docs.php-http.org/en/latest/clients/react-adapter.html)",
-        "php-http/buzz-adapter": "To enable use of Buzz http client (http://docs.php-http.org/en/latest/clients/buzz-adapter.html)",
-        "php-http/curl-client": "Simple PSR-7 compliant http client"
     }
 }
 {% endautoescape %}

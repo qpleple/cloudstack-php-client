@@ -1,6 +1,7 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
-use Http\Client\HttpClient;
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ class Configuration implements LoggerAwareInterface {
     /** @var \DateTime */
     protected $now;
 
-    /** @var \Http\Client\HttpClient */
+    /** @var \GuzzleHttp\ClientInterface */
     public $HttpClient = null;
 
     /**
@@ -73,7 +74,21 @@ class Configuration implements LoggerAwareInterface {
 
         $this->now = new \DateTime();
 
-        $this->postConstructValidation();
+        if ('' === $this->host) {
+            throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
+        }
+
+        if ('' === $this->apiKey) {
+            throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
+        }
+
+        if ('' === $this->secretKey) {
+            throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
+        }
+
+        if (!($this->HttpClient instanceof ClientInterface)) {
+            $this->HttpClient = new Client();
+        }
     }
 
     /**
@@ -278,10 +293,10 @@ class Configuration implements LoggerAwareInterface {
     }
 
     /**
-     * @param \Http\Client\HttpClient $HttpClient
-     * @return Configuration
+     * @param \GuzzleHttp\ClientInterface $HttpClient
+     * @return $this
      */
-    public function setHttpClient(HttpClient $HttpClient) {
+    public function setHttpClient(ClientInterface $HttpClient) {
         $this->HttpClient = $HttpClient;
         return $this;
     }
@@ -298,34 +313,5 @@ class Configuration implements LoggerAwareInterface {
 
         $hash = @hash_hmac('SHA1', strtolower($query), $this->getSecretKey(), true);
         return urlencode(base64_encode($hash));
-    }
-
-    protected function postConstructValidation() {
-        static $knownClients = [
-            '\\Http\\Client\\Curl\\Client',
-            '\\Http\\Adapter\\Guzzle6\\Client',
-            '\\Http\\Adapter\\Buzz\\Client'
-        ];
-
-        if (null === $this->HttpClient) {
-            foreach ($knownClients as $clientClass) {
-                if (class_exists($clientClass, true)) {
-                    $this->HttpClient = new $clientClass;
-                    break;
-                }
-            }
-        }
-
-        if ('' === $this->host) {
-            throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
-        }
-
-        if ('' === $this->apiKey) {
-            throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
-        }
-
-        if ('' === $this->secretKey) {
-            throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
-        }
     }
 }

@@ -1,5 +1,6 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
+use GuzzleHttp\RequestOptions;
 use MyENA\CloudStackClientGenerator\API\API;
 use MyENA\CloudStackClientGenerator\API\ObjectVariable;
 use MyENA\CloudStackClientGenerator\API\Variable;
@@ -404,7 +405,10 @@ class Generator {
      * @return \stdClass
      */
     protected function doRequest(RequestInterface $request) {
-        $resp = $this->configuration->HttpClient->sendRequest($request);
+        $resp = $this->configuration->HttpClient->send($request, [
+            RequestOptions::HTTP_ERRORS => false,
+            RequestOptions::DECODE_CONTENT => false,
+        ]);
 
         if (200 !== $resp->getStatusCode()) {
             throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);

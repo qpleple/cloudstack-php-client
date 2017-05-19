@@ -29,7 +29,8 @@
  * file that was distributed with this source code.
  */
 
-use Http\Client\HttpClient;
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -63,8 +64,8 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /** @var string */
     protected $compiledAddress = '';
 
-    /** @var \Http\Client\HttpClient */
-    public $HttpClient = null;
+    /** @var \GuzzleHttp\ClientInterface */
+    protected $httpClient = null;
 
     /**
      * CloudStackConfiguration constructor.
@@ -91,7 +92,21 @@ class CloudStackConfiguration implements LoggerAwareInterface {
             }
         }
 
-        $this->postConstructValidation();
+        if ('' === $this->host) {
+            throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
+        }
+
+        if ('' === $this->apiKey) {
+            throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
+        }
+
+        if ('' === $this->secretKey) {
+            throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
+        }
+
+        if (!isset($this->httpClient) || !($this->httpClient instanceof ClientInterface)) {
+            $this->httpClient = new Client();
+        }
     }
 
     /**
@@ -265,48 +280,19 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     }
 
     /**
-     * @return \Http\Client\HttpClient
+     * @return \GuzzleHttp\ClientInterface
      */
     public function getHttpClient() {
-        return $this->HttpClient;
+        return $this->httpClient;
     }
 
     /**
-     * @param \Http\Client\HttpClient $HttpClient
+     * @param \GuzzleHttp\ClientInterface $httpClient
      * @return CloudStackConfiguration
      */
-    public function setHttpClient(HttpClient $HttpClient) {
-        $this->HttpClient = $HttpClient;
+    public function setHttpClient(ClientInterface $httpClient) {
+        $this->httpClient = $httpClient;
         return $this;
-    }
-
-    protected function postConstructValidation() {
-        static $knownClients = array(
-            '\\Http\\Client\\Curl\\Client',
-            '\\Http\\Adapter\\Guzzle6\\Client',
-            '\\Http\\Adapter\\Buzz\\Client'
-        );
-
-        foreach($knownClients as $clientClass) {
-            if (class_exists($clientClass, true)) {
-                $this->HttpClient = new $clientClass;
-                break;
-            }
-        }
-
-        if (null === $this->HttpClient) {
-            throw new \RuntimeException(HTTPCLIENT_EMPTY_MSG, HTTPCLIENT_EMPTY);
-        }
-
-        if ('' === $this->host) {
-            throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
-        }
-
-        if ('' === $this->apiKey)
-            throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
-
-        if ('' === $this->secretKey)
-            throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
     }
 
     /**

@@ -19,44 +19,21 @@
 {% for param in api.parameters %}
 {% if 'map' == param.type %}
         if (isset($this->{{ param.name }})) {
-{% if 'serviceproviderlist' == param.name %}
-            $i = 0;
-            foreach($this->{{ param.name }} as $k => $v) {
-                $a[sprintf('{{ param.name }}[%d].service', $i)] = $k;
-                $a[sprintf('{{ param.name }}[%d].provider', $i)] = $v;
-                $i++;
-            }
-{% elseif 'usersecuritygrouplist' == param.name %}
-            $i = 0;
-            foreach($this->{{ param.name }} as $k => $v) {
-                $a[sprintf('{{ param.name }}[%d].account', $i)] = $k;
-                $a[sprintf('{{ param.name }}[%d].group', $i)] = $v;
-                $i++;
-            }
-{% elseif 'assignToLoadBalancerRule' == api.name and 'vmidipmap' == param.name %}
             foreach(\{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackHelpers::formatCSQueryArray($this->{{ param.name }}, '{{ param.name }}') as $k => $v) {
                 $a[$k] = $v;
             }
-{% elseif 'deployVirtualMachine' == api.name and 'details' == param.name %}
-            foreach(\{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackHelpers::formatCSQueryArray($this->{{ param.name }}, '{{ param.name }}') as $k => $v) {
-                $a[$k] = $v;
-            }
-{% else %}
-            $i = 0;
-            foreach($this->{{ param.name }} as $k => $v) {
-                $a[sprintf('{{ param.name }}[%d].key', $i)] = $k;
-                $a[sprintf('{{ param.name }}[%d].value', $i)] = $v;
-                $i++;
-            }
-{% endif %}
         }
 {% elseif 'array' == param.phpType %}
         if (isset($this->{{ param.name }})) {
             $a['{{ param.name }}'] = implode(',', $this->{{ param.name }});
         }
+{% elseif 'boolean' == param.phpType %}
+        if (isset($this->{{ param.name }})) {
+            $a['{{ param.name }}'] = $this->{{ param.name }} ? 'true' : 'false';
+        }
 {% else %}
         if (isset($this->{{ param.name }})) {
-            $a['{{ param.name }}'] = $this->{{ param.name }};
+            $a['{{ param.name }}'] = (string)$this->{{ param.name }};
         }
 {% endif %}
 {% endfor %}

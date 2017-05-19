@@ -31,6 +31,7 @@
 
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -47,8 +48,7 @@ class CloudStackClient {
      *
      * @param CloudStackConfiguration $configuration
      */
-    public function __construct(CloudStackConfiguration $configuration)
-    {
+    public function __construct(CloudStackConfiguration $configuration) {
         $this->configuration = $configuration;
     }
 
@@ -144,7 +144,10 @@ class CloudStackClient {
      * @return mixed
      */
     public function doRequest(CloudStackRequest\CloudStackRequestInterface $request, $decode = true) {
-        $resp = $this->configuration->HttpClient->sendRequest($this->createPsr7Request($request));
+        $resp = $this->configuration->getHttpClient()->send($this->createPsr7Request($request), [
+            RequestOptions::HTTP_ERRORS => false,
+            RequestOptions::DECODE_CONTENT => false,
+        ]);
 
         if (200 !== $resp->getStatusCode()) {
             $body = $resp->getBody();

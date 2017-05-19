@@ -19,6 +19,10 @@
     {
       "name": "Daniel Carbone",
       "email": "daniel.p.carbone@gmail.com"
+    },
+    {
+      "name": "Bogdan Gabor",
+      "email": "bgabor@ena.com"
     }
   ],
 
@@ -33,12 +37,14 @@
 
   "require": {
     "php": ">=5.6.0",
+
     "twig/twig": "<=2.0",
     "twig/extensions": "<=2.0",
-    "psr/log": "1.0.*",
-    "guzzlehttp/psr7": "~1.4",
 
-    "php-http/guzzle6-adapter": "1.1.*"
+    "psr/log": "1.0.*",
+
+    "guzzlehttp/psr7": "~1.4",
+    "guzzlehttp/guzzle": "~6"
   },
   "require-dev": {
     "myena/default-logger": "@stable",
