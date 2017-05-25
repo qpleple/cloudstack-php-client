@@ -125,6 +125,11 @@ class Generator {
         );
 
         file_put_contents(
+            $this->srcDir.'/CloudStackEventTypes.php',
+            $this->twig->load('eventTypes.php.twig')->render($args)
+        );
+
+        file_put_contents(
             $this->responseDir . '/AsyncJobStartResponse.php',
             $this->twig->load('responses/asyncJobStart.php.twig')->render($args)
         );
