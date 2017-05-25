@@ -62,7 +62,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * }
 {% endif %}
      */
-    public function __construct ({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}{% if 'array' == prop.phpType %}array {% endif %}${{ param.name }}{% endfor %}
+    public function __construct ({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}{% if 'array' == param.phpType %}array {% endif %}${{ param.name }}{% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
 {% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
