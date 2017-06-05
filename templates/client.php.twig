@@ -149,12 +149,17 @@ class CloudStackClient {
             RequestOptions::DECODE_CONTENT => false,
         ]);
 
+        // Check for 200..
         if (200 !== $resp->getStatusCode()) {
-            $body = $resp->getBody();
-            $bodyContents = '';
-            if (null !== $body && 0 < $body->getSize()) {
-                while (!$body->eof()) {
-                    $bodyContents .= $body->read(8192);
+            // attempt to decode response...
+            $data = $resp->getBody()->getContents();
+            $decoded = @json_decode($data, true);
+            if (JSON_ERROR_NONE === json_last_error()) {
+                if (1 === count($decoded)) {
+                    $decoded = reset($decoded);
+                }
+                if (isset($decoded['errortext'])) {
+                    throw new CloudStackAPIException($decoded);
                 }
             }
             throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $bodyContents), NO_VALID_JSON_RECEIVED);
@@ -232,17 +237,12 @@ class CloudStackClient {
             throw new \RuntimeException(sprintf('%s: %s', NO_VALID_JSON_RECEIVED_MSG, json_last_error_msg()), NO_VALID_JSON_RECEIVED);
         }
 
-        /* standard presentation of errors */
-        if (isset($decoded['errorresponse']) && isset($decoded['errorresponse']['errortext'])) {
-            throw new \RuntimeException($decoded['errorresponse']['errortext']);
-        }
-
         $lowerCmd = strtolower($command);
         $propertyResponse = sprintf('%sresponse', $lowerCmd);
 
         if (!isset($decoded[$propertyResponse])) {
             /* some commands drop the trailing 's' in the response: listPools becomes 'listpoolresponse' */
-            $propertyResponse = sprintf('%sresponse', substr(strtolower($command), 0, -1));
+            $propertyResponse = sprintf('%sresponse', substr($lowerCmd, 0, -1));
             if (!isset($decoded[$propertyResponse])) {
                 throw new \RuntimeException(sprintf(
                     'Unable to parse the response. Got code %d and message: %s',
@@ -253,6 +253,11 @@ class CloudStackClient {
         }
 
         $responseData = $decoded[$propertyResponse];
+
+        // the "createUser" response is strange...
+        if ('createuserresponse' === $propertyResponse && isset($responseData['user'])) {
+            return $responseData['user'];
+        }
 
         if (0 === strpos($lowerCmd, 'list'))
         {

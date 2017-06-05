@@ -158,6 +158,11 @@ class Generator {
             $this->requestDir.'/AccessVmConsoleProxyRequest.php',
             $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render($args)
         );
+
+        file_put_contents(
+            $this->srcDir.'/CloudStackExceptions.php',
+            $this->twig->load('exceptions.php.twig')->render($args)
+        );
     }
 
     protected function writeOutClient() {
