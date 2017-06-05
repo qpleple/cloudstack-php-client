@@ -162,7 +162,7 @@ class CloudStackClient {
                     throw new CloudStackAPIException($decoded);
                 }
             }
-            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $bodyContents), NO_VALID_JSON_RECEIVED);
+            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $data), NO_VALID_JSON_RECEIVED);
         }
 
         if ($decode) {
