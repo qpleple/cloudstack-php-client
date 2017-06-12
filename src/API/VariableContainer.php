@@ -10,7 +10,7 @@ class VariableContainer implements \Iterator, \Countable {
 
     /**
      * @param string $name
-     * @return Variable
+     * @return \MyENA\CloudStackClientGenerator\API\Variable
      */
     public function get($name) {
         if (isset($this->_storage[$name])) {
@@ -21,14 +21,22 @@ class VariableContainer implements \Iterator, \Countable {
     }
 
     /**
-     * @param Variable $var
+     * @param \MyENA\CloudStackClientGenerator\API\Variable $var
      */
     public function add(Variable $var) {
         $this->_storage[$var->getName()] = $var;
     }
 
     /**
-     * @return Variable[]
+     * @param \MyENA\CloudStackClientGenerator\API\Variable $var
+     * @return bool
+     */
+    public function has(Variable $var) {
+        return isset($this->_storage[$var->getName()]);
+    }
+
+    /**
+     * @return \MyENA\CloudStackClientGenerator\API\Variable[]
      */
     public function getRequired() {
         $required = [];
@@ -42,7 +50,7 @@ class VariableContainer implements \Iterator, \Countable {
     }
 
     /**
-     * @return Variable[]
+     * @return \MyENA\CloudStackClientGenerator\API\Variable[]
      */
     public function getOptional() {
         $optional = [];
@@ -56,7 +64,7 @@ class VariableContainer implements \Iterator, \Countable {
     }
 
     /**
-     * @return string[string]
+     * @return string[]
      */
     public function getTypeMap() {
         $types = [];
@@ -76,44 +84,26 @@ class VariableContainer implements \Iterator, \Countable {
         ksort($this->_storage, SORT_NATURAL);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function current() {
         return current($this->_storage);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function next() {
         next($this->_storage);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function key() {
         return key($this->_storage);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function valid() {
         return null !== key($this->_storage);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function rewind() {
         reset($this->_storage);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function count() {
         return count($this->_storage);
     }

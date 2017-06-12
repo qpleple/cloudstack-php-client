@@ -1,8 +1,11 @@
-<?php namespace MyENA\CloudStackClientGenerator\API;
+<?php namespace MyENA\CloudStackClientGenerator;
+
+use MyENA\CloudStackClientGenerator\API\ObjectVariable;
+use MyENA\CloudStackClientGenerator\API\VariableContainer;
 
 /**
  * Class API
- * @package MyENA\CloudStackClientGenerator\API
+ * @package MyENA\CloudStackClientGenerator
  */
 class API {
     /** @var string */
@@ -19,7 +22,7 @@ class API {
     /** @var VariableContainer */
     private $parameters;
 
-    /** @var ObjectVariable */
+    /** @var \MyENA\CloudStackClientGenerator\API\ObjectVariable */
     private $response;
 
     /**
@@ -89,7 +92,8 @@ class API {
      * @param string $related
      */
     public function setRelatedString($related) {
-        $this->related = explode(',', $related);
+        // filter to remove extraneous [""] entries from explode...
+        $this->related = array_filter(explode(',', $related));
     }
 
     /**

@@ -1,10 +1,10 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
-use MyENA\CloudStackClientGenerator\API\API;
 use MyENA\CloudStackClientGenerator\API\ObjectVariable;
 use MyENA\CloudStackClientGenerator\API\Variable;
-use Psr\Http\Message\RequestInterface;
 
 /**
  * Class Generator
@@ -26,6 +26,9 @@ class Generator {
 
     /** @var \MyENA\CloudStackClientGenerator\API\ObjectVariable[] */
     protected $sharedObjectMap = [];
+
+    /** @var string[] */
+    protected $responseMap = [];
 
     /** @var string */
     protected $srcDir;
@@ -89,6 +92,9 @@ class Generator {
         }
     }
 
+    /**
+     * Execute generation of CloudStack API client
+     */
     public function generate() {
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
@@ -99,6 +105,70 @@ class Generator {
         $this->writeOutRequestModels();
         $this->writeOutSharedResponseModels();
         $this->writeOutResponseModels();
+    }
+
+    /**
+     * Execute request against configured CloudStack instance.
+     *
+     * @param string $command
+     * @param array $parameters
+     * @param array $headers
+     * @return \stdClass
+     */
+    public function doApiRequest($command, array $parameters = [], array $headers = []) {
+        static $defaultHeaders = ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
+
+        $params = [
+                'apikey' => $this->configuration->getApiKey(),
+                'command' => $command,
+                'response' => 'json',
+            ] + $parameters;
+
+        ksort($params);
+
+        $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+
+        $uri = new Uri(sprintf(
+            '%s/api?%s&signature=%s',
+            $this->configuration->getCompiledAddress(),
+            $query,
+            $this->configuration->buildSignature($query)
+        ));
+
+        $r = new Request('GET', $uri,$headers + $defaultHeaders);
+
+        $resp = $this->configuration->HttpClient->send($r, [
+            RequestOptions::HTTP_ERRORS => false,
+            RequestOptions::DECODE_CONTENT => false,
+        ]);
+
+        if (200 !== $resp->getStatusCode()) {
+            // attempt to decode response...
+            $data = $resp->getBody()->getContents();
+            $decoded = @json_decode($data, true);
+            if (JSON_ERROR_NONE === json_last_error()) {
+                if (1 === count($decoded)) {
+                    $decoded = reset($decoded);
+                }
+                if (isset($decoded['errortext'])) {
+                    throw new \RuntimeException($decoded);
+                }
+            }
+            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $data), NO_VALID_JSON_RECEIVED);
+        }
+
+        $body = $resp->getBody();
+
+        if (0 === $body->getSize()) {
+            throw new \RuntimeException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
+        }
+
+        $decoded = @json_decode($body->getContents());
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new \RuntimeException(sprintf('%s: %s', NO_VALID_JSON_RECEIVED_MSG, json_last_error_msg()), NO_VALID_JSON_RECEIVED);
+        }
+
+        return $decoded;
     }
 
     protected function writeOutStaticTemplates() {
@@ -375,8 +445,7 @@ class Generator {
      */
     protected function getCapabilities() {
         if (!isset($this->capabilities)) {
-            $cmd = new Command($this->configuration, 'listCapabilities');
-            $data = $this->doRequest($cmd->createPsr7Request());
+            $data = $this->doApiRequest('listCapabilities');
             $this->capabilities = $data->listcapabilitiesresponse;
         }
 
@@ -384,9 +453,7 @@ class Generator {
     }
 
     protected function compileAPIs() {
-        $cmd = new Command($this->configuration, 'listApis');
-
-        $data = $this->doRequest($cmd->createPsr7Request())->listapisresponse;
+        $data = $this->doApiRequest('listApis')->listapisresponse;
 
         foreach ($data->api as $apiDef) {
             $api = new API();
@@ -408,33 +475,5 @@ class Generator {
 
             $this->apis[$api->getName()] = $api;
         }
-    }
-
-    /**
-     * @param \Psr\Http\Message\RequestInterface $request
-     * @return \stdClass
-     */
-    protected function doRequest(RequestInterface $request) {
-        $resp = $this->configuration->HttpClient->send($request, [
-            RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::DECODE_CONTENT => false,
-        ]);
-
-        if (200 !== $resp->getStatusCode()) {
-            throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
-        }
-
-        $body = $resp->getBody();
-
-        if (0 === $body->getSize()) {
-            throw new \RuntimeException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
-        }
-
-        $decoded = @json_decode($body->getContents());
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \RuntimeException(NO_VALID_JSON_RECEIVED_MSG, NO_VALID_JSON_RECEIVED);
-        }
-
-        return $decoded;
     }
 }
