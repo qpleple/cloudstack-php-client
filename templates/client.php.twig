@@ -257,6 +257,8 @@ class CloudStackClient {
         // the "createUser" response is strange...
         if ('createuserresponse' === $propertyResponse && isset($responseData['user'])) {
             return $responseData['user'];
+        } elseif ('registeruserkeysresponse' === $propertyResponse && isset($responseData['userkeys'])) {
+            return $responseData['userkeys'];
         }
 
         if (0 === strpos($lowerCmd, 'list'))
