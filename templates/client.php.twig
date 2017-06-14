@@ -254,16 +254,11 @@ class CloudStackClient {
 
         $responseData = $decoded[$propertyResponse];
 
-        // the "createUser" response is strange...
-        if ('createuserresponse' === $propertyResponse && isset($responseData['user'])) {
-            return $responseData['user'];
-        } elseif ('registeruserkeysresponse' === $propertyResponse && isset($responseData['userkeys'])) {
-            return $responseData['userkeys'];
-        }
-
-        if (0 === strpos($lowerCmd, 'list'))
+        // treat special cases of list, create and register calls
+        if (1 === preg_match('/^(list|create|register)/', $lowerCmd, $matches, PREG_OFFSET_CAPTURE))
         {
-            $objectName = substr($lowerCmd, 4);
+            $commandPrefix = reset($matches[0]);
+            $objectName = substr($lowerCmd, strlen($commandPrefix));
             if (isset($responseData[$objectName])) {
                 $resultArray = $responseData[$objectName];
                 if (is_array($resultArray)) {
