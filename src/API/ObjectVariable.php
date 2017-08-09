@@ -48,6 +48,9 @@ class ObjectVariable extends Variable {
      * @return string
      */
     public function getFQName() {
+        if (!isset($this->namespace) || $this->namespace === '') {
+            return sprintf('\\CloudStackResponse\\%s', $this->getClassName());
+        }
         return sprintf('\\%s\\CloudStackResponse\\%s', $this->namespace, $this->getClassName());
     }
 

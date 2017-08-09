@@ -16,7 +16,6 @@
 {% set requiredParamLength = requiredParams|length %}
 {% set optionalParamLength = optionalParams|length %}
 {% endspaceless %}
-{% autoescape false %}
     /**
      * {% filter wordwrap(80, "\n     * ", true) %}{{ api.description|raw|ucfirst }}{{ "\n" }}{% endfilter %}
 {% if api.since != '0.0' %}
@@ -53,4 +52,3 @@
 
         ));
     }
-{% endautoescape %}

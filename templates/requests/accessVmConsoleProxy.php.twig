@@ -10,7 +10,6 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
-{% autoescape false %}
 <?php namespace {% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest;
 
 /*
@@ -117,4 +116,3 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
         return $a;
     }
 }
-{% endautoescape %}

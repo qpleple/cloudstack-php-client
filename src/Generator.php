@@ -53,11 +53,10 @@ class Generator {
         $this->configuration = $configuration;
 
         $twigLoader = new \Twig_Loader_Filesystem(__DIR__ . '/../templates');
-        $this->twig = new \Twig_Environment($twigLoader, ['debug' => true]);
+        $this->twig = new \Twig_Environment($twigLoader, ['debug' => true, 'strict_variables' => true, 'autoescape' => false]);
         $this->twig->addExtension(new \Twig_Extensions_Extension_Text());
         $this->twig->addFilter(
-            'ucfirst',
-            new \Twig_SimpleFilter(
+            new \Twig_Filter(
                 'ucfirst',
                 function ($in) {
                     return ucfirst($in);
@@ -472,6 +471,8 @@ class Generator {
             $this->parseResponse($api, $apiDef->response);
 
             $api->getParameters()->nameSort();
+
+            $api->setEventType($this->configuration->getEventForAPI($api));
 
             $this->apis[$api->getName()] = $api;
         }

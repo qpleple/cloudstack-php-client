@@ -199,6 +199,8 @@ class Variable {
             case 'state':
             case 'url':
             case 'uuid':
+            case 'powerstate':
+            case 'outofbandmanagementresponse':
                 return 'string';
 
             // Catch these here so we can analyze outliers easier...

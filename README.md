@@ -1,7 +1,7 @@
 CloudStack PHP Client
 =====================
 
-PHP client library for the CloudStack API v4.8 ([reference](https://cloudstack.apache.org/docs/api/apidocs-4.8/TOC_User.html))
+PHP client library for the CloudStack API v4.10 ([reference](http://cloudstack.apache.org/api/apidocs-4.9/))
 
 This project was originally forked from the following projects:
   * [qpleple/cloudstack-client-generator](https://github.com/qpleple/cloudstack-client-generator)
