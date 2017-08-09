@@ -15,8 +15,13 @@
 {% set optionalParams = params.optional %}
 {% set requiredParamLength = requiredParams|length %}
 {% set optionalParamLength = optionalParams|length %}
+{% set hasMapParameter = false %}
+{% for param in api.parameters if hasMapParameter == false %}
+    {% if param.type == 'map' %}
+        {% set hasMapParameter = true %}
+    {% endif %}
+{% endfor %}
 {% endspaceless %}
-{% autoescape false %}
 <?php namespace {% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest;
 
 /*
@@ -35,18 +40,30 @@
  * file that was distributed with this source code.
  */
 
+{% if config.namespace != '' %}{% if api.isAsync and api.eventType != ''%}
+use {{ config.namespace}}\CloudStackEventTypes;
+{% endif %}{% if hasMapParameter %}
+use {{ config.namespace }}\CloudStackHelpers;
+{% endif %}{% endif %}
+
 /**
  * Class {{ api.requestClassname }}
 {{ api.sinceTag(0) }} * @package \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest
  * @SWG\Definition(definition="{{ api.requestClassname }}")
  */
-class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudStackApiCommandRequest{% if api.isList %}, CloudStackListRequest{% endif %}{% if api.isAsync %}, CloudStackAsynchronousRequest{% endif %} {
+class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudStackApiCommandRequest{% if api.isList %}, CloudStackListRequest{% endif %}{% if api.isAsync %}, CloudStackAsynchronousRequest{% else %}, CloudStackSynchronousRequest{% endif %} {
+
+{% if api.isAsync %}
+    const EVENT_TYPE = {% if api.eventType == '' %}''{% else %}{% if config.namespace == '' %}\{% endif %}CloudStackEventTypes::{{ api.eventType }}{% endif %};
+{% endif %}
+    const API_NAME = '{{ api.name }}';
+{% if requiredParamLength > 0 or optionalParamLength > 0 %}
 
 {% for prop in api.parameters %}
 {{ prop.propertyDocBloc }}
     private ${{ prop.name }};
 
-{% endfor %}
+{% endfor %}{% endif %}{% if requiredParamLength > 0 or optionalParamLength > 0 %}
     /**
      * {{ api.requestClassname }} Constructor
 {% for param in requiredParams %}
@@ -74,13 +91,16 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         }
 {% endif %}
     }
+{% endif %}
 
     /**
      * @param array $data
      * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest\{{ api.requestClassname }}
      */
     public static function fromArray(array $data) {
-{% if 0 == requiredParamLength %}{# this object only contains optional parameters #}
+{% if requiredParamLength == 0 and optionalParamLength == 0 %}
+        return new static;
+{% elseif 0 == requiredParamLength %}{# this object only contains optional parameters #}
         return new static($data);
 {% else %}{% for param in requiredParams %}
         if (isset($data['{{ param.name }}'])) {
@@ -142,6 +162,15 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     public function getCloudStackResponseModel() {
         return '{{ api.response.FQName|replace({"\\": "\\\\"}) }}';
     }
+{% if api.isAsync %}
+
+    /**
+     * @return string
+     */
+    public function getCloudStackEventType() {
+        return self::EVENT_TYPE;
+    }
+{% endif %}
 
     /**
      * @return bool
@@ -154,19 +183,45 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
 
     }
 
-{% include 'requests/urlParamMethod.php.twig' with {'api': api, 'config': config} %}
+    /**
+     * @return array
+     */
+    public function toUrlParams() {
+        $a = [];
+{% for param in api.parameters %}
+{% if 'map' == param.type %}
+        if (isset($this->{{ param.name }}) && is_array($this->{{ param.name }}) && count($this->{{ param.name }}) > 0) {
+            foreach({% if config.namespace == '' %}\{% endif %}CloudStackHelpers::formatCSQueryArray($this->{{ param.name }}, '{{ param.name }}') as $k => $v) {
+                $a[$k] = $v;
+            }
+        }
+{% elseif 'array' == param.phpType %}
+        if (isset($this->{{ param.name }})) {
+            $a['{{ param.name }}'] = implode(',', $this->{{ param.name }});
+        }
+{% elseif 'boolean' == param.phpType %}
+        if (isset($this->{{ param.name }})) {
+            $a['{{ param.name }}'] = $this->{{ param.name }} ? 'true' : 'false';
+        }
+{% else %}
+        if (isset($this->{{ param.name }})) {
+            $a['{{ param.name }}'] = (string)$this->{{ param.name }};
+        }
+{% endif %}
+{% endfor %}
+        return $a;
+    }
 
     /**
      * @return array
      */
     public function jsonSerialize() {
         $a = [];
-{% for prop in api.parameters %}
-        if (isset($this->{{ prop.name }})) {
-            $a['{{ prop.name }}'] = $this->{{ prop.name }};
+{% for param in api.parameters %}
+        if (isset($this->{{ param.name }}){% if param.isCollection %} && is_array($this->{{ param.name }}) && count($this->{{ param.name }}) > 0{% endif %}) {
+            $a['{{ param.name }}'] = $this->{{ param.name }};
         }
 {% endfor %}
         return $a;
     }
 }
-{% endautoescape %}

@@ -10,7 +10,6 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
-{% autoescape false %}
 <?php{% if config.namespace != '' %} namespace {{ config.namespace }};{% endif %}
 
 /*
@@ -335,4 +334,3 @@ class CloudStackClient {
         return str_replace($search, $replace, $query);
     }
 }
-{% endautoescape %}

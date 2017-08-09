@@ -19,6 +19,9 @@ class API {
     /** @var string */
     private $since = '0.0';
 
+    /** @var string */
+    private $eventType = '';
+
     /** @var VariableContainer */
     private $parameters;
 
@@ -141,6 +144,20 @@ class API {
      */
     public function setResponse(ObjectVariable $response) {
         $this->response = $response;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEventType(): string {
+        return $this->eventType;
+    }
+
+    /**
+     * @param string $eventType
+     */
+    public function setEventType(string $eventType) {
+        $this->eventType = $eventType;
     }
 
     /**

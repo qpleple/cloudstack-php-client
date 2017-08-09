@@ -10,7 +10,6 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
-{% autoescape false %}
 <?php{% if config.namespace != '' %} namespace {{ config.namespace }};{% endif %}
 
 /*
@@ -121,6 +120,14 @@ abstract class CloudStackEventTypes {
     const EVENT_GLOBAL_LOAD_BALANCER_CREATE = 'GLOBAL.LB.CREATE';
     const EVENT_GLOBAL_LOAD_BALANCER_DELETE = 'GLOBAL.LB.DELETE';
     const EVENT_GLOBAL_LOAD_BALANCER_UPDATE = 'GLOBAL.LB.UPDATE';
+
+    // Role events
+    const EVENT_ROLE_CREATE = 'ROLE.CREATE';
+    const EVENT_ROLE_UPDATE = 'ROLE.UPDATE';
+    const EVENT_ROLE_DELETE = 'ROLE.DELETE';
+    const EVENT_ROLE_PERMISSION_CREATE = 'ROLE.PERMISSION.CREATE';
+    const EVENT_ROLE_PERMISSION_UPDATE = 'ROLE.PERMISSION.UPDATE';
+    const EVENT_ROLE_PERMISSION_DELETE = 'ROLE.PERMISSION.DELETE';
 
     // Account events
     const EVENT_ACCOUNT_ENABLE = 'ACCOUNT.ENABLE';
@@ -254,6 +261,14 @@ abstract class CloudStackEventTypes {
 
     // Host
     const EVENT_HOST_RECONNECT = 'HOST.RECONNECT';
+
+    // Host Out-of-band management
+    const EVENT_HOST_OUTOFBAND_MANAGEMENT_ENABLE = 'HOST.OOBM.ENABLE';
+    const EVENT_HOST_OUTOFBAND_MANAGEMENT_DISABLE = 'HOST.OOBM.DISABLE';
+    const EVENT_HOST_OUTOFBAND_MANAGEMENT_CONFIGURE = 'HOST.OOBM.CONFIGURE';
+    const EVENT_HOST_OUTOFBAND_MANAGEMENT_ACTION = 'HOST.OOBM.ACTION';
+    const EVENT_HOST_OUTOFBAND_MANAGEMENT_CHANGE_PASSWORD = 'HOST.OOBM.CHANGEPASSWORD';
+    const EVENT_HOST_OUTOFBAND_MANAGEMENT_POWERSTATE_TRANSITION = 'HOST.OOBM.POWERSTATE.TRANSITION';
 
     // Maintenance
     const EVENT_MAINTENANCE_CANCEL = 'MAINT.CANCEL';
@@ -483,4 +498,3 @@ abstract class CloudStackEventTypes {
     //Usage related events
     const EVENT_USAGE_REMOVE_USAGE_RECORDS = 'USAGE.REMOVE.USAGE.RECORDS';
 }
-{% endautoescape %}

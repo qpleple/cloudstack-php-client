@@ -10,7 +10,6 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
-{% autoescape false %}
 <?php namespace {% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackRequest;
 
 /*
@@ -84,12 +83,24 @@ interface CloudStackConsoleCommandRequest {
 }
 
 /**
+ * Indicates this is a synchronous request
+ * Interface CloudStackSynchronousRequest
+ * @package \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackConsoleCommandRequest
+ */
+interface CloudStackSynchronousRequest {
+
+}
+
+/**
  * Indicates this is an asynchronous request
  * Interface CloudStackAsynchronousRequest
  * @package \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackAsynchronousRequest
  */
 interface CloudStackAsynchronousRequest {
-
+    /**
+     * @return string
+     */
+    public function getCloudStackEventType();
 }
 
 /**
@@ -100,4 +111,3 @@ interface CloudStackAsynchronousRequest {
 interface CloudStackListRequest {
 
 }
-{% endautoescape %}

@@ -44,6 +44,9 @@ class Configuration implements LoggerAwareInterface {
     /** @var \DateTime */
     protected $now;
 
+    /** @var array */
+    protected $eventTypeMap = [];
+
     /** @var \GuzzleHttp\ClientInterface */
     public $HttpClient = null;
 
@@ -89,6 +92,8 @@ class Configuration implements LoggerAwareInterface {
         if (!($this->HttpClient instanceof ClientInterface)) {
             $this->HttpClient = new Client();
         }
+
+        $this->eventTypeMap = require __DIR__.'/../files/command_event_map.php';
     }
 
     /**
@@ -272,6 +277,14 @@ class Configuration implements LoggerAwareInterface {
         }
 
         return $this;
+    }
+
+    /**
+     * @param \MyENA\CloudStackClientGenerator\API $api
+     * @return string
+     */
+    public function getEventForAPI(API $api): string {
+        return $this->eventTypeMap[$api->getName()] ?? '';
     }
 
     /**
