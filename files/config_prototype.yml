@@ -1,6 +1,6 @@
 # PHP CloudStack Client generator config prototype
 
-# Any cli option defined in src/Command/GenerateCommand.php can be defined, excluding the "config" and "env" flag.
+# Any option defined in src/Command/AbstractCommand.php can be defined, excluding the "config" and "env" flag.
 
 # Combining rules:
 # - If an option is NOT defined here and NOT defined explicitly at runtime, the default value will be used.  If there is
