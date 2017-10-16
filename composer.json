@@ -37,12 +37,11 @@
 
   "require": {
     "php": "^7.1",
-
+    "symfony/console": "@stable",
+    "symfony/yaml": "@stable",
     "twig/twig": "@stable",
     "twig/extensions": "@stable",
-
     "psr/log": "@stable",
-
     "guzzlehttp/psr7": "@stable",
     "guzzlehttp/guzzle": "@stable"
   },

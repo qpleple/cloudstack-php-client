@@ -49,20 +49,20 @@ class CloudStackAPIException extends \RuntimeException {
      * @param \Throwable $previous Previous exception, if any
      */
     public function __construct(array $response, \Throwable $previous = null) {
-        if (isset($response['uuidlist'])) {
+        if (isset($response['uuidlist']) && is_array($response['uuidlist'])) {
             $this->uuidList = $response['uuidlist'];
         }
 
         if (isset($response['errorcode'])) {
-            $this->errorCode = $response['errorcode'];
+            $this->errorCode = (int)$response['errorcode'];
         }
 
         if (isset($response['cserrorcode'])) {
-            $this->csErrorCode = $response['cserrorcode'];
+            $this->csErrorCode = (int)$response['cserrorcode'];
         }
 
         if (isset($response['errortext'])) {
-            $this->errorText = $response['errortext'];
+            $this->errorText = (string)$response['errortext'];
         }
 
         $msg = sprintf('Code: %d; CloudStack Code: %d; Message: %s', $this->errorCode, $this->csErrorCode, $this->errorText);
@@ -73,28 +73,28 @@ class CloudStackAPIException extends \RuntimeException {
     /**
      * @return string[]
      */
-    public function getUUIDList() {
+    public function getUUIDList(): array {
         return $this->uuidList;
     }
 
     /**
      * @return int
      */
-    public function getErrorCode() {
+    public function getErrorCode(): int {
         return $this->errorCode;
     }
 
     /**
      * @return int
      */
-    public function getCSErrorCode() {
+    public function getCSErrorCode(): int {
         return $this->csErrorCode;
     }
 
     /**
      * @return string
      */
-    public function getErrorText() {
+    public function getErrorText(): string {
         return $this->errorText;
     }
 }

@@ -1,0 +1,25 @@
+# PHP CloudStack Client generator config prototype
+
+# Any cli option defined in src/Command/GenerateCommand.php can be defined, excluding the "config" and "env" flag.
+
+# Combining rules:
+# - If an option is NOT defined here and NOT defined explicitly at runtime, the default value will be used.  If there is
+#   no default value for that option, the command will fail.
+# - If an option is defined here but NOT defined explicitly at runtime, the default value for that option be used.  If
+#   there is no default option, the command will fail.
+# - If an option is defined here AND defined explicitly at runtime, the runtime option will be used in favor of the
+#   value defined here.
+# - If a value is NOT defined here but is defined explicitly at runtime, the runtime value will be used.
+# - Noise will be ignored.
+
+# php_cs_generator must be the root key
+php_cs_generator:
+  dev: # Name of this config.  Accessible via the "config-env" option
+    host: dev.ourcloudstack.com
+    key: # your api key
+    secret: # your api secret
+  prod:
+    host: prod.ourcloudstack.com
+    port: 8765
+    key: # your api key
+    secret: # your api secret
