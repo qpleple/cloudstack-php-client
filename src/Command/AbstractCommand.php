@@ -136,16 +136,16 @@ abstract class AbstractCommand extends Command {
         }
 
         // Set any runtime command options
-        if ($scheme = $input->getOption('scheme')) {
+        if (Configuration::DefaultScheme === $this->config->getScheme() && Configuration::DefaultScheme !== ($scheme = $input->getOption('scheme'))) {
             $this->config->setScheme($scheme);
         }
         if ($host = $input->getOption('host')) {
             $this->config->setHost($host);
         }
-        if ($port = $input->getOption('port')) {
+        if (Configuration::DefaultPort === $this->config->getPort() && Configuration::DefaultPort !== ($port = $input->getOption('port'))) {
             $this->config->setPort($port);
         }
-        if ($apiPath = $input->getOption('apipath')) {
+        if (Configuration::DefaultAPIPath === $this->config->getApiPath() && Configuration::DefaultAPIPath !== ($apiPath = $input->getOption('apipath'))) {
             $this->config->setApiPath($apiPath);
         }
         if ($consolePath = $input->getOption('consolepath')) {
@@ -157,7 +157,7 @@ abstract class AbstractCommand extends Command {
         if ($secret = $input->getOption('secret')) {
             $this->config->setSecret($secret);
         }
-        if ($out = $input->getOption('out')) {
+        if (Configuration::DefaultOutputDir === $this->config->getOutputDir() && Configuration::DefaultOutputDir !== ($out = $input->getOption('out'))) {
             $this->config->setOutputDir($this->tryResolvePath($out));
         }
         if ($ns = $input->getOption('namespace')) {
@@ -195,6 +195,7 @@ abstract class AbstractCommand extends Command {
      * @return bool
      */
     protected function parseYAML(string $file, string $env = ''): bool {
+        $this->log->debug("Parsing config file \"{$file}\"...");
         try {
             $parsed = Yaml::parse(file_get_contents($file));
         } catch (\Exception $e) {
@@ -216,6 +217,7 @@ abstract class AbstractCommand extends Command {
                 $this->log->error("Config file \"{$file}\" does not contain specified environment \"{$env}\"");
                 return false;
             }
+            $this->log->info("Using \"{$env}\" configuration");
         } else {
             $this->log->info('No env specified, using first entry in config: "'.key($parsed).'"');
             $parsed = reset($parsed);

@@ -5,14 +5,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class GenerateCommand
+ * Class GenerateClientCommand
  * @package MyENA\CloudStackClientGenerator\Command
  */
-class GenerateCommand extends AbstractCommand {
+class GenerateClientCommand extends AbstractCommand {
 
     protected function configure() {
         $this
-            ->setName($this->generateName('generate'))
+            ->setName($this->generateName('generate-client'))
             ->setDescription('Generate a PHP CloudStack Client based on your current CloudStack implementation')
             ->setHelp(<<<STRING
 This command will execute the client generation command.  The generator does the following:

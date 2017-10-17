@@ -5,8 +5,7 @@
 # Combining rules:
 # - If an option is NOT defined here and NOT defined explicitly at runtime, the default value will be used.  If there is
 #   no default value for that option, the command will fail.
-# - If an option is defined here but NOT defined explicitly at runtime, the default value for that option be used.  If
-#   there is no default option, the command will fail.
+# - If an option is defined here but NOT defined explicitly at runtime, the value present here will be used.
 # - If an option is defined here AND defined explicitly at runtime, the runtime option will be used in favor of the
 #   value defined here.
 # - If a value is NOT defined here but is defined explicitly at runtime, the runtime value will be used.

@@ -14,22 +14,28 @@ use Psr\Log\NullLogger;
 class Configuration implements LoggerAwareInterface {
     use LoggerAwareTrait;
 
+    const DefaultScheme = 'http';
+    const DefaultPort = 8080;
+    const DefaultAPIPath = 'client/api';
+    const DefaultConsolePath = 'client/console';
+    const DefaultOutputDir = __DIR__.'/../output';
+
     /** @var string */
     protected $key = '';
     /** @var string */
     protected $secret = '';
 
     /** @var string */
-    protected $scheme = 'http';
+    protected $scheme = self::DefaultScheme;
     /** @var string */
     protected $host = '';
     /** @var int */
-    protected $port = 8080;
+    protected $port = self::DefaultPort;
 
     /** @var string */
-    protected $apiPath = 'client/api';
+    protected $apiPath = self::DefaultAPIPath;
     /** @var string */
-    protected $consolePath = 'client/console';
+    protected $consolePath = self::DefaultConsolePath;
 
     /** @var string */
     protected $compiledAddress = '';
@@ -37,7 +43,7 @@ class Configuration implements LoggerAwareInterface {
     /** @var string */
     protected $namespace = '';
     /** @var string */
-    protected $outputDir = __DIR__ . '/../output';
+    protected $outputDir = self::DefaultOutputDir;
 
     /** @var \DateTime */
     protected $now;
@@ -61,7 +67,6 @@ class Configuration implements LoggerAwareInterface {
             $this->logger = $logger;
         }
         $this->now = new \DateTime();
-        $this->HttpClient = new Client();
         $this->eventTypeMap = require __DIR__.'/../files/command_event_map.php';
 
         foreach ($config as $k => $v) {
@@ -70,6 +75,10 @@ class Configuration implements LoggerAwareInterface {
             } else {
                 $this->{'set' . implode('', array_map('ucfirst', explode('_', $k)))}($v);
             }
+        }
+
+        if (!isset($this->HttpClient)) {
+            $this->HttpClient = new Client();
         }
     }
 
