@@ -12,6 +12,11 @@ This project combines these two tools into one project.  The code generation is 
 
 The code generated is tagged for [phpdoc](https://github.com/phpDocumentor/phpDocumentor2).
 
+## Installation
+
+Simply download the latest `php-cs.phar` from the releases page and put it where you'd like.  We recommend adding it to
+your path in whatever fashion you prefer.
+
 ## Code Generation
 
 ### Define a configuration file:
@@ -21,7 +26,7 @@ Please see [files/config_prototype.yml](./files/config_prototype.yml) for an exa
 ### Execute build
 
 ```php
-php ./bin/php-cs phpcs:build --config your_config_file.yml
+php-cs phpcs:build --config your_config_file.yml
 ```
 
 There are 3 directories of files created by this generated process, however you will only directly interact with 3:
