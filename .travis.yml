@@ -13,9 +13,6 @@ matrix:
       env:
         - BUILD_PHAR=true
 
-install:
-  - composer install --no-interaction --no-dev --no-progress --no-suggest --optimize-autoloader
-
 script:
   - if [[ $BUILD_PHAR == 'true' && $TRAVIS_TAG != '' ]]; then composer run-script build -vvv ; fi
 
