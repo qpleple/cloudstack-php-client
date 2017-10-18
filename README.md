@@ -12,31 +12,22 @@ This project combines these two tools into one project.  The code generation is 
 
 The code generated is tagged for [phpdoc](https://github.com/phpDocumentor/phpDocumentor2).
 
+## Installation
+
+Simply download the latest `php-cs.phar` from the releases page and put it where you'd like.  We recommend adding it to
+your path in whatever fashion you prefer.
+
 ## Code Generation
 
-A quick example:
+### Define a configuration file:
+
+Please see [files/config_prototype.yml](./files/config_prototype.yml) for an example configuration file
+
+### Execute build
 
 ```php
-$generator = new \MyENA\CloudStackClientGenerator\Generator(new \MyENA\CloudStackClientGenerator\Configuration(
-    [
-        'api_key'      => '',               // YOUR_API_KEY (required)
-        'secret_key'   => '',               // YOUR_SECRET_KEY (required)
-        'host'         => 'localhost',      // Your CloudStack host (required)
-        'scheme'       => 'http',           // http or https (defaults to http)
-        'port'         => 8080,             // api port (defaults to 8080)
-        'path_prefix'  => 'client',         // url prefix (defaults to 'client')
-        'api_path'     => 'api',            // admin api path (defaults to 'api')
-        'console_path' => 'console',        // console api path (defaults to 'console')
-        'output_dir'   => '',               // Where you'd like the generated files to go (defaults to ./output)
-        'namespace'    => '',               // The namespace that will be used in the generated files (optional)
-        'http_client'  => null,             // GuzzleHttp\ClientInterface compatible client
-    ]
-));
-
-$generator->generate();
+php-cs phpcs:build --config your_config_file.yml
 ```
-
-If you do not specify anything for `output_dir`, all generated files will be placed under [output](./output)
 
 There are 3 directories of files created by this generated process, however you will only directly interact with 3:
 
@@ -56,9 +47,8 @@ PHP Library Usage
         'host'         => 'localhost',      // Your CloudStack host (required)
         'scheme'       => 'http',           // http or https (defaults to http)
         'port'         => 8080,             // api port (defaults to 8080)
-        'path_prefix'  => 'client',         // url prefix (defaults to 'client')
-        'api_path'     => 'api',            // admin api path (defaults to 'api')
-        'console_path' => 'console',        // console api path (defaults to 'console')
+        'api_path'     => 'client/api',     // admin api path (defaults to 'client/api')
+        'console_path' => 'client/console', // console api path (defaults to 'client/console')
         'http_client'  => null,             // GuzzleHttp\ClientInterface compatible client
     ]);
     

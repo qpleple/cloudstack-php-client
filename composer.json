@@ -36,18 +36,26 @@
   },
 
   "require": {
-    "php": "^7.1",
-
+    "php": "^7.0",
+    "symfony/console": "@stable",
+    "symfony/yaml": "@stable",
     "twig/twig": "@stable",
     "twig/extensions": "@stable",
-
     "psr/log": "@stable",
-
     "guzzlehttp/psr7": "@stable",
     "guzzlehttp/guzzle": "@stable"
   },
   "require-dev": {
     "myena/default-logger": "@stable",
     "phpunit/phpunit": "@stable"
+  },
+
+  "scripts": {
+    "build": [
+      "rm -rf vendor",
+      "composer install --no-interaction --no-dev --no-progress --no-suggest --optimize-autoloader --profile",
+      "/usr/bin/env php ./bin/php-cs phpcs:build -vvv",
+      "chmod +x build/php-cs.phar"
+    ]
   }
 }

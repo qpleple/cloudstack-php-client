@@ -14,24 +14,27 @@ use Psr\Log\NullLogger;
 class Configuration implements LoggerAwareInterface {
     use LoggerAwareTrait;
 
-    /** @var string */
-    protected $apiKey = '';
-    /** @var string */
-    protected $secretKey = '';
+    const DefaultScheme = 'http';
+    const DefaultPort = 8080;
+    const DefaultAPIPath = 'client/api';
+    const DefaultConsolePath = 'client/console';
 
     /** @var string */
-    protected $scheme = 'http';
+    protected $key = '';
+    /** @var string */
+    protected $secret = '';
+
+    /** @var string */
+    protected $scheme = self::DefaultScheme;
     /** @var string */
     protected $host = '';
     /** @var int */
-    protected $port = 8080;
+    protected $port = self::DefaultPort;
 
     /** @var string */
-    protected $pathPrefix = 'client';
+    protected $apiPath = self::DefaultAPIPath;
     /** @var string */
-    protected $apiPath = 'api';
-    /** @var string */
-    protected $consolePath = 'console';
+    protected $consolePath = self::DefaultConsolePath;
 
     /** @var string */
     protected $compiledAddress = '';
@@ -39,7 +42,7 @@ class Configuration implements LoggerAwareInterface {
     /** @var string */
     protected $namespace = '';
     /** @var string */
-    protected $outputDir = __DIR__ . '/../output';
+    protected $outputDir = '';
 
     /** @var \DateTime */
     protected $now;
@@ -62,10 +65,8 @@ class Configuration implements LoggerAwareInterface {
         } else {
             $this->logger = $logger;
         }
-
-        if (isset($config['endpoint'])) {
-            throw new \InvalidArgumentException('The "endpoint" configuration parameter is deprecated, please use the component url params');
-        }
+        $this->now = new \DateTime();
+        $this->eventTypeMap = require __DIR__.'/../files/command_event_map.php';
 
         foreach ($config as $k => $v) {
             if (false === strpos($k, '_')) {
@@ -75,25 +76,15 @@ class Configuration implements LoggerAwareInterface {
             }
         }
 
-        $this->now = new \DateTime();
-
-        if ('' === $this->host) {
-            throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
-        }
-
-        if ('' === $this->apiKey) {
-            throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
-        }
-
-        if ('' === $this->secretKey) {
-            throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
-        }
-
-        if (!($this->HttpClient instanceof ClientInterface)) {
+        if (!isset($this->HttpClient)) {
             $this->HttpClient = new Client();
         }
+    }
 
-        $this->eventTypeMap = require __DIR__.'/../files/command_event_map.php';
+    public function __debugInfo() {
+        $clone = clone $this;
+        unset($clone->now, $clone->HttpClient, $clone->logger, $clone->eventTypeMap);
+        return get_object_vars($clone);
     }
 
     /**
@@ -113,32 +104,32 @@ class Configuration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getApiKey() {
-        return $this->apiKey;
+    public function getKey() {
+        return $this->key;
     }
 
     /**
-     * @param string $apiKey
+     * @param string $key
      * @return Configuration
      */
-    public function setApiKey($apiKey) {
-        $this->apiKey = $apiKey;
+    public function setKey($key) {
+        $this->key = $key;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getSecretKey() {
-        return $this->secretKey;
+    public function getSecret() {
+        return $this->secret;
     }
 
     /**
-     * @param string $secretKey
+     * @param string $secret
      * @return Configuration
      */
-    public function setSecretKey($secretKey) {
-        $this->secretKey = $secretKey;
+    public function setSecret($secret) {
+        $this->secret = $secret;
         return $this;
     }
 
@@ -189,23 +180,6 @@ class Configuration implements LoggerAwareInterface {
      */
     public function setPort($port) {
         $this->port = $port;
-        $this->compiledAddress = '';
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPathPrefix() {
-        return $this->pathPrefix;
-    }
-
-    /**
-     * @param string $pathPrefix
-     * @return Configuration
-     */
-    public function setPathPrefix($pathPrefix) {
-        $this->pathPrefix = trim($pathPrefix, " \t\n\r\0\x0B/");
         $this->compiledAddress = '';
         return $this;
     }
@@ -271,11 +245,6 @@ class Configuration implements LoggerAwareInterface {
      */
     public function setOutputDir($outputDir) {
         $this->outputDir = $outputDir;
-
-        if (!is_dir($outputDir) || !is_writable($outputDir)) {
-            throw new \RuntimeException(sprintf('Unable to locate dir "%s" or it is not writable', $outputDir));
-        }
-
         return $this;
     }
 
@@ -293,11 +262,10 @@ class Configuration implements LoggerAwareInterface {
     public function getCompiledAddress() {
         if ('' === $this->compiledAddress) {
             $this->compiledAddress = rtrim(sprintf(
-                '%s://%s%s/%s',
+                '%s://%s%s/',
                 $this->getScheme(),
                 $this->getHost(),
-                0 === $this->port ? '' : sprintf(':%d', $this->port),
-                $this->getPathPrefix()
+                0 === $this->port ? '' : sprintf(':%d', $this->port)
             ),
                 "/");
         }
@@ -324,7 +292,7 @@ class Configuration implements LoggerAwareInterface {
             throw new \Exception(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
         }
 
-        $hash = @hash_hmac('SHA1', strtolower($query), $this->getSecretKey(), true);
+        $hash = @hash_hmac('SHA1', strtolower($query), $this->getSecret(), true);
         return urlencode(base64_encode($hash));
     }
 }

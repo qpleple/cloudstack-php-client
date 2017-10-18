@@ -1,8 +1,5 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Uri;
-use GuzzleHttp\RequestOptions;
 use MyENA\CloudStackClientGenerator\API\ObjectVariable;
 use MyENA\CloudStackClientGenerator\API\Variable;
 
@@ -13,7 +10,9 @@ use MyENA\CloudStackClientGenerator\API\Variable;
  */
 class Generator {
     /** @var \MyENA\CloudStackClientGenerator\Configuration */
-    protected $configuration;
+    protected $config;
+    /** @var \MyENA\CloudStackClientGenerator\Client */
+    protected $client;
 
     /** @var \Twig_Environment */
     protected $twig;
@@ -32,15 +31,12 @@ class Generator {
 
     /** @var string */
     protected $srcDir;
-
     /** @var string */
     protected $filesDir;
-
     /** @var string */
     protected $responseDir;
     /** @var string */
     protected $responseTypesDir;
-
     /** @var string */
     protected $requestDir;
 
@@ -50,43 +46,45 @@ class Generator {
      * @param \MyENA\CloudStackClientGenerator\Configuration $configuration
      */
     public function __construct(Configuration $configuration) {
-        $this->configuration = $configuration;
+        $this->config = $configuration;
+        $this->client = new Client($configuration);
 
-        $twigLoader = new \Twig_Loader_Filesystem(__DIR__ . '/../templates');
-        $this->twig = new \Twig_Environment($twigLoader, ['debug' => true, 'strict_variables' => true, 'autoescape' => false]);
+        $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
+        $this->twig =
+            new \Twig_Environment($twigLoader, ['debug' => true, 'strict_variables' => true, 'autoescape' => false]);
         $this->twig->addExtension(new \Twig_Extensions_Extension_Text());
         $this->twig->addFilter(
             new \Twig_Filter(
                 'ucfirst',
-                function ($in) {
+                function($in) {
                     return ucfirst($in);
                 },
                 ['is_safe' => ['html']]
             )
         );
 
-        $this->srcDir = sprintf('%s/src', $this->configuration->getOutputDir());
-        if (!is_dir($this->srcDir) && false === (bool)mkdir($this->srcDir)) {
+        $this->srcDir = sprintf('%s/src', $this->config->getOutputDir());
+        if (!is_dir($this->srcDir) && !mkdir($this->srcDir)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->srcDir));
         }
 
-        $this->filesDir = sprintf('%s/files', $this->configuration->getOutputDir());
-        if (!is_dir($this->filesDir) && false === (bool)mkdir($this->filesDir)) {
+        $this->filesDir = sprintf('%s/files', $this->config->getOutputDir());
+        if (!is_dir($this->filesDir) && !mkdir($this->filesDir)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->filesDir));
         }
 
         $this->responseDir = sprintf('%s/CloudStackResponse', $this->srcDir);
-        if (!is_dir($this->responseDir) && false === (bool)mkdir($this->responseDir)) {
+        if (!is_dir($this->responseDir) && !mkdir($this->responseDir)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseDir));
         }
 
         $this->responseTypesDir = sprintf('%s/Types', $this->responseDir);
-        if (!is_dir($this->responseTypesDir) && false === (bool)mkdir($this->responseTypesDir)) {
+        if (!is_dir($this->responseTypesDir) && !mkdir($this->responseTypesDir)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseTypesDir));
         }
 
         $this->requestDir = sprintf('%s/CloudStackRequest', $this->srcDir);
-        if (!is_dir($this->requestDir)&& false === (bool)mkdir($this->requestDir)) {
+        if (!is_dir($this->requestDir) && !mkdir($this->requestDir)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->requestDir));
         }
     }
@@ -95,152 +93,106 @@ class Generator {
      * Execute generation of CloudStack API client
      */
     public function generate() {
+        $log = $this->config->getLogger();
+
+        $log->info("Compiling APIs from {$this->config->getHost()}...");
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
 
+        $log->info('Writing static templates...');
         $this->writeOutStaticTemplates();
+        $log->info('Writing Client class...');
         $this->writeOutClient();
 
+        $log->info('Writing Request Models...');
         $this->writeOutRequestModels();
+        $log->info('Writing Shared Response Models...');
         $this->writeOutSharedResponseModels();
+        $log->info('Writing Response Models...');
         $this->writeOutResponseModels();
     }
 
     /**
-     * Execute request against configured CloudStack instance.
-     *
-     * @param string $command
-     * @param array $parameters
-     * @param array $headers
-     * @return \stdClass
+     * @param string $file
+     * @param string $data
+     * @return bool|int
      */
-    public function doApiRequest($command, array $parameters = [], array $headers = []) {
-        static $defaultHeaders = ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
-
-        $params = [
-                'apikey' => $this->configuration->getApiKey(),
-                'command' => $command,
-                'response' => 'json',
-            ] + $parameters;
-
-        ksort($params);
-
-        $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-
-        $uri = new Uri(sprintf(
-            '%s/api?%s&signature=%s',
-            $this->configuration->getCompiledAddress(),
-            $query,
-            $this->configuration->buildSignature($query)
-        ));
-
-        $r = new Request('GET', $uri,$headers + $defaultHeaders);
-
-        $resp = $this->configuration->HttpClient->send($r, [
-            RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::DECODE_CONTENT => false,
-        ]);
-
-        if (200 !== $resp->getStatusCode()) {
-            // attempt to decode response...
-            $data = $resp->getBody()->getContents();
-            $decoded = @json_decode($data, true);
-            if (JSON_ERROR_NONE === json_last_error()) {
-                if (1 === count($decoded)) {
-                    $decoded = reset($decoded);
-                }
-                if (isset($decoded['errortext'])) {
-                    throw new \RuntimeException($decoded);
-                }
-            }
-            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $data), NO_VALID_JSON_RECEIVED);
-        }
-
-        $body = $resp->getBody();
-
-        if (0 === $body->getSize()) {
-            throw new \RuntimeException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
-        }
-
-        $decoded = @json_decode($body->getContents());
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \RuntimeException(sprintf('%s: %s', NO_VALID_JSON_RECEIVED_MSG, json_last_error_msg()), NO_VALID_JSON_RECEIVED);
-        }
-
-        return $decoded;
+    protected function writeFile(string $file, string $data) {
+        $this->config->getLogger()->debug('Writing '.mb_strlen($data).' bytes to '.$file);
+        return file_put_contents($file, $data);
     }
 
     protected function writeOutStaticTemplates() {
-        $args = ['config' => $this->configuration, 'capabilities' => $this->getCapabilities()];
+        $args = ['config' => $this->config, 'capabilities' => $this->getCapabilities()];
 
-        file_put_contents(
-            $this->configuration->getOutputDir() . '/LICENSE',
-            file_get_contents(__DIR__ . '/../LICENSE')
+        $this->writeFile(
+            $this->config->getOutputDir().'/LICENSE',
+            file_get_contents(__DIR__.'/../LICENSE')
         );
 
-        file_put_contents(
-            $this->configuration->getOutputDir() . '/composer.json',
+        $this->writeFile(
+            $this->config->getOutputDir().'/composer.json',
             $this->twig->load('composer.json.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->srcDir . '/CloudStackConfiguration.php',
+        $this->writeFile(
+            $this->srcDir.'/CloudStackConfiguration.php',
             $this->twig->load('configuration.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->filesDir . '/constants.php',
+        $this->writeFile(
+            $this->filesDir.'/constants.php',
             $this->twig->load('constants.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->srcDir.'/CloudStackEventTypes.php',
             $this->twig->load('eventTypes.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->responseDir . '/AsyncJobStartResponse.php',
+        $this->writeFile(
+            $this->responseDir.'/AsyncJobStartResponse.php',
             $this->twig->load('responses/asyncJobStart.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->responseDir . '/AccessVmConsoleProxyResponse.php',
+        $this->writeFile(
+            $this->responseDir.'/AccessVmConsoleProxyResponse.php',
             $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->responseTypesDir . '/DateType.php',
+        $this->writeFile(
+            $this->responseTypesDir.'/DateType.php',
             $this->twig->load('responses/dateType.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->srcDir . '/CloudStackHelpers.php',
+        $this->writeFile(
+            $this->srcDir.'/CloudStackHelpers.php',
             $this->twig->load('helpers.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->requestDir.'/CloudStackRequestInterfaces.php',
             $this->twig->load('requests/interfaces.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->requestDir.'/AccessVmConsoleProxyRequest.php',
             $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->srcDir.'/CloudStackExceptions.php',
             $this->twig->load('exceptions.php.twig')->render($args)
         );
     }
 
     protected function writeOutClient() {
-        file_put_contents(
-            $this->srcDir . '/CloudStackClient.php',
+        $this->writeFile(
+            $this->srcDir.'/CloudStackClient.php',
             $this->twig->load('client.php.twig')->render([
-                'config' => $this->configuration,
+                'config'       => $this->config,
                 'capabilities' => $this->getCapabilities(),
-                'apis' => $this->apis,
+                'apis'         => $this->apis,
             ])
         );
     }
@@ -249,13 +201,13 @@ class Generator {
         $capabilities = $this->getCapabilities();
         $template = $this->twig->load('requests/model.php.twig');
 
-        foreach($this->apis as $api) {
+        foreach ($this->apis as $api) {
             $className = $api->getRequestClassName();
-            file_put_contents(
-                $this->requestDir . '/' .$className . '.php',
+            $this->writeFile(
+                $this->requestDir.'/'.$className.'.php',
                 $template->render([
-                    'api' => $api,
-                    'config' => $this->configuration,
+                    'api'          => $api,
+                    'config'       => $this->config,
                     'capabilities' => $capabilities,
                 ])
             );
@@ -268,13 +220,12 @@ class Generator {
 
         foreach ($this->sharedObjectMap as $name => $class) {
             $class->getProperties()->nameSort();
-
             $className = $class->getClassName();
-            file_put_contents(
-                $this->responseDir . '/' . $className . '.php',
+            $this->writeFile(
+                $this->responseDir.'/'.$className.'.php',
                 $template->render([
-                    'obj' => $class,
-                    'config' => $this->configuration,
+                    'obj'          => $class,
+                    'config'       => $this->config,
                     'capabilities' => $capabilities,
                 ])
             );
@@ -289,11 +240,11 @@ class Generator {
             $response = $api->getResponse();
             $className = $response->getClassName();
 
-            file_put_contents(
-                $this->responseDir . '/' . $className . '.php',
+            $this->writeFile(
+                $this->responseDir.'/'.$className.'.php',
                 $template->render([
-                    'obj' => $response,
-                    'config' => $this->configuration,
+                    'obj'          => $response,
+                    'config'       => $this->config,
                     'capabilities' => $capabilities,
                 ])
             );
@@ -388,7 +339,7 @@ class Generator {
      * @param array $response
      */
     protected function parseResponse(API $api, array $response) {
-        $obj = new ObjectVariable($this->configuration->getNamespace());
+        $obj = new ObjectVariable($this->config->getNamespace());
         $obj->setName($api->getName());
         $obj->setDescription($api->getDescription());
         $obj->setSince($api->getSince());
@@ -426,7 +377,7 @@ class Generator {
             return $this->sharedObjectMap[$name];
         }
 
-        $obj = new ObjectVariable($this->configuration->getNamespace());
+        $obj = new ObjectVariable($this->config->getNamespace());
         $obj->setName($name);
         $obj->setType($def->type);
         $obj->setDescription($def->type);
@@ -444,7 +395,7 @@ class Generator {
      */
     protected function getCapabilities() {
         if (!isset($this->capabilities)) {
-            $data = $this->doApiRequest('listCapabilities');
+            $data = $this->client->do('listCapabilities');
             $this->capabilities = $data->listcapabilitiesresponse;
         }
 
@@ -452,7 +403,7 @@ class Generator {
     }
 
     protected function compileAPIs() {
-        $data = $this->doApiRequest('listApis')->listapisresponse;
+        $data = $this->client->do('listApis')->listapisresponse;
 
         foreach ($data->api as $apiDef) {
             $api = new API();
@@ -472,7 +423,7 @@ class Generator {
 
             $api->getParameters()->nameSort();
 
-            $api->setEventType($this->configuration->getEventForAPI($api));
+            $api->setEventType($this->config->getEventForAPI($api));
 
             $this->apis[$api->getName()] = $api;
         }

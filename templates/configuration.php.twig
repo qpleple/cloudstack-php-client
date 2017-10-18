@@ -111,7 +111,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getApiKey() {
+    public function getApiKey(): string {
         return $this->apiKey;
     }
 
@@ -119,7 +119,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param string $apiKey
      * @return CloudStackConfiguration
      */
-    public function setApiKey($apiKey) {
+    public function setApiKey(string $apiKey): CloudStackConfiguration {
         $this->apiKey = $apiKey;
         return $this;
     }
@@ -127,7 +127,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getSecretKey() {
+    public function getSecretKey(): string {
         return $this->secretKey;
     }
 
@@ -135,7 +135,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param string $secretKey
      * @return CloudStackConfiguration
      */
-    public function setSecretKey($secretKey) {
+    public function setSecretKey(string $secretKey): CloudStackConfiguration {
         $this->secretKey = $secretKey;
         return $this;
     }
@@ -143,7 +143,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getScheme() {
+    public function getScheme(): string {
         return $this->scheme;
     }
 
@@ -151,7 +151,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param string $scheme
      * @return CloudStackConfiguration
      */
-    public function setScheme($scheme) {
+    public function setScheme(string $scheme): CloudStackConfiguration {
         $this->scheme = $scheme;
         $this->compiledAddress = '';
         return $this;
@@ -160,7 +160,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getHost() {
+    public function getHost(): string {
         return $this->host;
     }
 
@@ -168,7 +168,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param string $host
      * @return CloudStackConfiguration
      */
-    public function setHost($host) {
+    public function setHost(string $host): CloudStackConfiguration {
         $this->host = $host;
         $this->compiledAddress = '';
         return $this;
@@ -177,7 +177,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return int
      */
-    public function getPort() {
+    public function getPort(): int {
         return $this->port;
     }
 
@@ -185,7 +185,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param int $port
      * @return CloudStackConfiguration
      */
-    public function setPort($port) {
+    public function setPort(int $port): CloudStackConfiguration {
         $port = intval($port);
         if (0 === $port) {
             $this->port = null;
@@ -201,7 +201,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getPathPrefix() {
+    public function getPathPrefix(): string {
         return $this->pathPrefix;
     }
 
@@ -209,7 +209,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param string $pathPrefix
      * @return CloudStackConfiguration
      */
-    public function setPathPrefix($pathPrefix) {
+    public function setPathPrefix(string $pathPrefix): CloudStackConfiguration {
         $this->pathPrefix = trim($pathPrefix, " \t\n\r\0\x0B/");
         $this->compiledAddress = '';
         return $this;
@@ -218,7 +218,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getApiPath() {
+    public function getApiPath(): string {
         return $this->apiPath;
     }
 
@@ -226,7 +226,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @var string $apiPath;
      * @return CloudStackConfiguration
      */
-    public function setApiPath($apiPath) {
+    public function setApiPath(string $apiPath): CloudStackConfiguration {
         $this->apiPath = trim($apiPath, " \t\n\r\0\x0B/");
         return $this;
     }
@@ -234,7 +234,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getConsolePath() {
+    public function getConsolePath(): string {
         return $this->consolePath;
     }
 
@@ -242,7 +242,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @param string $consolePath
      * @return CloudStackConfiguration
      */
-    public function setConsolePath($consolePath) {
+    public function setConsolePath(string $consolePath): CloudStackConfiguration {
         $this->consolePath = trim($consolePath, " \t\n\r\0\x0B/");
         return $this;
     }
@@ -250,7 +250,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
     /**
      * @return string
      */
-    public function getCompiledAddress() {
+    public function getCompiledAddress(): string {
         if ('' === $this->compiledAddress) {
             $this->compiledAddress = rtrim(sprintf(
                 '%s://%s%s/%s',
@@ -269,7 +269,7 @@ class CloudStackConfiguration implements LoggerAwareInterface {
      * @return string
      * @throws \Exception
      */
-    public function buildSignature($query) {
+    public function buildSignature(string $query): string {
         if ('' === $query) {
             throw new \Exception(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
         }
