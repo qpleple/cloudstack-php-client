@@ -14,7 +14,13 @@
 # php_cs_generator must be the root key
 php_cs_generator:
   dev: # Name of this config.  Accessible via the "config-env" option
-    host: dev.ourcloudstack.com
+    scheme: "http"
+    host: ~ # dev.ourcloudstack.com
+    port: 8080
+    apipath: "client/api"
+    consolepath: "client/console"
+    out: ~ # choose output path
+    namespace: "\\MyGreatNamespace"
     key: # your api key
     secret: # your api secret
   prod:
