@@ -200,8 +200,9 @@ STRING
             <<<PHP
 #!/usr/bin/env php
 <?php
-putenv('PHPCS_PHAR=1');
 Phar::mapPhar('php-cs.phar');
+putenv('PHPCS_PHAR=1');
+define('PHPCS_ROOT', Phar::running(false));
 require 'phar://php-cs.phar/bin/php-cs';
 __HALT_COMPILER(); ?>
 PHP

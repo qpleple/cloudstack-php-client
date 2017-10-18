@@ -49,13 +49,14 @@ class Generator {
         $this->config = $configuration;
         $this->client = new Client($configuration);
 
-        $twigLoader = new \Twig_Loader_Filesystem(__DIR__ . '/../templates');
-        $this->twig = new \Twig_Environment($twigLoader, ['debug' => true, 'strict_variables' => true, 'autoescape' => false]);
+        $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
+        $this->twig =
+            new \Twig_Environment($twigLoader, ['debug' => true, 'strict_variables' => true, 'autoescape' => false]);
         $this->twig->addExtension(new \Twig_Extensions_Extension_Text());
         $this->twig->addFilter(
             new \Twig_Filter(
                 'ucfirst',
-                function ($in) {
+                function($in) {
                     return ucfirst($in);
                 },
                 ['is_safe' => ['html']]
@@ -83,7 +84,7 @@ class Generator {
         }
 
         $this->requestDir = sprintf('%s/CloudStackRequest', $this->srcDir);
-        if (!is_dir($this->requestDir)&& !mkdir($this->requestDir)) {
+        if (!is_dir($this->requestDir) && !mkdir($this->requestDir)) {
             throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->requestDir));
         }
     }
@@ -92,88 +93,106 @@ class Generator {
      * Execute generation of CloudStack API client
      */
     public function generate() {
+        $log = $this->config->getLogger();
+
+        $log->info("Compiling APIs from {$this->config->getHost()}...");
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
 
+        $log->info('Writing static templates...');
         $this->writeOutStaticTemplates();
+        $log->info('Writing Client class...');
         $this->writeOutClient();
 
+        $log->info('Writing Request Models...');
         $this->writeOutRequestModels();
+        $log->info('Writing Shared Response Models...');
         $this->writeOutSharedResponseModels();
+        $log->info('Writing Response Models...');
         $this->writeOutResponseModels();
+    }
+
+    /**
+     * @param string $file
+     * @param string $data
+     * @return bool|int
+     */
+    protected function writeFile(string $file, string $data) {
+        $this->config->getLogger()->debug('Writing '.mb_strlen($data).' bytes to '.$file);
+        return file_put_contents($file, $data);
     }
 
     protected function writeOutStaticTemplates() {
         $args = ['config' => $this->config, 'capabilities' => $this->getCapabilities()];
 
-        file_put_contents(
-            $this->config->getOutputDir() . '/LICENSE',
-            file_get_contents(__DIR__ . '/../LICENSE')
+        $this->writeFile(
+            $this->config->getOutputDir().'/LICENSE',
+            file_get_contents(__DIR__.'/../LICENSE')
         );
 
-        file_put_contents(
-            $this->config->getOutputDir() . '/composer.json',
+        $this->writeFile(
+            $this->config->getOutputDir().'/composer.json',
             $this->twig->load('composer.json.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->srcDir . '/CloudStackConfiguration.php',
+        $this->writeFile(
+            $this->srcDir.'/CloudStackConfiguration.php',
             $this->twig->load('configuration.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->filesDir . '/constants.php',
+        $this->writeFile(
+            $this->filesDir.'/constants.php',
             $this->twig->load('constants.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->srcDir.'/CloudStackEventTypes.php',
             $this->twig->load('eventTypes.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->responseDir . '/AsyncJobStartResponse.php',
+        $this->writeFile(
+            $this->responseDir.'/AsyncJobStartResponse.php',
             $this->twig->load('responses/asyncJobStart.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->responseDir . '/AccessVmConsoleProxyResponse.php',
+        $this->writeFile(
+            $this->responseDir.'/AccessVmConsoleProxyResponse.php',
             $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->responseTypesDir . '/DateType.php',
+        $this->writeFile(
+            $this->responseTypesDir.'/DateType.php',
             $this->twig->load('responses/dateType.php.twig')->render($args)
         );
 
-        file_put_contents(
-            $this->srcDir . '/CloudStackHelpers.php',
+        $this->writeFile(
+            $this->srcDir.'/CloudStackHelpers.php',
             $this->twig->load('helpers.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->requestDir.'/CloudStackRequestInterfaces.php',
             $this->twig->load('requests/interfaces.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->requestDir.'/AccessVmConsoleProxyRequest.php',
             $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render($args)
         );
 
-        file_put_contents(
+        $this->writeFile(
             $this->srcDir.'/CloudStackExceptions.php',
             $this->twig->load('exceptions.php.twig')->render($args)
         );
     }
 
     protected function writeOutClient() {
-        file_put_contents(
-            $this->srcDir . '/CloudStackClient.php',
+        $this->writeFile(
+            $this->srcDir.'/CloudStackClient.php',
             $this->twig->load('client.php.twig')->render([
-                'config' => $this->config,
+                'config'       => $this->config,
                 'capabilities' => $this->getCapabilities(),
-                'apis' => $this->apis,
+                'apis'         => $this->apis,
             ])
         );
     }
@@ -182,13 +201,13 @@ class Generator {
         $capabilities = $this->getCapabilities();
         $template = $this->twig->load('requests/model.php.twig');
 
-        foreach($this->apis as $api) {
+        foreach ($this->apis as $api) {
             $className = $api->getRequestClassName();
-            file_put_contents(
-                $this->requestDir . '/' .$className . '.php',
+            $this->writeFile(
+                $this->requestDir.'/'.$className.'.php',
                 $template->render([
-                    'api' => $api,
-                    'config' => $this->config,
+                    'api'          => $api,
+                    'config'       => $this->config,
                     'capabilities' => $capabilities,
                 ])
             );
@@ -201,13 +220,12 @@ class Generator {
 
         foreach ($this->sharedObjectMap as $name => $class) {
             $class->getProperties()->nameSort();
-
             $className = $class->getClassName();
-            file_put_contents(
-                $this->responseDir . '/' . $className . '.php',
+            $this->writeFile(
+                $this->responseDir.'/'.$className.'.php',
                 $template->render([
-                    'obj' => $class,
-                    'config' => $this->config,
+                    'obj'          => $class,
+                    'config'       => $this->config,
                     'capabilities' => $capabilities,
                 ])
             );
@@ -222,11 +240,11 @@ class Generator {
             $response = $api->getResponse();
             $className = $response->getClassName();
 
-            file_put_contents(
-                $this->responseDir . '/' . $className . '.php',
+            $this->writeFile(
+                $this->responseDir.'/'.$className.'.php',
                 $template->render([
-                    'obj' => $response,
-                    'config' => $this->config,
+                    'obj'          => $response,
+                    'config'       => $this->config,
                     'capabilities' => $capabilities,
                 ])
             );

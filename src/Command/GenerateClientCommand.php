@@ -51,6 +51,8 @@ STRING
             return 1;
         }
 
+        $this->log->info("Generating client against host \"{$this->config->getHost()}\"");
+
         $generator = new Generator($this->config);
 
         try {

@@ -228,11 +228,12 @@ abstract class AbstractCommand extends Command {
 
         foreach ($parsed as $k => $v) {
             if ('path' === substr($k, -4)) {
-                $key = substr($k, 0, strlen($k) - 4).'Path';
-            } else {
-                $key = $k;
+                $k = substr($k, 0, strlen($k) - 4).'Path';
+            } else if ('out' === $k) {
+                $k = 'outputDir';
+                $v = $this->tryResolvePath($v);
             }
-            $this->config->{'set'.ucfirst($key)}($v);
+            $this->config->{'set'.ucfirst($k)}($v);
         }
 
         return true;
@@ -249,14 +250,24 @@ abstract class AbstractCommand extends Command {
     }
 
     /**
+     * Will attempt to detect and expand a relative path.
+     *
+     * // TODO: This is probably a bad idea and I should stop being lazy.
+     *
      * @param string $in
      * @return string
      */
     protected function tryResolvePath(string $in): string {
         if (0 === strpos($in, './')) {
-            return __DIR__.'/../../'.substr($in, 2);
+            if ($rp = realpath(PHPCS_ROOT.'/'.substr($in, 2))) {
+                return $rp;
+            }
+            return PHPCS_ROOT.'/'.substr($in, 2);
         } else if (0 !== strpos($in, '/')) {
-            return __DIR__.'/../../'.ltrim($in, "/");
+            if ($rp = realpath(PHPCS_ROOT.'/'.ltrim($in, "/"))) {
+                return $rp;
+            }
+            return PHPCS_ROOT.'/'.ltrim($in, "/");
         } else {
             return $in;
         }
