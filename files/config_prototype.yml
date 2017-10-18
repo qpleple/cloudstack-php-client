@@ -9,7 +9,6 @@
 # - If an option is defined here AND defined explicitly at runtime, the runtime option will be used in favor of the
 #   value defined here.
 # - If a value is NOT defined here but is defined explicitly at runtime, the runtime value will be used.
-# - Noise will be ignored.
 
 # php_cs_generator must be the root key
 php_cs_generator:
@@ -21,10 +20,10 @@ php_cs_generator:
     consolepath: "client/console"
     out: ~ # choose output path
     namespace: "\\MyGreatNamespace"
-    key: # your api key
-    secret: # your api secret
+    key: ~ # your api key
+    secret: ~ # your api secret
   prod:
     host: prod.ourcloudstack.com
     port: 8765
-    key: # your api key
-    secret: # your api secret
+    key: ~ # your api key
+    secret: ~ # your api secret
