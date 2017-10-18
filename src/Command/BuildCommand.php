@@ -121,6 +121,7 @@ STRING
             '/test/',
             '/tests/',
             '/Tests/',
+            '/Tester/',
             '/doc/',
             '/docs/',
         ];
@@ -133,6 +134,11 @@ STRING
             '.gitattributes',
             '.gitkeep',
             'CHANGELOG',
+            'CHANGELOG.md',
+            'CHANGELOG.MD',
+            'UPGRADING',
+            'UPGRADING.md',
+            'UPGRADING.MD',
             'README',
             'README.md',
             'README.MD',
@@ -140,7 +146,6 @@ STRING
         ];
 
         foreach (glob(rtrim($this->resolvePath($dir), "/").'/*', GLOB_NOSORT) as $f) {
-            // try to omit test stuff..
             foreach ($skipDirs as $skipDir) {
                 if (false !== strpos($f, $skipDir)) {
                     $this->log->debug("Skipping \"{$this->trimRootPath($f)}\"...");
