@@ -42,9 +42,8 @@ PHP Library Usage
         'host'         => 'localhost',      // Your CloudStack host (required)
         'scheme'       => 'http',           // http or https (defaults to http)
         'port'         => 8080,             // api port (defaults to 8080)
-        'path_prefix'  => 'client',         // url prefix (defaults to 'client')
-        'api_path'     => 'api',            // admin api path (defaults to 'api')
-        'console_path' => 'console',        // console api path (defaults to 'console')
+        'api_path'     => 'client/api',     // admin api path (defaults to 'client/api')
+        'console_path' => 'client/console', // console api path (defaults to 'client/console')
         'http_client'  => null,             // GuzzleHttp\ClientInterface compatible client
     ]);
     
