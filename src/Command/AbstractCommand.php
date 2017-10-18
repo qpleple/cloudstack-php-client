@@ -50,7 +50,7 @@ abstract class AbstractCommand extends Command {
                 null,
                 InputOption::VALUE_REQUIRED,
                 'HTTP Scheme to use (http or https)',
-                'http'
+                Configuration::DefaultScheme
             )
             ->addOption(
                 'host',
@@ -63,21 +63,21 @@ abstract class AbstractCommand extends Command {
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API Client port to use',
-                8080
+                Configuration::DefaultPort
             )
             ->addOption(
                 'apipath',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API path to use',
-                'client/api'
+                Configuration::DefaultAPIPath
             )
             ->addOption(
                 'consolepath',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Console path to use',
-                'client/console'
+                Configuration::DefaultConsolePath
             )
             ->addOption(
                 'key',
@@ -93,18 +93,16 @@ abstract class AbstractCommand extends Command {
             )
             ->addOption(
                 'out',
-                null,
+                'O',
                 InputOption::VALUE_REQUIRED,
-                'Output Directory',
-                __DIR__.'/../../output'
+                'Output Directory'
             )
             ->addOption(
                 'namespace',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Namespace for generated code'
-            )
-            ;
+            );
     }
 
     /**
@@ -136,16 +134,19 @@ abstract class AbstractCommand extends Command {
         }
 
         // Set any runtime command options
-        if (Configuration::DefaultScheme === $this->config->getScheme() && Configuration::DefaultScheme !== ($scheme = $input->getOption('scheme'))) {
+        if (Configuration::DefaultScheme === $this->config->getScheme() &&
+            Configuration::DefaultScheme !== ($scheme = $input->getOption('scheme'))) {
             $this->config->setScheme($scheme);
         }
         if ($host = $input->getOption('host')) {
             $this->config->setHost($host);
         }
-        if (Configuration::DefaultPort === $this->config->getPort() && Configuration::DefaultPort !== ($port = $input->getOption('port'))) {
+        if (Configuration::DefaultPort === $this->config->getPort() &&
+            Configuration::DefaultPort !== ($port = $input->getOption('port'))) {
             $this->config->setPort($port);
         }
-        if (Configuration::DefaultAPIPath === $this->config->getApiPath() && Configuration::DefaultAPIPath !== ($apiPath = $input->getOption('apipath'))) {
+        if (Configuration::DefaultAPIPath === $this->config->getApiPath() &&
+            Configuration::DefaultAPIPath !== ($apiPath = $input->getOption('apipath'))) {
             $this->config->setApiPath($apiPath);
         }
         if ($consolePath = $input->getOption('consolepath')) {
@@ -157,7 +158,7 @@ abstract class AbstractCommand extends Command {
         if ($secret = $input->getOption('secret')) {
             $this->config->setSecret($secret);
         }
-        if (Configuration::DefaultOutputDir === $this->config->getOutputDir() && Configuration::DefaultOutputDir !== ($out = $input->getOption('out'))) {
+        if ($out = $input->getOption('out')) {
             $this->config->setOutputDir($this->tryResolvePath($out));
         }
         if ($ns = $input->getOption('namespace')) {
@@ -177,7 +178,9 @@ abstract class AbstractCommand extends Command {
             $this->log->error('"secret" cannot be empty');
             return false;
         }
-        if (!is_dir($this->config->getOutputDir()) && !mkdir($this->config->getOutputDir())) {
+        if ('' === $this->config->getOutputDir()) {
+            $this->log->error('The "out" option must be passed!');
+        } else if (!is_dir($this->config->getOutputDir()) && !mkdir($this->config->getOutputDir())) {
             $this->log->error("Unable to create output directory \"{$this->config->getOutputDir()}\"");
             return false;
         } else if (!is_writable($this->config->getOutputDir())) {
@@ -223,9 +226,9 @@ abstract class AbstractCommand extends Command {
             $parsed = reset($parsed);
         }
 
-        foreach($parsed as $k => $v) {
+        foreach ($parsed as $k => $v) {
             if ('path' === substr($k, -4)) {
-                $key = substr($k, 0, strlen($k)-4).'Path';
+                $key = substr($k, 0, strlen($k) - 4).'Path';
             } else {
                 $key = $k;
             }

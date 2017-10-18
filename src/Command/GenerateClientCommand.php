@@ -21,11 +21,22 @@ This command will execute the client generation command.  The generator does the
 - Executes "listCapabilities" to get version and other information about your CloudStack instance
 - Attempts to build a client for you
 
-To use a configuration file, please see the prototype "files/config_prototype.yml"
+Example Config: 
+
+# php_cs_generator must be the root key
+php_cs_generator:
+  dev: # Name of this config.  Accessible via the "config-env" option
+    host: dev.ourcloudstack.com
+    key: # your api key
+    secret: # your api secret
+  prod:
+    host: prod.ourcloudstack.com
+    port: 8765
+    key: # your api key
+    secret: # your api secret
 
 STRING
-            )
-            ;
+            );
 
         $this->addConfigOptions();
     }

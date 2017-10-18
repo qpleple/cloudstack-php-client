@@ -18,7 +18,6 @@ class Configuration implements LoggerAwareInterface {
     const DefaultPort = 8080;
     const DefaultAPIPath = 'client/api';
     const DefaultConsolePath = 'client/console';
-    const DefaultOutputDir = __DIR__.'/../output';
 
     /** @var string */
     protected $key = '';
@@ -43,7 +42,7 @@ class Configuration implements LoggerAwareInterface {
     /** @var string */
     protected $namespace = '';
     /** @var string */
-    protected $outputDir = self::DefaultOutputDir;
+    protected $outputDir = '';
 
     /** @var \DateTime */
     protected $now;

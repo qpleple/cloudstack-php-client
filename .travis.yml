@@ -1,0 +1,29 @@
+language: php
+
+dist: trusty
+
+sudo: false
+
+php:
+  - 7.0
+  - 7.1
+
+matrix:
+  include:
+    - php: 7.1
+      env:
+        - BUILD_PHAR=true
+
+install:
+  - composer install --no-interaction --no-dev --no-progress --no-suggest --optimize-autoloader
+
+script:
+  - if [[ $BUILD_PHAR == 'true' ]]; then /usr/bin/env php ./bin/php-cs phpcs:build -vvv ; fi
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_API_KEY
+  file: build/php-cs.phar
+  skip_cleanup: true
+  on:
+    php: '7.1'

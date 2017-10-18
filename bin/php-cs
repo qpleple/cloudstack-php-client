@@ -1,7 +1,26 @@
-#!/usr/bin/env php
 <?php
+
+if (PHP_SAPI !== 'cli') {
+    echo 'PHP-CS should be invoked via the CLI version of PHP, not the '.PHP_SAPI.' SAPI'.PHP_EOL;
+}
 
 require __DIR__.'/../vendor/autoload.php';
 
-$application = new \MyENA\CloudStackClientGenerator\Application();
-$application->run();
+use MyENA\CloudStackClientGenerator\Application;
+use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
+error_reporting(-1);
+
+$application = new Application('PHP CloudStack', '3.0.0');
+
+// Shamelessly borrowed from Composer...
+$styles = [
+    'highlight' => new OutputFormatterStyle('red'),
+    'warning' => new OutputFormatterStyle('black', 'yellow'),
+];
+$formatter = new OutputFormatter(null, $styles);
+$output = new ConsoleOutput(ConsoleOutput::VERBOSITY_NORMAL, null, $formatter);
+
+$application->run(null);

@@ -1,5 +1,8 @@
 <?php namespace MyENA\CloudStackClientGenerator;
 
+use MyENA\CloudStackClientGenerator\Command\BuildCommand;
+use MyENA\CloudStackClientGenerator\Command\GenerateClientCommand;
+use MyENA\CloudStackClientGenerator\Command\GenerateEventMapCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 
 /**
@@ -11,17 +14,17 @@ class Application extends BaseApplication {
      * @return array
      */
     protected function getDefaultCommands() {
+        $commands = [
+            new GenerateClientCommand(),
+        ];
+
+        if (!(bool)getenv('PHPCS_PHAR')) {
+            $commands[] = new BuildCommand();
+            $commands[] = new GenerateEventMapCommand();
+        }
         return array_merge(
             parent::getDefaultCommands(),
-            array_filter(array_map(function ($file) {
-                $basename = basename($file);
-                if (0 === strpos($basename, 'Abstract')) {
-                    return null;
-                }
-                $class = sprintf('%s\\Command\\%s', __NAMESPACE__, str_replace('.php', '', $basename));
-                return new $class;
-            },
-                glob(__DIR__ . '/Command/*Command.php', GLOB_NOSORT)))
+            $commands
         );
     }
 }
