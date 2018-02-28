@@ -25,7 +25,6 @@
       "email": "bgabor@ena.com"
     }
   ],
-
   "autoload": {
     "psr-4": {
       "MyENA\\CloudStackClientGenerator\\": "src/"
@@ -34,7 +33,6 @@
       "files/constants.php"
     ]
   },
-
   "require": {
     "php": "^7.0",
     "symfony/console": "@stable",
@@ -46,10 +44,8 @@
     "guzzlehttp/guzzle": "@stable"
   },
   "require-dev": {
-    "myena/default-logger": "@stable",
-    "phpunit/phpunit": "@stable"
+    "myena/default-logger": "@stable"
   },
-
   "scripts": {
     "build": [
       "rm -rf vendor",

@@ -12,18 +12,35 @@
 
 # php_cs_generator must be the root key
 php_cs_generator:
-  dev: # Name of this config.  Accessible via the "config-env" option
-    scheme: "http"
-    host: ~ # dev.ourcloudstack.com
-    port: 8080
-    apipath: "client/api"
-    consolepath: "client/console"
-    out: ~ # choose output path
-    namespace: "\\MyGreatNamespace"
-    key: ~ # your api key
-    secret: ~ # your api secret
-  prod:
-    host: prod.ourcloudstack.com
-    port: 8765
-    key: ~ # your api key
-    secret: ~ # your api secret
+  # environment configuration
+  environments:
+    dev: # Name of this config.  Accessible via the "env" option
+      scheme: "http"
+      host: ~ # dev.ourcloudstack.com
+      port: 8080
+      apipath: "client/api"
+      consolepath: "client/console"
+      out: ~ # choose output path
+      namespace: "\\MyGreatNamespace"
+      key: ~ # your api key
+      secret: ~ # your api secret
+      logger:
+        class: ~ # psr-3 compliant logger instance
+        level: ~ #level the environment's logger should be
+      http_client:
+        class: ~ # any class that implements \GuzzleHttp\ClientInterface
+        config:
+          allow_redirects: true
+          http_errors: true
+          verify: false
+    prod:
+      host: prod.ourcloudstack.com
+      port: 8765
+      key: ~ # your api key
+      secret: ~ # your api secret
+  # allows you to extend the classes constructed by this lib with your own class
+  overloaded_classes:
+    - name: Tags                  # name of class you are overloading
+      overload: MyGreatTagsClass  # fully qualified name of class extending the base class
+    - name: ListVirtualMachinesRequest
+      overload: DoSomethingCrazyRequest

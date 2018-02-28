@@ -23,20 +23,8 @@ This command will execute the client generation command.  The generator does the
 
 Example Config: 
 
-# php_cs_generator must be the root key
-php_cs_generator:
-  dev: # Name of this config.  Accessible via the "config-env" option
-    host: dev.ourcloudstack.com
-    key: # your api key
-    secret: # your api secret
-  prod:
-    host: prod.ourcloudstack.com
-    port: 8765
-    key: # your api key
-    secret: # your api secret
-
 STRING
-            );
+                .rtrim(file_get_contents(__DIR__.'/../../files/config_prototype.yml'))."\n\n");
 
         $this->addConfigOptions();
     }
@@ -44,21 +32,22 @@ STRING
     /**
      * @param \Symfony\Component\Console\Input\InputInterface $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @return int
+     * @return int|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function execute(InputInterface $input, OutputInterface $output) {
         if (!$this->initializeConfig($input, $output)) {
             return 1;
         }
 
-        $this->log->info("Generating client against host \"{$this->config->getHost()}\"");
+        $this->log->info("Generating client against host \"{$this->env->getHost()}\"");
 
-        $generator = new Generator($this->config);
+        $generator = new Generator($this->config, $this->env);
 
         try {
             $generator->generate();
         } catch (\Throwable $e) {
-            $this->log->error("Unable to complete generation: {$e->getMessage()}.");
+            $this->log->error("Unable to complete generation: {$e->getMessage()}");
             return 1;
         }
 

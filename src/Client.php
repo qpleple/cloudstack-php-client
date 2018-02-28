@@ -3,21 +3,22 @@
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
+use MyENA\CloudStackClientGenerator\Configuration\Environment;
 
 /**
  * Class Client
  * @package MyENA\CloudStackClientGenerator
  */
 class Client {
-    /** @var \MyENA\CloudStackClientGenerator\Configuration */
-    protected $config;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment */
+    protected $env;
 
     /**
      * Client constructor.
-     * @param \MyENA\CloudStackClientGenerator\Configuration $c
+     * @param \MyENA\CloudStackClientGenerator\Configuration\Environment $e
      */
-    public function __construct(Configuration $c) {
-        $this->config = $c;
+    public function __construct(Environment $e) {
+        $this->env = $e;
     }
 
     /**
@@ -25,12 +26,14 @@ class Client {
      * @param array $parameters
      * @param array $headers
      * @return \stdClass
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function do(string $command, array $parameters = [], array $headers = []): \stdClass {
         static $defaultHeaders =
             ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
 
-        $params = ['apikey' => $this->config->getKey(), 'command' => $command, 'response' => 'json'] + $parameters;
+        $params = ['apikey' => $this->env->getKey(), 'command' => $command, 'response' => 'json'] + $parameters;
 
         ksort($params);
 
@@ -38,15 +41,15 @@ class Client {
 
         $uri = new Uri(sprintf(
             '%s/%s?%s&signature=%s',
-            $this->config->getCompiledAddress(),
-            $this->config->getApiPath(),
+            $this->env->getCompiledAddress(),
+            $this->env->getApiPath(),
             $query,
-            $this->config->buildSignature($query)
+            $this->env->buildSignature($query)
         ));
 
         $r = new Request('GET', $uri, $headers + $defaultHeaders);
 
-        $resp = $this->config->HttpClient->send($r, [
+        $resp = $this->env->getHttpClient()->send($r, [
             RequestOptions::HTTP_ERRORS => false,
             RequestOptions::DECODE_CONTENT => false,
         ]);

@@ -37,7 +37,7 @@
 {# end optional arguments #}
      * }
 {% endif %}
-     * @return \{% if config.namespace != '' %}{{ config.namespace }}\{% endif %}CloudStackResponse\{% if api.isAsync %}AsyncJobStartResponse{% else %}{{ api.response.className }}{% if api.list %}[]{% endif %}{% endif %}
+     * @return {{ namespace_path('CloudStackResponse', true) }}\{% if api.isAsync %}AsyncJobStartResponse{% else %}{{ api.response.className }}{% if api.list %}[]{% endif %}{% endif %}
 
      */
     public function {{ api.name }}({# only define required paramaters in function #}

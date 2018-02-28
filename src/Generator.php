@@ -2,6 +2,7 @@
 
 use MyENA\CloudStackClientGenerator\API\ObjectVariable;
 use MyENA\CloudStackClientGenerator\API\Variable;
+use MyENA\CloudStackClientGenerator\Configuration\Environment;
 
 /**
  * Class Generator
@@ -11,8 +12,13 @@ use MyENA\CloudStackClientGenerator\API\Variable;
 class Generator {
     /** @var \MyENA\CloudStackClientGenerator\Configuration */
     protected $config;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment */
+    protected $env;
     /** @var \MyENA\CloudStackClientGenerator\Client */
     protected $client;
+
+    /** @var \Psr\Log\LoggerInterface */
+    protected $log;
 
     /** @var \Twig_Environment */
     protected $twig;
@@ -40,14 +46,22 @@ class Generator {
     /** @var string */
     protected $requestDir;
 
+    /** @var array */
+    protected $commandEventMap;
+
     /**
      * Generator constructor.
-     *
-     * @param \MyENA\CloudStackClientGenerator\Configuration $configuration
+     * @param \MyENA\CloudStackClientGenerator\Configuration $config
+     * @param \MyENA\CloudStackClientGenerator\Configuration\Environment $environment
      */
-    public function __construct(Configuration $configuration) {
-        $this->config = $configuration;
-        $this->client = new Client($configuration);
+    public function __construct(Configuration $config, Environment $environment) {
+        $this->config = $config;
+        $this->env = $environment;
+        $this->client = new Client($environment);
+
+        $this->log = $environment->getLogger();
+
+        $this->commandEventMap = require __DIR__.'/../files/command_event_map.php';
 
         $twigLoader = new \Twig_Loader_Filesystem(__DIR__.'/../templates');
         $this->twig =
@@ -62,54 +76,136 @@ class Generator {
                 ['is_safe' => ['html']]
             )
         );
+        $map = $this->commandEventMap;
+        $this->twig->addFunction(new \Twig_Function(
+            'command_event',
+            function(string $in) use ($map): string {
+                return $map[$in] ?? '';
+            },
+            ['is_safe' => ['html']]
+        ));
+        $rootNS = $environment->getNamespace();
+        $this->twig->addFunction(new \Twig_function(
+            'namespace_stmt',
+            function(string $in = '') use ($rootNS): string {
+                if ('' === $rootNS) {
+                    if ('' === $in) {
+                        return '';
+                    }
+                    return " namespace {$in};";
+                }
+                if ('' === $in) {
+                    return " namespace {$rootNS};";
+                }
+                return " namespace {$rootNS}\\{$in};";
+            },
+            ['is_safe' => ['html']]
+        ));
+        $this->twig->addFunction(new \Twig_Function(
+            'namespace_path',
+            function(string $in = '', bool $prefix = false) use ($rootNS): string {
+                if ('' === $rootNS) {
+                    if ('' === $in) {
+                        return '';
+                    }
+                    return $prefix ? "\\{$in}" : $in;
+                }
+                if ('' === $in) {
+                    return $prefix ? "\\{$rootNS}" : $rootNS;
+                }
+                return $prefix ? "\\{$rootNS}\\{$in}" : "{$rootNS}\\{$in}";
+            },
+            ['is_safe' => ['html']]
+        ));
+        $now = new \DateTime();
+        $this->twig->addFunction(new \Twig_Function(
+            'now',
+            function(string $format = '') use ($now) : string {
+                if ('' === $format) {
+                    $format = 'Y-m-d';
+                }
+                return $now->format($format);
+            },
+            ['is_safe' => ['html']]
+        ));
 
-        $this->srcDir = sprintf('%s/src', $this->config->getOutputDir());
-        if (!is_dir($this->srcDir) && !mkdir($this->srcDir)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->srcDir));
-        }
-
-        $this->filesDir = sprintf('%s/files', $this->config->getOutputDir());
-        if (!is_dir($this->filesDir) && !mkdir($this->filesDir)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->filesDir));
-        }
-
+        $this->srcDir = sprintf('%s/src', $this->env->getOut());
+        $this->filesDir = sprintf('%s/files', $this->env->getOut());
         $this->responseDir = sprintf('%s/CloudStackResponse', $this->srcDir);
-        if (!is_dir($this->responseDir) && !mkdir($this->responseDir)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseDir));
-        }
-
         $this->responseTypesDir = sprintf('%s/Types', $this->responseDir);
-        if (!is_dir($this->responseTypesDir) && !mkdir($this->responseTypesDir)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseTypesDir));
-        }
-
         $this->requestDir = sprintf('%s/CloudStackRequest', $this->srcDir);
-        if (!is_dir($this->requestDir) && !mkdir($this->requestDir)) {
-            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->requestDir));
-        }
     }
 
     /**
      * Execute generation of CloudStack API client
+     *
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
      */
     public function generate() {
-        $log = $this->config->getLogger();
+        $this->log->info('Initializing directories...');
+        $this->initializeDirectories();
 
-        $log->info("Compiling APIs from {$this->config->getHost()}...");
+        $this->log->info("Compiling APIs from {$this->env->getHost()}...");
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
 
-        $log->info('Writing static templates...');
+        $this->log->debug('Setting Twig globals');
+        $this->twig->addGlobal('config', $this->config);
+        $this->twig->addGlobal('env', $this->env);
+        $this->twig->addGlobal('log', $this->log);
+        $this->twig->addGlobal('capabilities', $this->getCapabilities());
+
+        $this->log->info('Writing static templates...');
         $this->writeOutStaticTemplates();
-        $log->info('Writing Client class...');
+        $this->log->info('Writing Client class...');
         $this->writeOutClient();
 
-        $log->info('Writing Request Models...');
+        $this->log->info('Writing Request Models...');
         $this->writeOutRequestModels();
-        $log->info('Writing Shared Response Models...');
+        $this->log->info('Writing Shared Response Models...');
         $this->writeOutSharedResponseModels();
-        $log->info('Writing Response Models...');
+        $this->log->info('Writing Response Models...');
         $this->writeOutResponseModels();
+    }
+
+    protected function cleanDirectory(string $dir) {
+        if (0 < ($cnt = count(($phpFiles = glob($dir.'/*.php'))))) {
+            $this->log->info(sprintf('Directory "%s" has "%d" php file(s), emptying...', $dir, $cnt));
+            foreach ($phpFiles as $phpFile) {
+                if (!@unlink($phpFile)) {
+                    $this->log->warning(sprintf('Unable to delete file "%s"', $phpFile));
+                }
+            }
+        } else {
+            $this->log->debug(sprintf('Directory "%s" is already empty', $dir));
+        }
+    }
+
+    protected function initializeDirectories() {
+        if (!is_dir($this->srcDir) && !mkdir($this->srcDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->srcDir));
+        }
+        if (!is_dir($this->filesDir) && !mkdir($this->filesDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->filesDir));
+        }
+        if (!is_dir($this->responseDir) && !mkdir($this->responseDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseDir));
+        }
+        if (!is_dir($this->responseTypesDir) && !mkdir($this->responseTypesDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->responseTypesDir));
+        }
+        if (!is_dir($this->requestDir) && !mkdir($this->requestDir)) {
+            throw new \RuntimeException(sprintf('Unable to create directory "%s"', $this->requestDir));
+        }
+        $this->cleanDirectory($this->srcDir);
+        $this->cleanDirectory($this->filesDir);
+        $this->cleanDirectory($this->responseDir);
+        $this->cleanDirectory($this->responseTypesDir);
+        $this->cleanDirectory($this->requestDir);
     }
 
     /**
@@ -118,104 +214,120 @@ class Generator {
      * @return bool|int
      */
     protected function writeFile(string $file, string $data) {
-        $this->config->getLogger()->debug('Writing '.mb_strlen($data).' bytes to '.$file);
+        $this->log->debug('Writing '.mb_strlen($data).' bytes to '.$file);
         return file_put_contents($file, $data);
     }
 
+    /**
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     protected function writeOutStaticTemplates() {
-        $args = ['config' => $this->config, 'capabilities' => $this->getCapabilities()];
-
         $this->writeFile(
-            $this->config->getOutputDir().'/LICENSE',
+            $this->env->getOut().'/LICENSE',
             file_get_contents(__DIR__.'/../LICENSE')
         );
 
         $this->writeFile(
-            $this->config->getOutputDir().'/composer.json',
-            $this->twig->load('composer.json.twig')->render($args)
+            $this->env->getOut().'/composer.json',
+            $this->twig->load('composer.json.twig')->render()
         );
 
         $this->writeFile(
             $this->srcDir.'/CloudStackConfiguration.php',
-            $this->twig->load('configuration.php.twig')->render($args)
+            $this->twig->load('configuration.php.twig')->render()
         );
 
         $this->writeFile(
             $this->filesDir.'/constants.php',
-            $this->twig->load('constants.php.twig')->render($args)
+            $this->twig->load('constants.php.twig')->render()
         );
 
         $this->writeFile(
             $this->srcDir.'/CloudStackEventTypes.php',
-            $this->twig->load('eventTypes.php.twig')->render($args)
+            $this->twig->load('eventTypes.php.twig')->render()
         );
 
         $this->writeFile(
             $this->responseDir.'/AsyncJobStartResponse.php',
-            $this->twig->load('responses/asyncJobStart.php.twig')->render($args)
+            $this->twig->load('responses/asyncJobStart.php.twig')->render()
         );
 
         $this->writeFile(
             $this->responseDir.'/AccessVmConsoleProxyResponse.php',
-            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render($args)
+            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render()
         );
 
         $this->writeFile(
             $this->responseTypesDir.'/DateType.php',
-            $this->twig->load('responses/dateType.php.twig')->render($args)
+            $this->twig->load('responses/dateType.php.twig')->render()
         );
 
         $this->writeFile(
             $this->srcDir.'/CloudStackHelpers.php',
-            $this->twig->load('helpers.php.twig')->render($args)
+            $this->twig->load('helpers.php.twig')->render()
         );
 
         $this->writeFile(
             $this->requestDir.'/CloudStackRequestInterfaces.php',
-            $this->twig->load('requests/interfaces.php.twig')->render($args)
+            $this->twig->load('requests/interfaces.php.twig')->render()
         );
 
         $this->writeFile(
             $this->requestDir.'/AccessVmConsoleProxyRequest.php',
-            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render($args)
+            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render()
         );
 
         $this->writeFile(
             $this->srcDir.'/CloudStackExceptions.php',
-            $this->twig->load('exceptions.php.twig')->render($args)
+            $this->twig->load('exceptions.php.twig')->render()
         );
     }
 
+    /**
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     protected function writeOutClient() {
         $this->writeFile(
             $this->srcDir.'/CloudStackClient.php',
-            $this->twig->load('client.php.twig')->render([
-                'config'       => $this->config,
-                'capabilities' => $this->getCapabilities(),
-                'apis'         => $this->apis,
-            ])
+            $this->twig->load('client.php.twig')->render(['apis' => $this->apis])
         );
     }
 
+    /**
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     protected function writeOutRequestModels() {
-        $capabilities = $this->getCapabilities();
         $template = $this->twig->load('requests/model.php.twig');
 
         foreach ($this->apis as $api) {
             $className = $api->getRequestClassName();
             $this->writeFile(
                 $this->requestDir.'/'.$className.'.php',
-                $template->render([
-                    'api'          => $api,
-                    'config'       => $this->config,
-                    'capabilities' => $capabilities,
-                ])
+                $template->render(['api' => $api])
             );
         }
     }
 
+    /**
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     protected function writeOutSharedResponseModels() {
-        $capabilities = $this->getCapabilities();
         $template = $this->twig->load('responses/model.php.twig');
 
         foreach ($this->sharedObjectMap as $name => $class) {
@@ -223,17 +335,19 @@ class Generator {
             $className = $class->getClassName();
             $this->writeFile(
                 $this->responseDir.'/'.$className.'.php',
-                $template->render([
-                    'obj'          => $class,
-                    'config'       => $this->config,
-                    'capabilities' => $capabilities,
-                ])
+                $template->render(['obj' => $class])
             );
         }
     }
 
+    /**
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
     protected function writeOutResponseModels() {
-        $capabilities = $this->getCapabilities();
         $template = $this->twig->load('responses/model.php.twig');
 
         foreach ($this->apis as $name => $api) {
@@ -242,11 +356,7 @@ class Generator {
 
             $this->writeFile(
                 $this->responseDir.'/'.$className.'.php',
-                $template->render([
-                    'obj'          => $response,
-                    'config'       => $this->config,
-                    'capabilities' => $capabilities,
-                ])
+                $template->render(['obj' => $response])
             );
         }
     }
@@ -339,7 +449,7 @@ class Generator {
      * @param array $response
      */
     protected function parseResponse(API $api, array $response) {
-        $obj = new ObjectVariable($this->config->getNamespace());
+        $obj = new ObjectVariable($this->env->getNamespace());
         $obj->setName($api->getName());
         $obj->setDescription($api->getDescription());
         $obj->setSince($api->getSince());
@@ -377,7 +487,7 @@ class Generator {
             return $this->sharedObjectMap[$name];
         }
 
-        $obj = new ObjectVariable($this->config->getNamespace());
+        $obj = new ObjectVariable($this->env->getNamespace());
         $obj->setName($name);
         $obj->setType($def->type);
         $obj->setDescription($def->type);
@@ -392,6 +502,8 @@ class Generator {
 
     /**
      * @return \stdClass
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     protected function getCapabilities() {
         if (!isset($this->capabilities)) {
@@ -402,6 +514,10 @@ class Generator {
         return $this->capabilities;
     }
 
+    /**
+     * @throws \Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     protected function compileAPIs() {
         $data = $this->client->do('listApis')->listapisresponse;
 
@@ -423,7 +539,13 @@ class Generator {
 
             $api->getParameters()->nameSort();
 
-            $api->setEventType($this->config->getEventForAPI($api));
+            if ($api->isAsync()) {
+                if (isset($this->commandEventMap[$api->getName()])) {
+                    $api->setEventType($this->commandEventMap[$api->getName()]);
+                } else {
+                    $this->log->warning(sprintf('No async event present in map for %s', $api->getName()));
+                }
+            }
 
             $this->apis[$api->getName()] = $api;
         }

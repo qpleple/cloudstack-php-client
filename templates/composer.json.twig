@@ -13,7 +13,7 @@
 {
     "name": "myena/generated-cloudstack-client",
     "type": "library",
-    "description": "Generated CloudStack PHP Client built on {{ config.now.format('Y-m-d') }} against ACS {{ capabilities.capability.cloudstackversion }}",
+    "description": "Generated CloudStack PHP Client built on {{ now('Y-m-d') }} against ACS {{ capabilities.capability.cloudstackversion }}",
     "license": "MIT",
     "authors": [
         {
@@ -47,7 +47,7 @@
     },
     "autoload": {
         "psr-4": {
-            "{% if config.namespace != '' %}{{ config.namespace|replace({'\\': '\\\\'}) }}\\{% endif %}": "src/"
+            "{{ namespace_path('\\', true)|replace({'\\': '\\\\'}) }}": "src/"
         },
         "files": [
             "files/constants.php",

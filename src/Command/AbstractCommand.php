@@ -2,6 +2,7 @@
 
 use MyENA\CloudStackClientGenerator\Client;
 use MyENA\CloudStackClientGenerator\Configuration;
+use Psr\Log\NullLogger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -19,6 +20,9 @@ abstract class AbstractCommand extends Command {
 
     /** @var \MyENA\CloudStackClientGenerator\Configuration */
     protected $config;
+
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment */
+    protected $env;
 
     /** @var \MyENA\CloudStackClientGenerator\Client */
     private $client;
@@ -50,7 +54,7 @@ abstract class AbstractCommand extends Command {
                 null,
                 InputOption::VALUE_REQUIRED,
                 'HTTP Scheme to use (http or https)',
-                Configuration::DefaultScheme
+                Configuration\Environment::DefaultScheme
             )
             ->addOption(
                 'host',
@@ -63,21 +67,21 @@ abstract class AbstractCommand extends Command {
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API Client port to use',
-                Configuration::DefaultPort
+                Configuration\Environment::DefaultPort
             )
             ->addOption(
                 'apipath',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API path to use',
-                Configuration::DefaultAPIPath
+                Configuration\Environment::DefaultAPIPath
             )
             ->addOption(
                 'consolepath',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Console path to use',
-                Configuration::DefaultConsolePath
+                Configuration\Environment::DefaultConsolePath
             )
             ->addOption(
                 'key',
@@ -102,7 +106,8 @@ abstract class AbstractCommand extends Command {
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Namespace for generated code'
-            );
+            )
+        ;
     }
 
     /**
@@ -110,7 +115,11 @@ abstract class AbstractCommand extends Command {
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      */
     protected function initialize(InputInterface $input, OutputInterface $output) {
-        $this->log = new ConsoleLogger($output);
+        if ((bool)$output->isQuiet()) {
+            $this->log = new NullLogger();
+        } else {
+            $this->log = new ConsoleLogger($output);
+        }
     }
 
     /**
@@ -119,11 +128,11 @@ abstract class AbstractCommand extends Command {
      * @return bool
      */
     protected function initializeConfig(InputInterface $input, OutputInterface $output): bool {
-        $this->config = new Configuration([], $this->log);
+        $this->config = new Configuration([]);
 
         // attempt to parse config file
         if ($file = $input->getOption('config')) {
-            $file = $this->tryResolvePath($file);
+            $file = Configuration\Environment::tryResolvePath($file);
             if (!file_exists($file) || !is_readable($file)) {
                 $this->log->error("Config file {$file} either does not exist or is not readable");
                 return false;
@@ -131,60 +140,70 @@ abstract class AbstractCommand extends Command {
             if (!$this->parseYAML($file, (string)$input->getOption('env'))) {
                 return false;
             }
+        } else {
+            $environment = new Configuration\Environment([
+                'name' => 'adhoc',
+            ]);
+            $this->config->getEnvironments()->setEnvironment($environment);
+            $this->env = $environment;
+            $this->log->info('No config file specified, using adhoc');
+        }
+        if ($this->env->getLogger() === null || $this->env->getLogger() instanceof NullLogger) {
+            $this->env->setLogger($this->log); // TODO: might just set null logger again, do we care?
         }
 
         // Set any runtime command options
-        if (Configuration::DefaultScheme === $this->config->getScheme() &&
-            Configuration::DefaultScheme !== ($scheme = $input->getOption('scheme'))) {
-            $this->config->setScheme($scheme);
+        if (Configuration\Environment::DefaultScheme === $this->env->getScheme() &&
+            Configuration\Environment::DefaultScheme !== ($scheme = $input->getOption('scheme'))) {
+            $this->env->setScheme($scheme);
         }
         if ($host = $input->getOption('host')) {
-            $this->config->setHost($host);
+            $this->env->setHost($host);
         }
-        if (Configuration::DefaultPort === $this->config->getPort() &&
-            Configuration::DefaultPort !== ($port = $input->getOption('port'))) {
-            $this->config->setPort($port);
+        if (Configuration\Environment::DefaultPort === $this->env->getPort() &&
+            Configuration\Environment::DefaultPort !== ($port = $input->getOption('port'))) {
+            $this->env->setPort($port);
         }
-        if (Configuration::DefaultAPIPath === $this->config->getApiPath() &&
-            Configuration::DefaultAPIPath !== ($apiPath = $input->getOption('apipath'))) {
-            $this->config->setApiPath($apiPath);
+        if (Configuration\Environment::DefaultAPIPath === $this->env->getApiPath() &&
+            Configuration\Environment::DefaultAPIPath !== ($apiPath = $input->getOption('apipath'))) {
+            $this->env->setApiPath($apiPath);
         }
         if ($consolePath = $input->getOption('consolepath')) {
-            $this->config->setConsolePath($consolePath);
+            $this->env->setConsolePath($consolePath);
         }
         if ($key = $input->getOption('key')) {
-            $this->config->setKey($key);
+            $this->env->setKey($key);
         }
         if ($secret = $input->getOption('secret')) {
-            $this->config->setSecret($secret);
+            $this->env->setSecret($secret);
         }
         if ($out = $input->getOption('out')) {
-            $this->config->setOutputDir($this->tryResolvePath($out));
+            $this->env->setOut(Configuration\Environment::tryResolvePath($out));
         }
         if ($ns = $input->getOption('namespace')) {
-            $this->config->setNamespace($ns);
+            $this->env->setNamespace($ns);
         }
 
         // Do some basic validation
-        if ('' === $this->config->getHost()) {
+        if ('' === $this->env->getHost()) {
             $this->log->error('"host" cannot be empty');
             return false;
         }
-        if ('' === $this->config->getKey()) {
+        if ('' === $this->env->getKey()) {
             $this->log->error('"key" cannot be empty');
             return false;
         }
-        if ('' === $this->config->getSecret()) {
+        if ('' === $this->env->getSecret()) {
             $this->log->error('"secret" cannot be empty');
             return false;
         }
-        if ('' === $this->config->getOutputDir()) {
+        if ('' === $this->env->getOut()) {
             $this->log->error('The "out" option must be passed!');
-        } else if (!is_dir($this->config->getOutputDir()) && !mkdir($this->config->getOutputDir())) {
-            $this->log->error("Unable to create output directory \"{$this->config->getOutputDir()}\"");
+        } else if (!is_dir($this->env->getOut()) && !mkdir($this->env->getOut())) {
+            $this->log->error("Unable to create output directory \"{$this->env->getOut()}\"");
             return false;
-        } else if (!is_writable($this->config->getOutputDir())) {
-            $this->log->error("Output directory \"{$this->config->getOutputDir()}\" is not writable");
+        } else if (!is_writable($this->env->getOut())) {
+            $this->log->error("Output directory \"{$this->env->getOut()}\" is not writable");
             return false;
         }
 
@@ -213,28 +232,24 @@ abstract class AbstractCommand extends Command {
 
         $parsed = $parsed['php_cs_generator'];
 
+        $this->config = new Configuration($parsed);
+
         if ('' !== $env) {
-            if (isset($parsed[$env])) {
-                $parsed = $parsed[$env];
-            } else {
+            $environment = $this->config->getEnvironments()->getEnvironment($env);
+            if (null === $environment) {
                 $this->log->error("Config file \"{$file}\" does not contain specified environment \"{$env}\"");
                 return false;
             }
-            $this->log->info("Using \"{$env}\" configuration");
         } else {
-            $this->log->info('No env specified, using first entry in config: "'.key($parsed).'"');
-            $parsed = reset($parsed);
+            $first = $this->config->getEnvironments()->first();
+            if (null === $first) {
+                $this->log->error("Config file \"{$file}\" contains no environments");
+                return false;
+            }
+            $this->env = $first;
         }
 
-        foreach ($parsed as $k => $v) {
-            if ('path' === substr($k, -4)) {
-                $k = substr($k, 0, strlen($k) - 4).'Path';
-            } else if ('out' === $k) {
-                $k = 'outputDir';
-                $v = $this->tryResolvePath($v);
-            }
-            $this->config->{'set'.ucfirst($k)}($v);
-        }
+        $this->log->info("Using \"{$this->env->getName()}\" configuration");
 
         return true;
     }
@@ -244,32 +259,8 @@ abstract class AbstractCommand extends Command {
      */
     protected function getClient(): Client {
         if (!isset($this->client)) {
-            $this->client = new Client($this->config);
+            $this->client = new Client($this->env);
         }
         return $this->client;
-    }
-
-    /**
-     * Will attempt to detect and expand a relative path.
-     *
-     * // TODO: This is probably a bad idea and I should stop being lazy.
-     *
-     * @param string $in
-     * @return string
-     */
-    protected function tryResolvePath(string $in): string {
-        if (0 === strpos($in, './')) {
-            if ($rp = realpath(PHPCS_ROOT.'/'.substr($in, 2))) {
-                return $rp;
-            }
-            return PHPCS_ROOT.'/'.substr($in, 2);
-        } else if (0 !== strpos($in, '/')) {
-            if ($rp = realpath(PHPCS_ROOT.'/'.ltrim($in, "/"))) {
-                return $rp;
-            }
-            return PHPCS_ROOT.'/'.ltrim($in, "/");
-        } else {
-            return $in;
-        }
     }
 }
