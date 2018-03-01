@@ -6,15 +6,15 @@ php:
 #  - 7.0
   - 7.1
 #  - 7.2
-
-matrix:
-  include:
-    - php: 7.1
-      env:
-        - BUILD_PHAR=true
+#
+#matrix:
+#  include:
+#    - php: 7.1
+#      env:
+#        - BUILD_PHAR=true
 
 script:
-  - if [[ $BUILD_PHAR == 'true' && $TRAVIS_TAG != '' ]]; then composer run-script build -vvv ; fi
+  - composer run-script build -vvv
 
 deploy:
   provider: releases
