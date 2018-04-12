@@ -47,7 +47,7 @@
     },
     "autoload": {
         "psr-4": {
-            "{{ namespace_path('\\', true)|trim('\\', 'left')|replace({'\\': '\\\\'}) }}": "src/"
+            "{{ namespace_path()|replace({'\\': '\\\\'}) }}\\": "src/"
         },
         "files": [
             "files/constants.php",
