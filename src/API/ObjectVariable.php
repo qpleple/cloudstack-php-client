@@ -16,9 +16,11 @@ class ObjectVariable extends Variable {
 
     /**
      * ObjectVariable constructor.
+     * @param bool   $inResponse
      * @param string $namespace
      */
-    public function __construct($namespace) {
+    public function __construct(bool $inResponse, string $namespace) {
+        parent::__construct($inResponse);
         $this->namespace = $namespace;
         $this->properties = new VariableContainer();
     }
@@ -62,7 +64,7 @@ class ObjectVariable extends Variable {
             return ucfirst($this->getName());
         }
 
-        return ucfirst($this->getName()) . 'Response';
+        return ucfirst($this->getName()).'Response';
     }
 
     /**
@@ -98,7 +100,7 @@ STRING;
 
         // if this is a very simple class, just return the loop and move on.
         if (0 === $datesCnt && 0 === $objectsCnt) {
-            return $c . <<<STRING
+            return $c.<<<STRING
         foreach (\$data as \$k => \$v) {
             \$this->{\$k} = \$v;
         }
@@ -167,7 +169,7 @@ STRING;
             }
         }
 
-        return $c . <<<STRING
+        return $c.<<<STRING
  else {
                 \$this->{\$k} = \$v;
             }
@@ -179,14 +181,22 @@ STRING;
     /**
      * @inheritDoc
      */
-    public function getPHPType() {
+    public function getPHPType(): string {
         return $this->getFQName();
+    }
+
+    /**
+     * @return string
+     */
+    public function getSwaggerRefValue(): string {
+        return "#/definitions/{$this->getClassName()}";
     }
 
     /**
      * @inheritDoc
      */
-    public function getSwaggerItemsTag() {
-        return "     *  @SWG\\Items(ref=\"#/definitions/{$this->getClassName()}\"),";
+    public function getSwaggerItemsTag(): string {
+        return "@SWG\\Items(ref=\"{$this->getSwaggerRefValue()}\")";
     }
+
 }

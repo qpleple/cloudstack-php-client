@@ -219,8 +219,6 @@ class Generator {
     }
 
     /**
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -288,8 +286,6 @@ class Generator {
     }
 
     /**
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -302,8 +298,6 @@ class Generator {
     }
 
     /**
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -321,8 +315,6 @@ class Generator {
     }
 
     /**
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -341,8 +333,6 @@ class Generator {
     }
 
     /**
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -362,16 +352,17 @@ class Generator {
     }
 
     /**
+     * @param bool      $inResponse
      * @param \stdClass $def
      * @return \MyENA\CloudStackClientGenerator\API\Variable
      */
-    protected function buildVariable(\stdClass $def) {
+    protected function buildVariable(bool $inResponse, \stdClass $def) {
 
         if (!isset($def->name)) {
             return null;
         }
 
-        $var = new Variable();
+        $var = new Variable($inResponse);
 
         $var->setName(trim($def->name));
         $var->setType($def->type);
@@ -417,7 +408,7 @@ class Generator {
             $name = trim($def->name);
 
             if (null === $properties->get($name)) {
-                $var = $this->buildVariable($def);
+                $var = $this->buildVariable($object->inResponse(), $def);
                 if (null === $var) {
                     continue;
                 }
@@ -438,7 +429,7 @@ class Generator {
                 continue;
             }
 
-            if (null !== ($var = $this->buildVariable($param))) {
+            if (null !== ($var = $this->buildVariable(false, $param))) {
                 $api->getParameters()->add($var);
             }
         }
@@ -449,7 +440,7 @@ class Generator {
      * @param array $response
      */
     protected function parseResponse(API $api, array $response) {
-        $obj = new ObjectVariable($this->env->getNamespace());
+        $obj = new ObjectVariable(true, $this->env->getNamespace());
         $obj->setName($api->getName());
         $obj->setDescription($api->getDescription(false));
         $obj->setSince($api->getSince());
@@ -459,7 +450,7 @@ class Generator {
             if (isset($prop->response)) {
                 $var = $this->buildSharedResponseObject($prop);
             } else {
-                $var = $this->buildVariable($prop);
+                $var = $this->buildVariable(true, $prop);
             }
 
             if (null === $var) {
@@ -487,7 +478,7 @@ class Generator {
             return $this->sharedObjectMap[$name];
         }
 
-        $obj = new ObjectVariable($this->env->getNamespace());
+        $obj = new ObjectVariable(true, $this->env->getNamespace());
         $obj->setName($name);
         $obj->setType($def->type);
         $obj->setDescription($def->type);

@@ -23,17 +23,35 @@ class Variable {
     /** @var string */
     private $phpdocDescription;
 
+    /** @var bool */
+    private $inResponse;
+
+    /**
+     * Variable constructor.
+     * @param bool $inResponse Whether this property is contained by a response object. If false, assume part of Request object.
+     */
+    public function __construct(bool $inResponse) {
+        $this->inResponse = $inResponse;
+    }
+
+    /**
+     * @return bool
+     */
+    public function inResponse(): bool {
+        return $this->inResponse;
+    }
+
     /**
      * @return string
      */
-    public function getName() {
+    public function getName(): string {
         return $this->name;
     }
 
     /**
      * @param string $name
      */
-    public function setName($name) {
+    public function setName(string $name) {
         $this->name = $name;
     }
 
@@ -48,7 +66,7 @@ class Variable {
     /**
      * @param string $description
      */
-    public function setDescription($description) {
+    public function setDescription(string $description) {
         unset($this->phpdocDescription);
         $this->description = $description;
     }
@@ -56,7 +74,7 @@ class Variable {
     /**
      * @return string
      */
-    public function getType() {
+    public function getType(): string {
         return $this->type;
     }
 
@@ -70,28 +88,28 @@ class Variable {
     /**
      * @return int
      */
-    public function getLength() {
+    public function getLength(): int {
         return $this->length;
     }
 
     /**
      * @param int $length
      */
-    public function setLength($length) {
+    public function setLength(int $length) {
         $this->length = $length;
     }
 
     /**
      * @return bool
      */
-    public function isRequired() {
+    public function isRequired(): bool {
         return $this->required;
     }
 
     /**
      * @param bool $required
      */
-    public function setRequired($required) {
+    public function setRequired(bool $required) {
         $this->required = $required;
     }
 
@@ -99,7 +117,7 @@ class Variable {
      * @param int $offset
      * @return string
      */
-    public function getRequiredTag($offset = 4) {
+    public function getRequiredTag(int $offset = 4): string {
         if ($this->required) {
             return sprintf("%s * @required\n", str_repeat(' ', $offset));
         }
@@ -110,14 +128,14 @@ class Variable {
     /**
      * @return string
      */
-    public function getSince() {
+    public function getSince(): string {
         return $this->since;
     }
 
     /**
      * @param string $since
      */
-    public function setSince($since) {
+    public function setSince(string $since) {
         $this->since = $since;
     }
 
@@ -125,7 +143,7 @@ class Variable {
      * @param int $offset
      * @return string
      */
-    public function getSinceTag($offset = 4) {
+    public function getSinceTag(int $offset = 4): string {
         if ('0.0' === $this->since) {
             return '';
         }
@@ -136,16 +154,23 @@ class Variable {
     /**
      * @return bool
      */
-    public function isCollection() {
+    public function isCollection(): bool {
         static $collectionTypes = ['set', 'list', 'map', 'responseobject', 'uservmresponse'];
-
         return in_array($this->getType(), $collectionTypes, true);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDate(): bool {
+        static $dateTypes = ['date', 'tzdate'];
+        return in_array($this->getType(), $dateTypes, true);
     }
 
     /**
      * @return string[]
      */
-    public function getRelated() {
+    public function getRelated(): array {
         return $this->related;
     }
 
@@ -159,14 +184,14 @@ class Variable {
     /**
      * @param string $related
      */
-    public function setRelatedString($related) {
+    public function setRelatedString(string $related) {
         $this->related = explode(',', $related);
     }
 
     /**
      * @return string
      */
-    public function getPHPType() {
+    public function getPHPType(): string {
         $type = $this->getType();
         switch ($type) {
 
@@ -187,7 +212,7 @@ class Variable {
 
             case 'date':
             case 'tzdate':
-                return '\\DateTime|string';
+                return '\\DateTime';
 
             case 'object': // TODO: This one might be overly greedy, currently matches "baremetalrcturl"
 
@@ -217,7 +242,7 @@ class Variable {
     /**
      * @return string
      */
-    public function getPHPDocDescription() {
+    public function getPHPDocDescription(): string {
         if (!isset($this->phpdocDescription)) {
             $this->phpdocDescription = implode(
                 "\n",
@@ -225,7 +250,7 @@ class Variable {
                     return "     * {$v}";
                 },
                     explode("\n",
-                        wordwrap($this->getDescription(false), 100)
+                        wordwrap(ucfirst($this->getDescription(false)), 100)
                     )
                 )
             );
@@ -237,25 +262,33 @@ class Variable {
     /**
      * @return string
      */
-    public function getPropertyDocBloc() {
+    public function getPropertyDocBloc(): string {
         $bloc = "    /**\n";
         $bloc .= "{$this->getPHPDocDescription()}\n";
         $bloc .= "     * @var {$this->getPHPTypeTagValue()}\n";
         $bloc .= $this->getSinceTag();
         $bloc .= $this->getRequiredTag();
-
         $bloc .= <<<STRING
      * @SWG\Property(
-     *  type="{$this->getPHPType()}",
+     *    type="
 STRING;
-
         if ($this->isCollection()) {
-            $bloc .= "\n".$this->getSwaggerItemsTag();
+            $bloc .= "array\",\n";
+            $bloc .= "     *    {$this->getSwaggerItemsTag()},\n";
+        } else if ($this instanceof ObjectVariable) {
+            $bloc .= "object\",\n";
+            $bloc .= "     *    @SWG\\Schema(ref=\"{$this->getSwaggerRefValue()}\"),\n";
+        } else if ('mixed' === $this->getPHPType()) {
+            $bloc .= "string\",\n";
+        } else if ($this->isDate()) {
+            $bloc .= "string\",\n";
+        } else {
+            $bloc .= "{$this->getPHPType()}\",\n";
         }
 
+        $description = ucfirst($this->getDescription(true));
         return $bloc.<<<STRING
-
-     *  description="{$this->getDescription(true)}"
+     *    description="{$description}"
      * )
      */
 STRING;
@@ -266,23 +299,19 @@ STRING;
      * @return string
      */
     public function getSwaggerItemsTag(): string {
-        // TODO: Do better.
-        $type = $this->getPHPType();
-        if ('mixed' === $type) {
-            $type = 'string';
-        }
-        $tag = "     * @SWG\\Items(type=\"{$type}\"";
-        if ('array' === $type) {
-            $tag .= ', @SWG\\Items(type="string")';
-        }
-        return $tag . '),';
+        // TODO: This will need to be updated to properly model things like details maps and request tags...
+        return "@SWG\\Items(type=\"string\")";
     }
 
     /**
      * @return string
      */
     public function getPHPTypeTagValue() {
-        $tag = $this->getPHPType();
+        if ($this->inResponse() && $this->isDate()) {
+            $tag = '\\DateTime|string Value will try to be parsed as a \\DateTime, falling back to the raw string value if unable';
+        } else {
+            $tag = $this->getPHPType();
+        }
 
         if ('array' !== $tag && $this->isCollection()) {
             $tag .= '[]';
