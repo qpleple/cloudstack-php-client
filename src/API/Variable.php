@@ -265,7 +265,7 @@ STRING;
     /***
      * @return string
      */
-    public function getSwaggerItemsTag() {
+    public function getSwaggerItemsTag(): string {
         // TODO: Do better.
         $type = $this->getPHPType();
         if ('mixed' === $type) {
@@ -275,7 +275,7 @@ STRING;
         if ('array' === $type) {
             $tag .= ', @SWG\\Items(type="string")';
         }
-        return $tag .= '),';
+        return $tag . '),';
     }
 
     /**
