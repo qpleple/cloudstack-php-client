@@ -47,6 +47,9 @@ class Environment implements LoggerAwareInterface, \JsonSerializable {
     private $compiledAddress = '';
 
     /** @var string */
+    private $composerPackage = '';
+
+    /** @var string */
     private $namespace = '';
     /** @var string */
     private $out = '';
@@ -59,16 +62,17 @@ class Environment implements LoggerAwareInterface, \JsonSerializable {
      * @var array
      */
     private static $settableParams = [
-        'name'        => true,
-        'key'         => true,
-        'secret'      => true,
-        'scheme'      => true,
-        'host'        => true,
-        'port'        => true,
-        'apiPath'     => true,
-        'consolePath' => true,
-        'namespace'   => true,
-        'out'         => true,
+        'name'            => true,
+        'key'             => true,
+        'secret'          => true,
+        'scheme'          => true,
+        'host'            => true,
+        'port'            => true,
+        'apiPath'         => true,
+        'consolePath'     => true,
+        'composerPackage' => true,
+        'namespace'       => true,
+        'out'             => true,
     ];
 
     /** @var array */
@@ -130,9 +134,7 @@ class Environment implements LoggerAwareInterface, \JsonSerializable {
                     $clientConfig = $v['config'];
                 }
                 continue;
-            }
-
-            if ('logger' === $k) {
+            } else if ('logger' === $k) {
                 if (null === $v) {
                     continue;
                 }
@@ -170,15 +172,16 @@ class Environment implements LoggerAwareInterface, \JsonSerializable {
                 continue;
             }
 
+            if (false !== strpos($k, '_')) {
+                // TODO: this is a bit...clumsy.
+                $k = lcfirst(implode('', array_map('ucfirst', explode('_', $k))));
+            }
+
             if (!isset(self::$settableParams[$k])) {
                 throw new \DomainException(sprintf('"%s" is not a configurable value', $k));
             }
 
-            if (false === strpos($k, '_')) {
-                $this->{'set'.ucfirst($k)}($v);
-            } else {
-                $this->{'set'.implode('', array_map('ucfirst', explode('_', $k)))}($v);
-            }
+            $this->{'set'.ucfirst($k)}($v);
         }
 
         $this->httpClient = new $clientClass($clientConfig);
@@ -194,6 +197,22 @@ class Environment implements LoggerAwareInterface, \JsonSerializable {
                 'Unable to find method by which to set log level with logger "%s"',
                 get_class($this->logger)
             ));
+        }
+
+        if ('' === $this->composerPackage) {
+            $this->composerPackage = trim(
+                implode(
+                    '/',
+                    array_map(
+                        'strtolower',
+                        explode(
+                            '\\',
+                            $this->namespace
+                        )
+                    )
+                ),
+                " \t\n\r\0\x0B/"
+            );
         }
     }
 
@@ -355,6 +374,20 @@ class Environment implements LoggerAwareInterface, \JsonSerializable {
      */
     public function getOut(): string {
         return $this->out;
+    }
+
+    /**
+     * @param string $composerPackage
+     */
+    public function setComposerPackage(string $composerPackage) {
+        $this->composerPackage = $composerPackage;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComposerPackage(): string {
+        return $this->composerPackage;
     }
 
     /**

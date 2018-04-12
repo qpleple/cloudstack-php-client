@@ -22,6 +22,7 @@ php_cs_generator:
       consolepath: "client/console"
       out: ~ # choose output path
       namespace: "\\MyGreatNamespace"
+      composer_package: "my/greatnamespace"
       key: ~ # your api key
       secret: ~ # your api secret
       logger:
