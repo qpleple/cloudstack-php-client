@@ -50,10 +50,11 @@ class API {
     }
 
     /**
+     * @param bool $swaggerQuotes Will escape all double-quotes with '""'
      * @return string
      */
-    public function getDescription() {
-        return $this->description;
+    public function getDescription(bool $swaggerQuotes = false): string {
+        return $swaggerQuotes ? str_replace('"', '""', $this->description) : $this->description;
     }
 
     /**

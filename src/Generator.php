@@ -392,7 +392,7 @@ class Generator {
             $var->setRelatedString($def->related);
         }
 
-        if ('' === $var->getDescription()) {
+        if ('' === $var->getDescription(false)) {
             switch ($var->getName()) {
                 case 'pagesize':
                     $var->setDescription('the number of entries per page');
@@ -451,7 +451,7 @@ class Generator {
     protected function parseResponse(API $api, array $response) {
         $obj = new ObjectVariable($this->env->getNamespace());
         $obj->setName($api->getName());
-        $obj->setDescription($api->getDescription());
+        $obj->setDescription($api->getDescription(false));
         $obj->setSince($api->getSince());
         $obj->setRelated($api->getRelated());
 

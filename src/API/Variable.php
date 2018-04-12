@@ -38,10 +38,11 @@ class Variable {
     }
 
     /**
+     * @param bool $swaggerQuotes Will escape all double-quotes with '""'
      * @return string
      */
-    public function getDescription() {
-        return $this->description;
+    public function getDescription(bool $swaggerQuotes = false): string {
+        return $swaggerQuotes ? str_replace('"', '""', $this->description) : $this->description;
     }
 
     /**
@@ -220,9 +221,11 @@ class Variable {
         if (!isset($this->phpdocDescription)) {
             $this->phpdocDescription = implode(
                 "\n",
-                array_map(function($v) { return "     * {$v}"; },
+                array_map(function($v) {
+                    return "     * {$v}";
+                },
                     explode("\n",
-                        wordwrap($this->getDescription(), 100)
+                        wordwrap($this->getDescription(false), 100)
                     )
                 )
             );
@@ -247,12 +250,12 @@ class Variable {
 STRING;
 
         if ($this->isCollection()) {
-            $bloc .= "\n" . $this->getSwaggerItemsTag();
+            $bloc .= "\n".$this->getSwaggerItemsTag();
         }
 
-        return $bloc . <<<STRING
+        return $bloc.<<<STRING
 
-     *  description="{$this->getDescription()}"
+     *  description="{$this->getDescription(true)}"
      * )
      */
 STRING;
@@ -264,7 +267,15 @@ STRING;
      */
     public function getSwaggerItemsTag() {
         // TODO: Do better.
-        return "     * @SWG\\Items(type=\"{$this->getPHPType()}\"),";
+        $type = $this->getPHPType();
+        if ('mixed' === $type) {
+            $type = 'string';
+        }
+        $tag = "     * @SWG\\Items(type=\"{$type}\"";
+        if ('array' === $type) {
+            $tag .= ', @SWG\\Items(type="string")';
+        }
+        return $tag .= '),';
     }
 
     /**

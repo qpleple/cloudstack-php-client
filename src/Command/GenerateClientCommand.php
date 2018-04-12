@@ -24,7 +24,7 @@ This command will execute the client generation command.  The generator does the
 Example Config: 
 
 STRING
-                .rtrim(file_get_contents(__DIR__.'/../../files/config_prototype.yml'))."\n\n");
+                .rtrim(file_get_contents(__DIR__.'/../../files/config_prototype.yml'))."\n");
 
         $this->addConfigOptions();
     }
