@@ -35,7 +35,7 @@
     ]
   },
   "require": {
-    "php": "^7.0",
+    "php": "~7.1",
     "symfony/console": "^4.1",
     "symfony/yaml": "^4.1",
     "twig/twig": "^2.4",
@@ -45,7 +45,11 @@
     "guzzlehttp/guzzle": "^6.3"
   },
   "require-dev": {
-    "myena/default-logger": "^1.1"
+    "myena/default-logger": "~1.1"
+  },
+  "suggest": {
+    "doctrine/cache": "Used to enable response caching on \"get\" and \"list\" requests",
+    "myena/default-logger": "Simple PSR-3-compliant logger with level-filtering and ANSI coloring features"
   },
   "scripts": {
     "build": [

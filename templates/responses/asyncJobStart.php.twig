@@ -10,7 +10,9 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
-<?php{{ namespace_stmt('CloudStackResponse') }}
+<?php
+
+{{ namespace_stmt('CloudStackResponse') }}
 
 use {{ namespace_path('CloudStackRequest') }};
 
@@ -52,7 +54,8 @@ use {{ namespace_path('CloudStackRequest') }};
  * Class AsyncJobStartResponse
  * @package {{ namespace_path('CloudStackResponse', true) }}
  */
-class AsyncJobStartResponse {
+class AsyncJobStartResponse
+{
     /**
      * Internal CloudStack Async Job ID.  Not generally useful.
      * @var string
@@ -77,7 +80,8 @@ class AsyncJobStartResponse {
      * @param array $data
      * @param {{ namespace_path('CloudStackRequest\\CloudStackRequestInterface', true) }} $request
      */
-    public function __construct(array $data, CloudStackRequest\CloudStackRequestInterface $request) {
+    public function __construct(array $data, CloudStackRequest\CloudStackRequestInterface $request)
+    {
         if (isset($data['id']) && is_string($data['id'])) {
             $this->id = trim($data['id']);
         }
@@ -92,14 +96,16 @@ class AsyncJobStartResponse {
      * Returns the full async request object
      * @return {{ namespace_path('CloudStackRequest\\CloudStackRequestInterface', true) }}
      */
-    public function getRequest() {
+    public function getRequest()
+    {
         return $this->request;
     }
 
     /**
      * @return string
      */
-    public function getResponseClassName() {
+    public function getResponseClassName()
+    {
         return $this->request->getCloudStackResponseModel();
     }
 }

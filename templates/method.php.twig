@@ -44,7 +44,9 @@
 {% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}{% if 'array' == param.phpType %}array {% endif %}${{ param.name }}{% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
-{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}) {
+{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}): {% if api.list %}array{% else %}CloudStackResponse\{% if api.isAsync  %}AsyncJobStartResponse{% else %}{{ api.response.ClassName }}{% endif %}{% endif %}
+
+    {
         return $this->doRequest(new CloudStackRequest\{{ api.requestClassName }}({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}
             ${{ param.name }}{% endfor %}{% if 0 < optionalParamLength %}{% if 0 < requiredParamLength %},{% endif %}
 

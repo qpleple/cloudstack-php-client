@@ -9,6 +9,7 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
+use function MyENA\CloudStackClientGenerator\tryResolvePath;
 
 /**
  * Class Environment
@@ -18,12 +19,12 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
 {
     use LoggerAwareTrait;
 
-    const DefaultScheme = 'http';
-    const DefaultPort = 8080;
-    const DefaultAPIPath = 'client/api';
-    const DefaultConsolePath = 'client/console';
+    const DEFAULT_SCHEME = 'http';
+    const DEFAULT_PORT = 8080;
+    const DEFAULT_API_PATH = 'client/api';
+    const DEFAULT_CONSOLE_PATH = 'client/console';
 
-    const ValidNamespaceRegex = '{^[a-zA-Z][a-zA-Z0-9_]*(\\\[a-zA-Z][a-zA-Z0-9_]*)*$}';
+    const VALID_NAMESPACE_REGEX = '{^[a-zA-Z][a-zA-Z0-9_]*(\\\[a-zA-Z][a-zA-Z0-9_]*)*$}';
 
     /**
      * TODO: do better
@@ -64,16 +65,16 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
     private $secret = '';
 
     /** @var string */
-    private $scheme = self::DefaultScheme;
+    private $scheme = self::DEFAULT_SCHEME;
     /** @var string */
     private $host = '';
     /** @var int */
-    private $port = self::DefaultPort;
+    private $port = self::DEFAULT_PORT;
 
     /** @var string */
-    private $apiPath = self::DefaultAPIPath;
+    private $apiPath = self::DEFAULT_API_PATH;
     /** @var string */
-    private $consolePath = self::DefaultConsolePath;
+    private $consolePath = self::DEFAULT_CONSOLE_PATH;
 
     /** @var string */
     private $compiledAddress = '';
@@ -101,8 +102,8 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
         $clientClass = Client::class;
         $clientConfig = [];
 
-        $loggerClass = class_exists('\\MyEna\\DefaultANSILogger', true)
-            ? '\\MyEna\\DefaultANSILogger'
+        $loggerClass = class_exists('\\MyENA\\DefaultANSILogger', true)
+            ? '\\MyENA\\DefaultANSILogger'
             : NullLogger::class;
         $loggerLevel = LogLevel::INFO;
 
@@ -143,6 +144,8 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
             ));
         }
 
+        $this->logger->debug(sprintf('Environment %s configuration loaded', $this->name));
+
         if ('' === $this->composerPackage) {
             $this->composerPackage = trim(
                 implode(
@@ -158,101 +161,6 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
                 " \t\n\r\0\x0B/"
             );
         }
-    }
-
-    /**
-     * @param array|null $v
-     * @return array(
-     * @type string Client class
-     * @type array Client config
-     * )
-     */
-    protected function parseHttpClientEntry($v, string $clientClass): array
-    {
-        $clientConfig = [];
-        if (null === $v) {
-            return [$clientClass, $clientConfig];
-        }
-
-        if (!is_array($v)) {
-            throw new \DomainException(sprintf(
-                'Key "http_client" expected to be array, %s seen',
-                gettype($v)
-            ));
-        }
-
-        if (isset($v['class'])) {
-            if (!class_exists($v['class'], true)) {
-                throw new \RuntimeException(sprintf('Specified HttpClient class "%s" not found', $v['class']));
-            } elseif (!isset(class_implements($v['class'])['GuzzleHttp\\ClientInterface'])) {
-                throw new \DomainException(sprintf(
-                    'Specified HttpClient class "%s" does not seem to implement \\GuzzleHttp\\ClientInterface',
-                    $v['class']
-                ));
-            }
-            $clientClass = $v['class'];
-        }
-
-        if (isset($v['config'])) {
-            if (!is_array($v['config'])) {
-                throw new \InvalidArgumentException(sprintf(
-                    'http_client property config must be array, %s seen.',
-                    gettype($v['config'])
-                ));
-            }
-            $clientConfig = $v['config'];
-        }
-
-        return [$clientClass, $clientConfig];
-    }
-
-    /**
-     * @param null|array $v
-     * @return array(
-     * @type string Logger class
-     * @type string Logger level
-     * )
-     */
-    protected function parseLoggerEntry($v, string $loggerClass, string $loggerLevel): array
-    {
-        if (null === $v) {
-            return [$loggerClass, $loggerLevel];
-        }
-
-        if (!is_array($v)) {
-            throw new \DomainException(sprintf(
-                'Key "logger" expected to be array, %s seen',
-                gettype($v)
-            ));
-        }
-
-        if (isset($v['class'])) {
-            if (!class_exists($v['class'], true)) {
-                throw new \RuntimeException(sprintf(
-                    'Specified Logger class "%s" not found',
-                    $v['class']
-                ));
-            } elseif (!isset(class_implements($v['class'])['Psr\\Log\\LoggerInterface'])) {
-                throw new \InvalidArgumentException(sprintf(
-                    'Specified Logger class "%s" does not seem to implement \\Psr\\Log\\LoggerInterface',
-                    $v['class']
-                ));
-            }
-            $loggerClass = $v['class'];
-        }
-
-        if (isset($v['level'])) {
-            if (!isset(self::$logLevels[$v['level']])) {
-                throw new \OutOfBoundsException(sprintf(
-                    'Specified Logger level "%s" is not in valid range  ["%s"]',
-                    $v['level'],
-                    implode('", "', self::$logLevels)
-                ));
-            }
-            $loggerLevel = $v['level'];
-        }
-
-        return [$loggerClass, $loggerLevel];
     }
 
     /**
@@ -399,23 +307,6 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
     }
 
     /**
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return [
-            'name'        => $this->getName(),
-            'scheme'      => $this->getScheme(),
-            'host'        => $this->getHost(),
-            'port'        => $this->getPort(),
-            'apiPath'     => $this->getAPIPath(),
-            'consolePath' => $this->getConsolePath(),
-            'namespace'   => $this->getNamespace(),
-            'outputDir'   => $this->getOut(),
-        ];
-    }
-
-    /**
      * @return string
      */
     public function getName(): string
@@ -498,11 +389,11 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
      */
     public function setNamespace(string $namespace)
     {
-        if (!preg_match(self::ValidNamespaceRegex, $namespace)) {
+        if (!preg_match(self::VALID_NAMESPACE_REGEX, $namespace)) {
             throw new \InvalidArgumentException(sprintf(
                 'Provided namespace "%s" violates "%s"',
                 $namespace,
-                self::ValidNamespaceRegex
+                self::VALID_NAMESPACE_REGEX
             ));
         }
         $this->namespace = $namespace;
@@ -522,31 +413,133 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
      */
     public function setOut(string $out)
     {
-        $this->out = self::tryResolvePath($out);
+        $this->out = tryResolvePath($out);
     }
 
     /**
-     * Will attempt to detect and expand a relative path.
-     *
-     * // TODO: This is probably a bad idea and I should stop being lazy.
-     *
-     * @param string $in
-     * @return string
+     * @return array
      */
-    public static function tryResolvePath(string $in): string
+    public function jsonSerialize()
     {
-        if (0 === strpos($in, './')) {
-            if ($rp = realpath(PHPCS_ROOT . '/' . substr($in, 2))) {
-                return $rp;
-            }
-            return PHPCS_ROOT . '/' . substr($in, 2);
-        } elseif (0 !== strpos($in, '/')) {
-            if ($rp = realpath(PHPCS_ROOT . '/' . ltrim($in, "/"))) {
-                return $rp;
-            }
-            return PHPCS_ROOT . '/' . ltrim($in, "/");
-        } else {
-            return $in;
+        return [
+            'name'        => $this->getName(),
+            'scheme'      => $this->getScheme(),
+            'host'        => $this->getHost(),
+            'port'        => $this->getPort(),
+            'apiPath'     => $this->getAPIPath(),
+            'consolePath' => $this->getConsolePath(),
+            'namespace'   => $this->getNamespace(),
+            'outputDir'   => $this->getOut(),
+        ];
+    }
+
+    /**
+     * @param array|null $v
+     * @return array(
+     * @type string Client class
+     * @type array Client config
+     * )
+     */
+    protected function parseHttpClientEntry($v, string $clientClass): array
+    {
+        $clientConfig = [];
+        if (null === $v) {
+            return [$clientClass, $clientConfig];
         }
+
+        if (!is_array($v)) {
+            throw new \DomainException(sprintf(
+                'Key "http_client" expected to be array, %s seen',
+                gettype($v)
+            ));
+        }
+
+        if (isset($v['class'])) {
+            if (!is_string($v['class'])) {
+                throw new \DomainException(sprintf(
+                    'Key "http_client" sub-key "class" must be string, % seen',
+                    gettype($v['class'])
+                ));
+            } elseif (!class_exists($v['class'], true)) {
+                throw new \RuntimeException(sprintf('Specified HttpClient class "%s" not found', $v['class']));
+            } elseif (!isset(class_implements($v['class'])[ClientInterface::class])) {
+                throw new \DomainException(sprintf(
+                    'Specified HttpClient class "%s" does not seem to implement \\GuzzleHttp\\ClientInterface',
+                    $v['class']
+                ));
+            }
+            $clientClass = $v['class'];
+        }
+
+        if (isset($v['config'])) {
+            if (!is_array($v['config'])) {
+                throw new \InvalidArgumentException(sprintf(
+                    'http_client property config must be array, %s seen.',
+                    gettype($v['config'])
+                ));
+            }
+            $clientConfig = $v['config'];
+        }
+
+        return [$clientClass, $clientConfig];
+    }
+
+    /**
+     * @param null|array $v
+     * @return array(
+     * @type string Logger class
+     * @type string Logger level
+     * )
+     */
+    protected function parseLoggerEntry($v, string $loggerClass, string $loggerLevel): array
+    {
+        if (null === $v) {
+            return [$loggerClass, $loggerLevel];
+        }
+
+        if (!is_array($v)) {
+            throw new \DomainException(sprintf(
+                'Key "logger" expected to be array, %s seen',
+                gettype($v)
+            ));
+        }
+
+        if (isset($v['class'])) {
+            if (!is_string($v['class'])) {
+                throw new \DomainException(sprintf(
+                    'Key "logger" sub-key "class" must be string, %s seen.',
+                    gettype($v['class'])
+                ));
+            } elseif (!class_exists($v['class'], true)) {
+                throw new \RuntimeException(sprintf(
+                    'Specified Logger class "%s" not found',
+                    $v['class']
+                ));
+            } elseif (!isset(class_implements($v['class'])[LoggerInterface::class])) {
+                throw new \InvalidArgumentException(sprintf(
+                    'Specified Logger class "%s" does not seem to implement \\Psr\\Log\\LoggerInterface',
+                    $v['class']
+                ));
+            }
+            $loggerClass = $v['class'];
+        }
+
+        if (isset($v['level'])) {
+            if (!is_string($v['level'])) {
+                throw new \DomainException(sprintf(
+                    'Key "logger" sub-key "level" must be string, %s seen.',
+                    gettype($v['level'])
+                ));
+            } elseif (!isset(self::$logLevels[$v['level']])) {
+                throw new \OutOfBoundsException(sprintf(
+                    'Specified Logger level "%s" is not in valid range  ["%s"]',
+                    $v['level'],
+                    implode('", "', self::$logLevels)
+                ));
+            }
+            $loggerLevel = $v['level'];
+        }
+
+        return [$loggerClass, $loggerLevel];
     }
 }

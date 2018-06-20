@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
+use function MyENA\CloudStackClientGenerator\tryResolvePath;
 
 /**
  * Class AbstractCommand
@@ -59,7 +60,7 @@ abstract class AbstractCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'HTTP Scheme to use (http or https)',
-                Configuration\Environment::DefaultScheme
+                Configuration\Environment::DEFAULT_SCHEME
             )
             ->addOption(
                 'host',
@@ -72,21 +73,21 @@ abstract class AbstractCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API Client port to use',
-                Configuration\Environment::DefaultPort
+                Configuration\Environment::DEFAULT_PORT
             )
             ->addOption(
                 'apipath',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API path to use',
-                Configuration\Environment::DefaultAPIPath
+                Configuration\Environment::DEFAULT_API_PATH
             )
             ->addOption(
                 'consolepath',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Console path to use',
-                Configuration\Environment::DefaultConsolePath
+                Configuration\Environment::DEFAULT_CONSOLE_PATH
             )
             ->addOption(
                 'key',
@@ -138,7 +139,7 @@ abstract class AbstractCommand extends Command
 
         // attempt to parse config file
         if ($file = $input->getOption('config')) {
-            $file = Configuration\Environment::tryResolvePath($file);
+            $file = tryResolvePath($file);
             if (!file_exists($file) || !is_readable($file)) {
                 $this->log->error("Config file {$file} either does not exist or is not readable");
                 return false;
@@ -159,19 +160,19 @@ abstract class AbstractCommand extends Command
         }
 
         // Set any runtime command options
-        if (Configuration\Environment::DefaultScheme === $this->env->getScheme() &&
-            Configuration\Environment::DefaultScheme !== ($scheme = $input->getOption('scheme'))) {
+        if (Configuration\Environment::DEFAULT_SCHEME === $this->env->getScheme() &&
+            Configuration\Environment::DEFAULT_SCHEME !== ($scheme = $input->getOption('scheme'))) {
             $this->env->setScheme($scheme);
         }
         if ($host = $input->getOption('host')) {
             $this->env->setHost($host);
         }
-        if (Configuration\Environment::DefaultPort === $this->env->getPort() &&
-            Configuration\Environment::DefaultPort !== ($port = $input->getOption('port'))) {
+        if (Configuration\Environment::DEFAULT_PORT === $this->env->getPort() &&
+            Configuration\Environment::DEFAULT_PORT !== ($port = $input->getOption('port'))) {
             $this->env->setPort($port);
         }
-        if (Configuration\Environment::DefaultAPIPath === $this->env->getApiPath() &&
-            Configuration\Environment::DefaultAPIPath !== ($apiPath = $input->getOption('apipath'))) {
+        if (Configuration\Environment::DEFAULT_API_PATH === $this->env->getApiPath() &&
+            Configuration\Environment::DEFAULT_API_PATH !== ($apiPath = $input->getOption('apipath'))) {
             $this->env->setApiPath($apiPath);
         }
         if ($consolePath = $input->getOption('consolepath')) {
@@ -184,7 +185,7 @@ abstract class AbstractCommand extends Command
             $this->env->setSecret($secret);
         }
         if ($out = $input->getOption('out')) {
-            $this->env->setOut(Configuration\Environment::tryResolvePath($out));
+            $this->env->setOut(tryResolvePath($out));
         }
         if ($ns = $input->getOption('namespace')) {
             $this->env->setNamespace($ns);

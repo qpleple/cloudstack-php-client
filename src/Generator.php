@@ -65,16 +65,25 @@ class Generator
 
         $this->log = $environment->getLogger();
 
-        $this->commandEventMap = require __DIR__ . '/../files/command_event_map.php';
+        $this->log->info('Generator constructing with environment "' . $environment->getName() . '"');
 
-        $twigLoader = new \Twig_Loader_Filesystem(__DIR__ . '/../templates');
+        $cmdMapFile = __DIR__ . '/../files/command_event_map.php';
+        $this->log->debug('Loading command map from ' . $cmdMapFile);
+        $this->commandEventMap = require $cmdMapFile;
+
+        $templateDir = __DIR__ . '/../templates';
+        $this->log->debug('Loading Twig with template dir ' . $templateDir);
+        $twigLoader = new \Twig_Loader_Filesystem($templateDir);
         $this->twig = new \Twig_Environment(
             $twigLoader,
             ['debug' => true, 'strict_variables' => true, 'autoescape' => false]
         );
 
+        $this->log->debug('Registering Twig extensions...');
         $this->registerTwigExtensions();
+        $this->log->debug('Registering Twig filters...');
         $this->registerTwigFilters();
+        $this->log->debug('Registering Twig functions...');
         $this->registerTwigFunctions();
 
         $this->srcDir = sprintf('%s/src', $this->env->getOut());
@@ -101,6 +110,8 @@ class Generator
         $this->log->info("Compiling APIs from {$this->env->getHost()}...");
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
+
+        $this->log->info(count($this->apis) . ' API(s) found.');
 
         $this->log->debug('Setting Twig globals');
         $this->twig->addGlobal('config', $this->config);
@@ -151,7 +162,8 @@ class Generator
     protected function cleanDirectory(string $dir)
     {
         if (0 < ($cnt = count(($phpFiles = glob($dir . '/*.php'))))) {
-            $this->log->info(sprintf('Directory "%s" has "%d" php file(s), emptying...', $dir, $cnt));
+            $this->log->info(sprintf('Directory "%s" has "%d" php file%s, emptying...', $dir, $cnt,
+                (1 === $cnt ? '' : 's')));
             foreach ($phpFiles as $phpFile) {
                 if (!@unlink($phpFile)) {
                     $this->log->warning(sprintf('Unable to delete file "%s"', $phpFile));
@@ -374,57 +386,57 @@ class Generator
 
         $this->writeFile(
             $this->env->getOut() . '/composer.json',
-            $this->twig->load('composer.json.twig')->render()
+            $this->twig->load('composer.json.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackConfiguration.php',
-            $this->twig->load('configuration.php.twig')->render()
+            $this->twig->load('configuration.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->filesDir . '/constants.php',
-            $this->twig->load('constants.php.twig')->render()
+            $this->twig->load('constants.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackEventTypes.php',
-            $this->twig->load('eventTypes.php.twig')->render()
+            $this->twig->load('eventTypes.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->responseDir . '/AsyncJobStartResponse.php',
-            $this->twig->load('responses/asyncJobStart.php.twig')->render()
+            $this->twig->load('responses/asyncJobStart.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->responseDir . '/AccessVmConsoleProxyResponse.php',
-            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render()
+            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->responseTypesDir . '/DateType.php',
-            $this->twig->load('responses/dateType.php.twig')->render()
+            $this->twig->load('responses/dateType.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackHelpers.php',
-            $this->twig->load('helpers.php.twig')->render()
+            $this->twig->load('helpers.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->requestDir . '/CloudStackRequestInterfaces.php',
-            $this->twig->load('requests/interfaces.php.twig')->render()
+            $this->twig->load('requests/interfaces.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->requestDir . '/AccessVmConsoleProxyRequest.php',
-            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render()
+            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render(['env' => $this->env])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackExceptions.php',
-            $this->twig->load('exceptions.php.twig')->render()
+            $this->twig->load('exceptions.php.twig')->render(['env' => $this->env])
         );
     }
 
@@ -448,7 +460,7 @@ class Generator
     {
         $this->writeFile(
             $this->srcDir . '/CloudStackClient.php',
-            $this->twig->load('client.php.twig')->render(['apis' => $this->apis])
+            $this->twig->load('client.php.twig')->render(['env' => $this->env, 'apis' => $this->apis])
         );
     }
 
@@ -465,7 +477,7 @@ class Generator
             $className = $api->getRequestClassName();
             $this->writeFile(
                 $this->requestDir . '/' . $className . '.php',
-                $template->render(['api' => $api])
+                $template->render(['env' => $this->env, 'api' => $api])
             );
         }
     }

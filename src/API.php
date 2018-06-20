@@ -127,15 +127,15 @@ class API
      * @param bool $newline
      * @return string
      */
-    public function getSinceTag(int $indent = 4, bool $newline = false)
+    public function getSinceTag(int $indent = 4, bool $newline = false): string
     {
         return buildSinceTagLine($this->getSince(), $indent, $newline);
     }
 
     /**
-     * @return VariableContainer
+     * @return \MyENA\CloudStackClientGenerator\API\VariableContainer
      */
-    public function getParameters()
+    public function getParameters(): VariableContainer
     {
         return $this->parameters;
     }
@@ -143,17 +143,19 @@ class API
     /**
      * @return \MyENA\CloudStackClientGenerator\API\ObjectVariable
      */
-    public function getResponse()
+    public function getResponse(): ObjectVariable
     {
         return $this->response;
     }
 
     /**
      * @param \MyENA\CloudStackClientGenerator\API\ObjectVariable $response
+     * @return \MyENA\CloudStackClientGenerator\API
      */
-    public function setResponse(ObjectVariable $response)
+    public function setResponse(ObjectVariable $response): API
     {
         $this->response = $response;
+        return $this;
     }
 
     /**
@@ -166,16 +168,18 @@ class API
 
     /**
      * @param string $eventType
+     * @return \MyENA\CloudStackClientGenerator\API
      */
-    public function setEventType(string $eventType)
+    public function setEventType(string $eventType): API
     {
         $this->eventType = $eventType;
+        return $this;
     }
 
     /**
      * @return bool
      */
-    public function isList()
+    public function isList(): bool
     {
         return 0 === strpos($this->getName(), 'list');
     }
@@ -183,17 +187,28 @@ class API
     /**
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
      * @param string $name
+     * @return \MyENA\CloudStackClientGenerator\API
      */
-    public function setName($name)
+    public function setName(string $name): API
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCacheable(): bool
+    {
+        $name = $this->getName();
+        return 0 === strpos($name, 'get') || 0 === strpos($name, 'list');
     }
 
     /**
@@ -207,7 +222,8 @@ class API
     /**
      * @return string
      */
-    public function getSwaggerName(): string {
+    public function getSwaggerName(): string
+    {
         return "CloudStack{$this->getRequestClassName()}";
     }
 }
