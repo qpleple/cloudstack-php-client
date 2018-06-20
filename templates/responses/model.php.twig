@@ -29,10 +29,14 @@
  */
 
 /**
- * Class {{ obj.className }}
- * @package {{ namespace_path('CloudStackResponse', true) }}
- * @SWG\Definition(definition="{{ obj.className }}")
+{{ swagger_definition_tag(obj.swaggername, obj.description, obj.properties, 0) }}
  */
+
+/**
+ * Class {{ obj.className }}
+ * @package {{ namespace_path('CloudStackResponse', true) }}{% if api is defined %}
+
+{{ since_tag_line(api.since, 0, true) }}{% endif %} */
 class {{ obj.className }} {
 
 {% for prop in obj.properties %}

@@ -1,10 +1,16 @@
-<?php namespace MyENA\CloudStackClientGenerator\API;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\API;
+
+use function MyENA\CloudStackClientGenerator\buildSwaggerDefinitionTag;
+use function MyENA\CloudStackClientGenerator\escapeSwaggerString;
 
 /**
  * Class ObjectVariable
  * @package MyENA\CloudStackClientGenerator\API
  */
-class ObjectVariable extends Variable {
+class ObjectVariable extends Variable
+{
     /** @var bool */
     private $shared = false;
 
@@ -16,55 +22,14 @@ class ObjectVariable extends Variable {
 
     /**
      * ObjectVariable constructor.
-     * @param bool   $inResponse
+     * @param bool $inResponse
      * @param string $namespace
      */
-    public function __construct(bool $inResponse, string $namespace) {
+    public function __construct(bool $inResponse, string $namespace)
+    {
         parent::__construct($inResponse);
         $this->namespace = $namespace;
         $this->properties = new VariableContainer();
-    }
-
-    /**
-     * @return bool
-     */
-    public function isShared() {
-        return $this->shared;
-    }
-
-    /**
-     * @param bool $shared
-     */
-    public function setShared($shared) {
-        $this->shared = (bool)$shared;
-    }
-
-    /**
-     * @return VariableContainer
-     */
-    public function getProperties() {
-        return $this->properties;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFQName() {
-        if (!isset($this->namespace) || $this->namespace === '') {
-            return sprintf('\\CloudStackResponse\\%s', $this->getClassName());
-        }
-        return sprintf('\\%s\\CloudStackResponse\\%s', $this->namespace, $this->getClassName());
-    }
-
-    /**
-     * @return string
-     */
-    public function getClassName() {
-        if ($this->isShared()) {
-            return ucfirst($this->getName());
-        }
-
-        return ucfirst($this->getName()).'Response';
     }
 
     /**
@@ -72,7 +37,8 @@ class ObjectVariable extends Variable {
      *
      * @return string
      */
-    public function buildConstructor() {
+    public function buildConstructor()
+    {
         $dates = [];
         $objects = [];
 
@@ -92,6 +58,7 @@ class ObjectVariable extends Variable {
         $c = <<<STRING
     /**
      * {$this->getClassName()} Constructor
+     *
      * @param array \$data
      */
     public function __construct(array \$data) {
@@ -100,7 +67,7 @@ STRING;
 
         // if this is a very simple class, just return the loop and move on.
         if (0 === $datesCnt && 0 === $objectsCnt) {
-            return $c.<<<STRING
+            return $c . <<<STRING
         foreach (\$data as \$k => \$v) {
             \$this->{\$k} = \$v;
         }
@@ -169,7 +136,7 @@ STRING;
             }
         }
 
-        return $c.<<<STRING
+        return $c . <<<STRING
  else {
                 \$this->{\$k} = \$v;
             }
@@ -179,24 +146,96 @@ STRING;
     }
 
     /**
+     * @return VariableContainer
+     */
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClassName()
+    {
+        if ($this->isShared()) {
+            return ucfirst($this->getName());
+        }
+
+        return ucfirst($this->getName()) . 'Response';
+    }
+
+    /**
+     * @return bool
+     */
+    public function isShared()
+    {
+        return $this->shared;
+    }
+
+    /**
+     * @param bool $shared
+     */
+    public function setShared($shared)
+    {
+        $this->shared = (bool)$shared;
+    }
+
+    /**
      * @inheritDoc
      */
-    public function getPHPType(): string {
+    public function getPHPType(): string
+    {
         return $this->getFQName();
     }
 
     /**
      * @return string
      */
-    public function getSwaggerRefValue(): string {
-        return "#/definitions/{$this->getClassName()}";
+    public function getFQName()
+    {
+        if (!isset($this->namespace) || $this->namespace === '') {
+            return sprintf('\\CloudStackResponse\\%s', $this->getClassName());
+        }
+        return sprintf('\\%s\\CloudStackResponse\\%s', $this->namespace, $this->getClassName());
+    }
+
+    /**
+     * @return string
+     */
+    public function getSwaggerName(): string
+    {
+        return "CloudStack{$this->getClassName()}";
     }
 
     /**
      * @inheritDoc
      */
-    public function getSwaggerItemsTag(): string {
+    public function getSwaggerItemsTag(): string
+    {
         return "@SWG\\Items(ref=\"{$this->getSwaggerRefValue()}\")";
     }
 
+    /**
+     * @return string
+     */
+    public function getSwaggerRefValue(): string
+    {
+        return "#/definitions/{$this->getSwaggerName()}";
+    }
+
+    /**
+     * @param int $indent
+     * @param bool $newline
+     * @return string
+     */
+    public function getSwaggerDefinitionTag(int $indent = 4, bool $newline = false): string
+    {
+        return buildSwaggerDefinitionTag(
+            $this->getSwaggerName(),
+            escapeSwaggerString($this->getDescription()),
+            $this->getProperties(),
+            $indent,
+            $newline);
+    }
 }

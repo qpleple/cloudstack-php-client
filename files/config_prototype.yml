@@ -26,8 +26,8 @@ php_cs_generator:
       key: ~ # your api key
       secret: ~ # your api secret
       logger:
-        class: ~ # psr-3 compliant logger instance
-        level: ~ #level the environment's logger should be
+        class: ~ # psr-3 compliant logger class name
+        level: ~ # level the environment's logger should be, if your logger implementation supports level filtering
       http_client:
         class: ~ # any class that implements \GuzzleHttp\ClientInterface
         config:

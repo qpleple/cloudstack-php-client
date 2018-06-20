@@ -30,21 +30,22 @@
       "MyENA\\CloudStackClientGenerator\\": "src/"
     },
     "files": [
-      "files/constants.php"
+      "files/constants.php",
+      "files/funcs.php"
     ]
   },
   "require": {
     "php": "^7.0",
-    "symfony/console": "@stable",
-    "symfony/yaml": "@stable",
-    "twig/twig": "@stable",
-    "twig/extensions": "@stable",
-    "psr/log": "@stable",
-    "guzzlehttp/psr7": "@stable",
-    "guzzlehttp/guzzle": "@stable"
+    "symfony/console": "^4.1",
+    "symfony/yaml": "^4.1",
+    "twig/twig": "^2.4",
+    "twig/extensions": "^1.5",
+    "psr/log": "^1.0",
+    "guzzlehttp/psr7": "^1.4",
+    "guzzlehttp/guzzle": "^6.3"
   },
   "require-dev": {
-    "myena/default-logger": "@stable"
+    "myena/default-logger": "^1.1"
   },
   "scripts": {
     "build": [

@@ -1,4 +1,6 @@
-<?php namespace MyENA\CloudStackClientGenerator;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator;
 
 use MyENA\CloudStackClientGenerator\Command\BuildCommand;
 use MyENA\CloudStackClientGenerator\Command\GenerateClientCommand;
@@ -9,11 +11,13 @@ use Symfony\Component\Console\Application as BaseApplication;
  * Class Application
  * @package MyENA\CloudStackClientGenerator
  */
-class Application extends BaseApplication {
+class Application extends BaseApplication
+{
     /**
      * @return array
      */
-    protected function getDefaultCommands() {
+    protected function getDefaultCommands()
+    {
         $commands = [
             new GenerateClientCommand(),
         ];

@@ -1,10 +1,13 @@
-<?php namespace MyENA\CloudStackClientGenerator\Configuration;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\Configuration;
 
 /**
  * Class OverloadedClasses
  * @package MyENA\CloudStackClientGenerator\Configuration
  */
-class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSerializable {
+class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSerializable
+{
     /** @var \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass[] */
     private $_classes = [];
 
@@ -12,7 +15,8 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * OverloadedClasses constructor.
      * @param \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass[] $classes
      */
-    public function __construct(array $classes = []) {
+    public function __construct(array $classes = [])
+    {
         foreach ($classes as $class) {
             $this->setOverloadedClass($class);
         }
@@ -22,7 +26,8 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * @param \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass $class
      * @return void
      */
-    public function setOverloadedClass(OverloadedClass $class) {
+    public function setOverloadedClass(OverloadedClass $class)
+    {
         $this->_classes[$class->getName()] = $class;
     }
 
@@ -30,7 +35,8 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * @param string $name
      * @return \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass|null
      */
-    public function getOverloadedClass(string $name) {
+    public function getOverloadedClass(string $name)
+    {
         return $this->_classes[$name] ?? null;
     }
 
@@ -38,36 +44,42 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * @param string $name
      * @return void
      */
-    public function removeOverloadedClass(string $name) {
+    public function removeOverloadedClass(string $name)
+    {
         unset($this->_classes[$name]);
     }
 
     /**
      * @return \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass
      */
-    public function current() {
+    public function current()
+    {
         return current($this->_classes);
     }
 
-    public function next() {
+    public function next()
+    {
         next($this->_classes);
     }
 
     /**
      * @return string
      */
-    public function key() {
+    public function key()
+    {
         return key($this->_classes);
     }
 
     /**
      * @return bool
      */
-    public function valid() {
+    public function valid()
+    {
         return key($this->_classes) !== null;
     }
 
-    public function rewind() {
+    public function rewind()
+    {
         reset($this->_classes);
     }
 
@@ -75,7 +87,8 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * @param string $offset
      * @return bool
      */
-    public function offsetExists($offset) {
+    public function offsetExists($offset)
+    {
         return isset($this->_classes[$offset]);
     }
 
@@ -83,7 +96,8 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * @param string $offset
      * @return \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass|null
      */
-    public function offsetGet($offset) {
+    public function offsetGet($offset)
+    {
         return $this->_classes[$offset] ?? null;
     }
 
@@ -91,25 +105,29 @@ class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSer
      * @param mixed $offset ignored
      * @param \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass $value
      */
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value)
+    {
         $this->setOverloadedClass($value);
     }
 
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset)
+    {
         unset($this->_classes[$offset]);
     }
 
     /**
      * @return int
      */
-    public function count() {
+    public function count()
+    {
         return count($this->_classes);
     }
 
     /**
      * @return array
      */
-    public function jsonSerialize() {
+    public function jsonSerialize()
+    {
         return [
             'classes' => $this->_classes,
         ];

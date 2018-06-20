@@ -29,29 +29,57 @@
  */
 
 /**
+ * @SWG\Definition(
+ *     definition="CloudStackAccessVmConsoleProxyResponse",
+ *     type="object",
+ *     @SWG\Property(
+ *          property="vmid",
+ *          type="string",
+ *          description="ID of Virtual Machine"
+ *     ),
+ *     @SWG\Property(
+ *          property="iframe",
+ *          type="string",
+ *          description="HTML <iframe> element that can be used to view the console of the requested VM"
+ *     )
+ * )
+ */
+
+/**
  * Class AccessVmConsoleProxyResponse
  * @package {{ namespace_path('CloudStackResponse', true) }}
  */
 class AccessVmConsoleProxyResponse {
 
     /**
+     * Virtual Machine ID
+     * @var string
+     */
+    public $vmid;
+
+    /**
+     * HTML Iframe
      * @var string
      */
     public $iframe;
+
+    /** @var string */
+    private $src;
 
     /**
      * Attempt to pull just the console proxy address out of the response iframe.
      * @return string
      */
     public function getIframeSrc() {
-        if (is_string($this->iframe)) {
-            preg_match('{<frame src=([\'"])([^\1]+)\1}', $this->iframe, $matches);
-
-            if (3 === count($matches)) {
-                return $matches[2];
+        if (!isset($this->src)) {
+            if (is_string($this->iframe)) {
+                preg_match('{<frame src=([\'"])([^\1]+)\1}', $this->iframe, $matches);
+                if (3 === count($matches)) {
+                    $this->src = $matches[2];
+                }
             }
         }
 
-        return '';
+        return isset($this->src) ? $this->src : '';
     }
 }

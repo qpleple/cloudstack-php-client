@@ -1,18 +1,22 @@
-<?php namespace MyENA\CloudStackClientGenerator\API;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\API;
 
 /**
  * Class VariableContainer
  * @package MyENA\CloudStackClientGenerator\API
  */
-class VariableContainer implements \Iterator, \Countable {
+class VariableContainer implements \Iterator, \Countable
+{
     /** @var \MyENA\CloudStackClientGenerator\API\Variable[] */
     private $_storage = [];
 
     /**
      * @param string $name
-     * @return \MyENA\CloudStackClientGenerator\API\Variable
+     * @return \MyENA\CloudStackClientGenerator\API\Variable|null
      */
-    public function get($name) {
+    public function get($name)
+    {
         if (isset($this->_storage[$name])) {
             return $this->_storage[$name];
         }
@@ -22,23 +26,28 @@ class VariableContainer implements \Iterator, \Countable {
 
     /**
      * @param \MyENA\CloudStackClientGenerator\API\Variable $var
+     * @return $this
      */
-    public function add(Variable $var) {
+    public function add(Variable $var): VariableContainer
+    {
         $this->_storage[$var->getName()] = $var;
+        return $this;
     }
 
     /**
      * @param \MyENA\CloudStackClientGenerator\API\Variable $var
      * @return bool
      */
-    public function has(Variable $var) {
+    public function has(Variable $var): bool
+    {
         return isset($this->_storage[$var->getName()]);
     }
 
     /**
      * @return \MyENA\CloudStackClientGenerator\API\Variable[]
      */
-    public function getRequired() {
+    public function getRequired(): array
+    {
         $required = [];
         foreach ($this->_storage as $name => $var) {
             if ($var->isRequired()) {
@@ -52,7 +61,8 @@ class VariableContainer implements \Iterator, \Countable {
     /**
      * @return \MyENA\CloudStackClientGenerator\API\Variable[]
      */
-    public function getOptional() {
+    public function getOptional(): array
+    {
         $optional = [];
         foreach ($this->_storage as $name => $var) {
             if (false === $var->isRequired()) {
@@ -66,7 +76,8 @@ class VariableContainer implements \Iterator, \Countable {
     /**
      * @return string[]
      */
-    public function getTypeMap() {
+    public function getTypeMap(): array
+    {
         $types = [];
         foreach ($this->_storage as $name => $var) {
             $type = $var->getType();
@@ -80,31 +91,50 @@ class VariableContainer implements \Iterator, \Countable {
         return $types;
     }
 
-    public function nameSort() {
+    public function nameSort()
+    {
         ksort($this->_storage, SORT_NATURAL);
     }
 
-    public function current() {
+    /**
+     * @return \MyENA\CloudStackClientGenerator\API\Variable
+     */
+    public function current()
+    {
         return current($this->_storage);
     }
 
-    public function next() {
+    public function next()
+    {
         next($this->_storage);
     }
 
-    public function key() {
+    /**
+     * @return string|null
+     */
+    public function key()
+    {
         return key($this->_storage);
     }
 
-    public function valid() {
+    /**
+     * @return bool
+     */
+    public function valid()
+    {
         return null !== key($this->_storage);
     }
 
-    public function rewind() {
+    public function rewind()
+    {
         reset($this->_storage);
     }
 
-    public function count() {
+    /**
+     * @return int
+     */
+    public function count()
+    {
         return count($this->_storage);
     }
 }

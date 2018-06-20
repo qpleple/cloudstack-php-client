@@ -62,17 +62,9 @@ class CloudStackClient {
      */
     public function accessVmConsoleProxy($vmId) {
         $response = $this->doRequest(new CloudStackRequest\AccessVmConsoleProxyRequest($vmId), false);
-
-        $body = $response->getBody();
-
         $model = new CloudStackResponse\AccessVmConsoleProxyResponse();
-        $data = '';
-        while (!$body->eof() && $b = $body->read(8192)) {
-            $data .= $b;
-        }
-
-        $model->iframe = $data;
-
+        $model->vmid = $vmId;
+        $model->iframe = $response->getBody()->getContents();
         return $model;
     }
 
@@ -170,7 +162,7 @@ class CloudStackClient {
             $decoded = $this->decodeBody($resp, $request->getCloudStackCommandName());
 
             if ($request instanceof CloudStackRequest\CloudStackAsynchronousRequest) {
-                return new CloudStackResponse\AsyncJobStartResponse($decoded, $responseModel);
+                return new CloudStackResponse\AsyncJobStartResponse($decoded, $request);
             }
 
             if ($request instanceof CloudStackRequest\CloudStackListRequest) {

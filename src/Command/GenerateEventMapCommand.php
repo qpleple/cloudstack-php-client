@@ -1,10 +1,13 @@
-<?php namespace MyENA\CloudStackClientGenerator\Command;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\Command;
 
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class APIImplementation {
+class APIImplementation
+{
     /** @var string */
     public $class;
     /** @var string */
@@ -13,7 +16,8 @@ class APIImplementation {
     public $method;
 }
 
-class APICommand {
+class APICommand
+{
     /** @var string */
     public $name;
     /** @var string */
@@ -24,7 +28,8 @@ class APICommand {
  * Class GenerateEventMapCommand
  * @package MyENA\CloudStackClientGenerator\Command
  */
-class GenerateEventMapCommand extends AbstractCommand {
+class GenerateEventMapCommand extends AbstractCommand
+{
     /** @var \MyENA\CloudStackClientGenerator\Command\APIImplementation[] */
     protected $implementations = [];
     /** @var \MyENA\CloudStackClientGenerator\Command\APICommand[] */
@@ -33,7 +38,8 @@ class GenerateEventMapCommand extends AbstractCommand {
     /** @var array */
     protected $map = [];
 
-    protected function configure() {
+    protected function configure()
+    {
         $this
             ->setName($this->generateName('generate-event-map'))
             ->setDescription('Generate ["commandName" => EVENT] map')
@@ -53,7 +59,8 @@ STRING
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
         $src = $input->getArgument('src');
         if (!is_dir($src) || !is_readable($src)) {
             $this->log->error("Specified directory \"{$src}\" does not exist or is not readable");
@@ -91,140 +98,11 @@ STRING
         return 0;
     }
 
-    protected function globerize(string $dir, \Closure $cb, int $flags = GLOB_NOSORT) {
-        foreach (glob($dir, $flags) as $item) {
-            $basename = basename($item);
-            if (0 === strpos($basename, '.')) {
-                continue;
-            }
-            if (is_dir($item)) {
-                $this->globerize($item . '/*', $cb, $flags);
-            } else {
-                $cb($item, $basename);
-            }
-        }
-    }
-
-    /**
-     * @param resource $fh
-     * @param string $line
-     * @param int $line_num
-     * @return string
-     */
-    protected function parseAnnotation($fh, string $line, int &$line_num): string {
-        if (false === strpos($line, '(')) {
-            return $line;
-        }
-
-        $compiled = '';
-        $open = 0;
-        $closed = 0;
-
-        $cb = function (string $line) use (&$compiled, &$open, &$closed) {
-            foreach (str_split($line) as $chr) {
-                if ('(' === $chr) {
-                    $open++;
-                } else {
-                    if (')' === $chr) {
-                        $closed++;
-                    } else {
-                        if ("\n" === $chr || "\r" === $chr) {
-                            continue;
-                        }
-                    }
-                }
-                $compiled .= $chr;
-            }
-        };
-
-        $cb($line);
-
-        if ($open === $closed) {
-            return $compiled;
-        }
-
-        while ($open !== $closed && !feof($fh) && $line = fgets($fh)) {
-            $line_num++;
-            $cb(trim($line));
-        }
-
-        return $compiled;
-    }
-
-    /**
-     * @param string $implementations_dir
-     */
-    protected function parseImplementations(string $implementations_dir) {
-        // NOTE: This is here in case we need it later...
-        $this->globerize($implementations_dir, function (string $file, string $basename) {
-            if (false === strpos($basename, '.java')) {
-                return;
-            }
-
-            $fh = fopen($file, 'r');
-            if (!$fh) {
-                $this->log->error("Unable to open file {$file}");
-                exit(1);
-            }
-
-            $implementation = null;
-            $line_num = 0;
-
-            while (!feof($fh) && $line = fgets($fh)) {
-                $line_num++;
-                $line = trim($line);
-                if (0 === strlen($line)) {
-                    continue;
-                }
-                $ord = ord($line[0]);
-                if (null === $implementation) {
-                    if (0 === strpos($line, '@ActionEvent')) {
-                        $implementation = new APIImplementation();
-                        $implementation->class = str_replace('.java', '', $basename);
-                        preg_match('/eventType\s?=\s?EventTypes\.([a-zA-Z\._]+)/', $this->parseAnnotation($fh, $line, $line_num), $matches);
-                        if (2 !== count($matches)) {
-                            $this->log->notice(<<<STRING
-Unable to parse ActionEvent:
-file: {$file}
-{$line_num}: {$line}
-
-STRING
-                            );
-                            continue;
-                        }
-                        $implementation->event = $matches[1];
-                    }
-                } else {
-                    if (97 <= $ord && $ord <= 122 && $implementation instanceof APIImplementation) {
-                        preg_match('/^(?:public|private)\s[a-zA-Z0-9<>\[\]]+\s([a-zA-Z0-9]+)/', $line, $matches);
-                        if (2 !== count($matches)) {
-                            $var = var_export($matches, true);
-                            $this->log->error(<<<STRING
-Unable to parse method line:
-file: {$file}
-{$line_num}: {$line}
-{$var}
-
-STRING
-                            );
-                            exit(1);
-                        }
-                        $implementation->method = $matches[1];
-                        $this->implementations[] = $implementation;
-                        $implementation = null;
-                    }
-                }
-            }
-
-            fclose($fh);
-        });
-    }
-
-
     /**
      * @param string $commands_dir
      */
-    protected function parseCommands(string $commands_dir) {
+    protected function parseCommands(string $commands_dir)
+    {
         $this->globerize($commands_dir, function (string $file, $basename) {
             if (false === strpos($basename, '.java')) {
                 return;
@@ -334,6 +212,139 @@ STRING
                                 unset($command);
                             }
                         }
+                    }
+                }
+            }
+
+            fclose($fh);
+        });
+    }
+
+    protected function globerize(string $dir, \Closure $cb, int $flags = GLOB_NOSORT)
+    {
+        foreach (glob($dir, $flags) as $item) {
+            $basename = basename($item);
+            if (0 === strpos($basename, '.')) {
+                continue;
+            }
+            if (is_dir($item)) {
+                $this->globerize($item . '/*', $cb, $flags);
+            } else {
+                $cb($item, $basename);
+            }
+        }
+    }
+
+    /**
+     * @param resource $fh
+     * @param string $line
+     * @param int $line_num
+     * @return string
+     */
+    protected function parseAnnotation($fh, string $line, int &$line_num): string
+    {
+        if (false === strpos($line, '(')) {
+            return $line;
+        }
+
+        $compiled = '';
+        $open = 0;
+        $closed = 0;
+
+        $cb = function (string $line) use (&$compiled, &$open, &$closed) {
+            foreach (str_split($line) as $chr) {
+                if ('(' === $chr) {
+                    $open++;
+                } else {
+                    if (')' === $chr) {
+                        $closed++;
+                    } else {
+                        if ("\n" === $chr || "\r" === $chr) {
+                            continue;
+                        }
+                    }
+                }
+                $compiled .= $chr;
+            }
+        };
+
+        $cb($line);
+
+        if ($open === $closed) {
+            return $compiled;
+        }
+
+        while ($open !== $closed && !feof($fh) && $line = fgets($fh)) {
+            $line_num++;
+            $cb(trim($line));
+        }
+
+        return $compiled;
+    }
+
+    /**
+     * @param string $implementations_dir
+     */
+    protected function parseImplementations(string $implementations_dir)
+    {
+        // NOTE: This is here in case we need it later...
+        $this->globerize($implementations_dir, function (string $file, string $basename) {
+            if (false === strpos($basename, '.java')) {
+                return;
+            }
+
+            $fh = fopen($file, 'r');
+            if (!$fh) {
+                $this->log->error("Unable to open file {$file}");
+                exit(1);
+            }
+
+            $implementation = null;
+            $line_num = 0;
+
+            while (!feof($fh) && $line = fgets($fh)) {
+                $line_num++;
+                $line = trim($line);
+                if (0 === strlen($line)) {
+                    continue;
+                }
+                $ord = ord($line[0]);
+                if (null === $implementation) {
+                    if (0 === strpos($line, '@ActionEvent')) {
+                        $implementation = new APIImplementation();
+                        $implementation->class = str_replace('.java', '', $basename);
+                        preg_match('/eventType\s?=\s?EventTypes\.([a-zA-Z\._]+)/',
+                            $this->parseAnnotation($fh, $line, $line_num), $matches);
+                        if (2 !== count($matches)) {
+                            $this->log->notice(<<<STRING
+Unable to parse ActionEvent:
+file: {$file}
+{$line_num}: {$line}
+
+STRING
+                            );
+                            continue;
+                        }
+                        $implementation->event = $matches[1];
+                    }
+                } else {
+                    if (97 <= $ord && $ord <= 122 && $implementation instanceof APIImplementation) {
+                        preg_match('/^(?:public|private)\s[a-zA-Z0-9<>\[\]]+\s([a-zA-Z0-9]+)/', $line, $matches);
+                        if (2 !== count($matches)) {
+                            $var = var_export($matches, true);
+                            $this->log->error(<<<STRING
+Unable to parse method line:
+file: {$file}
+{$line_num}: {$line}
+{$var}
+
+STRING
+                            );
+                            exit(1);
+                        }
+                        $implementation->method = $matches[1];
+                        $this->implementations[] = $implementation;
+                        $implementation = null;
                     }
                 }
             }

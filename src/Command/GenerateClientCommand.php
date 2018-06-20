@@ -1,4 +1,6 @@
-<?php namespace MyENA\CloudStackClientGenerator\Command;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\Command;
 
 use MyENA\CloudStackClientGenerator\Generator;
 use Symfony\Component\Console\Input\InputInterface;
@@ -8,9 +10,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Class GenerateClientCommand
  * @package MyENA\CloudStackClientGenerator\Command
  */
-class GenerateClientCommand extends AbstractCommand {
+class GenerateClientCommand extends AbstractCommand
+{
 
-    protected function configure() {
+    protected function configure()
+    {
         $this
             ->setName($this->generateName('generate-client'))
             ->setDescription('Generate a PHP CloudStack Client based on your current CloudStack implementation')
@@ -24,7 +28,7 @@ This command will execute the client generation command.  The generator does the
 Example Config: 
 
 STRING
-                .rtrim(file_get_contents(__DIR__.'/../../files/config_prototype.yml'))."\n");
+                . rtrim(file_get_contents(__DIR__ . '/../../files/config_prototype.yml')) . "\n");
 
         $this->addConfigOptions();
     }
@@ -35,7 +39,8 @@ STRING
      * @return int|null
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
         if (!$this->initializeConfig($input, $output)) {
             return 1;
         }

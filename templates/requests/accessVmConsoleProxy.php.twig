@@ -29,11 +29,24 @@
  */
 
 /**
+ * @SWG\Definition(
+ *     definition="CloudStackAccessVmConsoleProxyRequest",
+ *     type="object",
+ *     description="Request url to access system console for a given VM",
+ *     required={"vm"},
+ *     @SWG\Property(
+ *          property="vm",
+ *          type="string",
+ *          description="ID of Virtual Machine you wish to access the console for"
+ *     )
+ * )
+ */
+
+/**
  * Class AccessVmConsoleProxyRequest
  * @package {{ namespace_path('CloudStackRequest', true) }}
  */
 class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudStackConsoleCommandRequest {
-
     /**
      * Virtual Machine ID
      * @var string

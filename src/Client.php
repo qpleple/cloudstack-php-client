@@ -1,4 +1,6 @@
-<?php namespace MyENA\CloudStackClientGenerator;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator;
 
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
@@ -9,7 +11,8 @@ use MyENA\CloudStackClientGenerator\Configuration\Environment;
  * Class Client
  * @package MyENA\CloudStackClientGenerator
  */
-class Client {
+class Client
+{
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment */
     protected $env;
 
@@ -17,7 +20,8 @@ class Client {
      * Client constructor.
      * @param \MyENA\CloudStackClientGenerator\Configuration\Environment $e
      */
-    public function __construct(Environment $e) {
+    public function __construct(Environment $e)
+    {
         $this->env = $e;
     }
 
@@ -29,7 +33,8 @@ class Client {
      * @throws \Exception
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function do(string $command, array $parameters = [], array $headers = []): \stdClass {
+    public function do(string $command, array $parameters = [], array $headers = []): \stdClass
+    {
         static $defaultHeaders =
             ['Accept' => ['application/json'], 'Content-Type' => ['application/x-www-form-urlencoded']];
 
@@ -50,7 +55,7 @@ class Client {
         $r = new Request('GET', $uri, $headers + $defaultHeaders);
 
         $resp = $this->env->getHttpClient()->send($r, [
-            RequestOptions::HTTP_ERRORS => false,
+            RequestOptions::HTTP_ERRORS    => false,
             RequestOptions::DECODE_CONTENT => false,
         ]);
 
@@ -66,7 +71,8 @@ class Client {
                     throw new \RuntimeException($decoded);
                 }
             }
-            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $data), NO_VALID_JSON_RECEIVED);
+            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(),
+                $resp->getReasonPhrase(), $data), NO_VALID_JSON_RECEIVED);
         }
 
         $body = $resp->getBody();
@@ -77,7 +83,8 @@ class Client {
 
         $decoded = @json_decode($body->getContents());
         if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \RuntimeException(sprintf('%s: %s', NO_VALID_JSON_RECEIVED_MSG, json_last_error_msg()), NO_VALID_JSON_RECEIVED);
+            throw new \RuntimeException(sprintf('%s: %s', NO_VALID_JSON_RECEIVED_MSG, json_last_error_msg()),
+                NO_VALID_JSON_RECEIVED);
         }
 
         return $decoded;

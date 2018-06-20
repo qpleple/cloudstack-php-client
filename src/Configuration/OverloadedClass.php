@@ -1,10 +1,13 @@
-<?php namespace MyENA\CloudStackClientGenerator\Configuration;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\Configuration;
 
 /**
  * Class OverloadedClass
  * @package MyENA\CloudStackClientGenerator\Configuration
  */
-class OverloadedClass implements \JsonSerializable {
+class OverloadedClass implements \JsonSerializable
+{
 
     /** @var string */
     private $name;
@@ -16,32 +19,36 @@ class OverloadedClass implements \JsonSerializable {
      * @param string $name Name of response class being overloaded
      * @param string $overload Fully qualified class name of the overloading class
      */
-    public function __construct(string $name, string $overload) {
+    public function __construct(string $name, string $overload)
+    {
         $this->name = $name;
         $this->overload = $overload;
     }
 
     /**
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'name'     => $this->getName(),
+            'overload' => $this->getOverload(),
+        ];
+    }
+
+    /**
      * @return string
      */
-    public function getName(): string {
+    public function getName(): string
+    {
         return $this->name;
     }
 
     /**
      * @return string
      */
-    public function getOverload(): string {
+    public function getOverload(): string
+    {
         return $this->overload;
-    }
-
-    /**
-     * @return array
-     */
-    public function jsonSerialize() {
-        return [
-            'name'     => $this->getName(),
-            'overload' => $this->getOverload(),
-        ];
     }
 }

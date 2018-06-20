@@ -1,4 +1,6 @@
-<?php namespace MyENA\CloudStackClientGenerator\Command;
+<?php declare(strict_types=1);
+
+namespace MyENA\CloudStackClientGenerator\Command;
 
 use MyENA\CloudStackClientGenerator\Client;
 use MyENA\CloudStackClientGenerator\Configuration;
@@ -14,7 +16,8 @@ use Symfony\Component\Yaml\Yaml;
  * Class AbstractCommand
  * @package MyENA\CloudStackClientGenerator\Command
  */
-abstract class AbstractCommand extends Command {
+abstract class AbstractCommand extends Command
+{
     /** @var \Psr\Log\LoggerInterface */
     protected $log;
 
@@ -31,11 +34,13 @@ abstract class AbstractCommand extends Command {
      * @param string $commandName
      * @return string
      */
-    protected function generateName(string $commandName): string {
+    protected function generateName(string $commandName): string
+    {
         return "phpcs:{$commandName}";
     }
 
-    protected function addConfigOptions() {
+    protected function addConfigOptions()
+    {
         $this
             ->addOption(
                 'config',
@@ -106,15 +111,15 @@ abstract class AbstractCommand extends Command {
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Namespace for generated code'
-            )
-        ;
+            );
     }
 
     /**
      * @param \Symfony\Component\Console\Input\InputInterface $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      */
-    protected function initialize(InputInterface $input, OutputInterface $output) {
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
         if ((bool)$output->isQuiet()) {
             $this->log = new NullLogger();
         } else {
@@ -127,7 +132,8 @@ abstract class AbstractCommand extends Command {
      * @param \Symfony\Component\Console\Output\OutputInterface $output
      * @return bool
      */
-    protected function initializeConfig(InputInterface $input, OutputInterface $output): bool {
+    protected function initializeConfig(InputInterface $input, OutputInterface $output): bool
+    {
         $this->config = new Configuration([]);
 
         // attempt to parse config file
@@ -199,12 +205,16 @@ abstract class AbstractCommand extends Command {
         }
         if ('' === $this->env->getOut()) {
             $this->log->error('The "out" option must be passed!');
-        } else if (!is_dir($this->env->getOut()) && !mkdir($this->env->getOut())) {
-            $this->log->error("Unable to create output directory \"{$this->env->getOut()}\"");
-            return false;
-        } else if (!is_writable($this->env->getOut())) {
-            $this->log->error("Output directory \"{$this->env->getOut()}\" is not writable");
-            return false;
+        } else {
+            if (!is_dir($this->env->getOut()) && !mkdir($this->env->getOut())) {
+                $this->log->error("Unable to create output directory \"{$this->env->getOut()}\"");
+                return false;
+            } else {
+                if (!is_writable($this->env->getOut())) {
+                    $this->log->error("Output directory \"{$this->env->getOut()}\" is not writable");
+                    return false;
+                }
+            }
         }
 
         // we good, lets go.
@@ -216,7 +226,8 @@ abstract class AbstractCommand extends Command {
      * @param string $env
      * @return bool
      */
-    protected function parseYAML(string $file, string $env = ''): bool {
+    protected function parseYAML(string $file, string $env = ''): bool
+    {
         $this->log->debug("Parsing config file \"{$file}\"...");
         try {
             $parsed = Yaml::parse(file_get_contents($file));
@@ -240,6 +251,7 @@ abstract class AbstractCommand extends Command {
                 $this->log->error("Config file \"{$file}\" does not contain specified environment \"{$env}\"");
                 return false;
             }
+            $this->env = $environment;
         } else {
             $first = $this->config->getEnvironments()->first();
             if (null === $first) {
@@ -257,7 +269,8 @@ abstract class AbstractCommand extends Command {
     /**
      * @return \MyENA\CloudStackClientGenerator\Client
      */
-    protected function getClient(): Client {
+    protected function getClient(): Client
+    {
         if (!isset($this->client)) {
             $this->client = new Client($this->env);
         }
