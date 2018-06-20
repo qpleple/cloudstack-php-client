@@ -23,10 +23,10 @@ your path in whatever fashion you prefer.
 
 Please see [files/config_prototype.yml](./files/config_prototype.yml) for an example configuration file
 
-### Execute build
+### Generate client
 
 ```php
-php-cs phpcs:build --config your_config_file.yml
+php-cs phpcs:generate-client --config="your_config_file.yml" --env="environment in config you wish to generate from"
 ```
 
 There are 3 directories of files created by this generated process, however you will only directly interact with 3:
