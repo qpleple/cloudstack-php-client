@@ -171,7 +171,7 @@ class CloudStackClient
         ];
 
         $command = $request->getCloudStackCommandName();
-        $cacheable = (isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest);
+        $cacheable = ($decode && isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest);
 
         if ($cacheable) {
             $cacheID = $request->getRequestCacheID($this->configuration->getApiKey(), $this->configuration->getSecretKey());

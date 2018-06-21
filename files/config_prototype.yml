@@ -35,6 +35,7 @@ php_cs_generator:
           http_errors: true
           verify: false
       cache:
+        id_prefix: ~ # if defined, will prepend each cache id with this value
         default_enabled: false # will disable caching for everything except those explicitly defined in "commands"
         default_ttl: 300 # 5 minutes
         commands:

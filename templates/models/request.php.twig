@@ -245,9 +245,9 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     {
         $id = "{{ api.name }}{$apiKey}{$apiSecret}";
         foreach($this->toUrlParams() as $k => $v) {
-            $id .= ",{$k}={$v}";
+            $id .= "{$k}{$v}";
         }
-        return sha1($id);
+        return {% if env.cache.idPrefix is not null %}'{{ env.cache.idPrefix }}'.{% endif %}sha1($id);
     }
 
     /**

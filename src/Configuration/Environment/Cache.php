@@ -11,6 +11,8 @@ class Cache
     const DEFAULT_ENABLED = true;
     const DEFAULT_TTL = 5 * 60;
 
+    /** @var string|null */
+    private $idPrefix;
     /** @var int */
     private $defaultTTL;
     /** @var bool */
@@ -24,6 +26,7 @@ class Cache
      */
     public function __construct(array $cacheConfig = [])
     {
+        $this->idPrefix = $cacheConfig['id_prefix'] ?? null;
         $this->defaultTTL = (int)($cacheConfig['default_ttl'] ?? self::DEFAULT_TTL);
         $this->defaultEnabled = (bool)($cacheConfig['default_enabled'] ?? self::DEFAULT_ENABLED);
         if (isset($cacheConfig['commands'])) {
@@ -44,6 +47,14 @@ class Cache
                 $this->commands[$command] = new CommandCache($command, $commandConfig);
             }
         }
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getIDPrefix(): ?string
+    {
+        return $this->idPrefix;
     }
 
     /**
