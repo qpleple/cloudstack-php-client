@@ -75,7 +75,7 @@ class CloudStackClient
     }
 
 {% for api in apis %}
-{% include "method.php.twig" with {'api' : api, 'config' : config} %}
+{% include "client/method.php.twig" with {'api' : api, 'config' : config} %}
 
 {% endfor %}
 
@@ -157,18 +157,19 @@ class CloudStackClient
      * Execute Request against CloudStack
      * @param {{ namespace_path('CloudStackRequest\\CloudStackRequestInterface', true) }}
      * @param bool $decode If true and response is OK, will attempt to decode response body into response model appropriate for request.  If false, raw PSR response is returned.
-     * @param bool $rebuildCache If true and the request supports response caching, use the output from this request to build / rebuild the cached version
      * @return mixed
      */
-    public function doRequest(CloudStackRequest\CloudStackRequestInterface $request, bool $decode = true, bool $noCache = false, bool $rebuildCache = false)
+    public function doRequest(CloudStackRequest\CloudStackRequestInterface $request, bool $decode = true)
     {
         static $defaultOpts = [
             RequestOptions::HTTP_ERRORS => false,
             RequestOptions::DECODE_CONTENT => false,
         ];
 
-        if (isset($this->cache) && !$noCache && $request instanceof CloudStackRequest\CloudStackCacheableRequest) {
+        $cacheable = isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest;
 
+        if ($cacheable && $request->isCachedResponseAllowed()) {
+            // TODO: implement cache retrieval
         }
 
         $resp = $this->configuration->getHttpClient()->send($this->createPsr7Request($request), $defaultOpts);
@@ -191,24 +192,30 @@ class CloudStackClient
 
         if ($decode) {
             $responseModel = $request->getCloudStackResponseModel();
-
             $decoded = $this->decodeBody($resp, $request->getCloudStackCommandName());
 
+            // if async request, don't test for cache
             if ($request instanceof CloudStackRequest\CloudStackAsynchronousRequest) {
                 return new CloudStackResponse\AsyncJobStartResponse($decoded, $request);
             }
 
             if ($request instanceof CloudStackRequest\CloudStackListRequest) {
-                $ret = [];
+                $response = [];
                 if ($decoded) {
                     unset($decoded['count']);
                     foreach(reset($decoded) as $item) {
-                        $ret[] = new $responseModel($item);
+                        $response[] = new $responseModel($item);
                     }
                 }
-                return $ret;
+            } else {
+                $response = new $responseModel($decoded);
             }
-            return new $responseModel($decoded);
+
+            if ($cacheable && $request->isResponseCachingAllowed()) {
+                // TODO: implementing response caching
+            }
+
+            return $response;
         }
 
         return $resp;

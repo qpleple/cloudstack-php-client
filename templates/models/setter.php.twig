@@ -1,0 +1,22 @@
+{#
+    This file is part of the CloudStack Client Generator.
+
+    (c) Quentin Pleplé <quentin.pleple@gmail.com>
+    (c) Aaron Hurt <ahurt@anbcs.com>
+    (c) Nathan Johnson <nathan@nathanjohnson.info>
+    (c) Daniel Carbone <daniel.p.carbone@gmail.com>
+    (c) Bogdan Gabor <bgabor@ena.com>
+
+    For the full copyright and license information, please view the LICENSE
+    file that was distributed with this source code.
+#}
+    /**
+{{ prop.phpdocDescription }}
+     * @param {{ prop.phpTypeTagValue }} ${{ prop.name }}
+     * @return {{ namespace_path('CloudStackRequest\\' ~ api.requestClassname, true) }}
+     */
+    public function set{{ prop.name|capitalize }}({% if 'array' == prop.phpType %}array {% endif %}${{ prop.name }}): {{ api.requestClassName }}
+    {
+        $this->{{ prop.name }} = ${{ prop.name }};
+        return $this;
+    }

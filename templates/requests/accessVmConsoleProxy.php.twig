@@ -69,9 +69,9 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
      * Virtual Machine ID
      * @return string
      */
-    public function getVm()
+    public function getVm(): ?string
     {
-        return $this->vm;
+        return $this->vm ?? null;
     }
 
     /**
@@ -88,7 +88,7 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
     /**
      * @return string
      */
-    public function getCloudStackCommandParameter()
+    public function getCloudStackCommandParameter(): string
     {
         return 'cmd';
     }
@@ -96,7 +96,7 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
     /**
      * @return string
      */
-    public function getCloudStackCommandName()
+    public function getCloudStackCommandName(): string
     {
         return 'access';
     }
@@ -104,7 +104,7 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
     /*
      * @return string
      */
-    public function getCloudStackResponseModel()
+    public function getCloudStackResponseModel(): string
     {
         return '{{ namespace_path('CloudStackResponse\AccessVmConsoleProxyResponse', true) }}';
     }
@@ -112,7 +112,7 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
     /**
      * @return bool
      */
-    public function isRequestValid()
+    public function isRequestValid(): bool
     {
         return isset($this->vm);
     }
@@ -120,7 +120,7 @@ class AccessVmConsoleProxyRequest implements CloudStackRequestInterface, CloudSt
     /**
      * @return array
      */
-    public function toUrlParams()
+    public function toUrlParams(): array
     {
         $a = [];
         if (isset($this->vm)) {

@@ -185,24 +185,6 @@ class Variable
     }
 
     /**
-     * @return string
-     */
-    public function getPHPTypeTagValue()
-    {
-        if ($this->inResponse() && $this->isDate()) {
-            $tag = '\\DateTime|string Value will try to be parsed as a \\DateTime, falling back to the raw string value if unable';
-        } else {
-            $tag = $this->getPHPType();
-        }
-
-        if ('array' !== $tag && $this->isCollection()) {
-            $tag .= '[]';
-        }
-
-        return $tag;
-    }
-
-    /**
      * @return bool
      */
     public function inResponse(): bool
@@ -217,6 +199,31 @@ class Variable
     {
         static $dateTypes = ['date', 'tzdate'];
         return in_array($this->getType(), $dateTypes, true);
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCollection(): bool
+    {
+        static $collectionTypes = ['set', 'list', 'map', 'responseobject', 'uservmresponse'];
+        return in_array($this->getType(), $collectionTypes, true);
     }
 
     /**
@@ -263,8 +270,10 @@ class Variable
 
             // Catch these here so we can analyze outliers easier...
             case 'string':
+                return 'string';
+
             case 'boolean':
-                return $type;
+                return 'boolean';
 
             default:
                 return $type;
@@ -274,26 +283,60 @@ class Variable
     /**
      * @return string
      */
-    public function getType(): string
+    public function getPHPTypeTagValue(): string
     {
-        return $this->type;
+        if ($this->inResponse() && $this->isDate()) {
+            return '\\DateTime|string|null Value will try to be parsed as a \\DateTime, falling back to the raw string value if unable';
+        }
+
+        $tag = $this->getPHPType();
+        if ('array' !== $tag && $this->isCollection()) {
+            $tag .= '[]';
+        }
+
+        return $tag;
     }
 
     /**
-     * @param string $type
+     * @param bool $nullable
+     * @param bool $asReturn
+     * @return string
      */
-    public function setType($type)
+    public function getPHPTypeHintValue(bool $nullable = false, bool $asReturn = false): string
     {
-        $this->type = $type;
-    }
+        $hint = '';
+        if ($this->isCollection()) {
+            $hint = 'array';
+        } elseif (!$this->isDate()) {
+            switch ($type = $this->getPHPType()) {
+                case 'string':
+                case 'int':
+                    $hint = $type;
+                    break;
 
-    /**
-     * @return bool
-     */
-    public function isCollection(): bool
-    {
-        static $collectionTypes = ['set', 'list', 'map', 'responseobject', 'uservmresponse'];
-        return in_array($this->getType(), $collectionTypes, true);
+                case 'double':
+                    $hint = 'float';
+                    break;
+
+                case 'integer':
+                    $hint = 'int';
+                    break;
+
+                case 'boolean':
+                    $hint = 'bool';
+                    break;
+
+            }
+        }
+
+        if ('' === $hint) {
+            return '';
+        }
+
+        if ($nullable) {
+            $hint = "?{$hint}";
+        }
+        return $asReturn ? ": {$hint}" : $hint;
     }
 
     /**

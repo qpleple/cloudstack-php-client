@@ -460,7 +460,7 @@ class Generator
     {
         $this->writeFile(
             $this->srcDir . '/CloudStackClient.php',
-            $this->twig->load('client.php.twig')->render(['env' => $this->env, 'apis' => $this->apis])
+            $this->twig->load('client/class.php.twig')->render(['env' => $this->env, 'apis' => $this->apis])
         );
     }
 
@@ -471,7 +471,7 @@ class Generator
      */
     protected function writeOutRequestModels()
     {
-        $template = $this->twig->load('requests/model.php.twig');
+        $template = $this->twig->load('models/request.php.twig');
 
         foreach ($this->apis as $api) {
             $className = $api->getRequestClassName();
@@ -489,7 +489,7 @@ class Generator
      */
     protected function writeOutSharedResponseModels()
     {
-        $template = $this->twig->load('responses/model.php.twig');
+        $template = $this->twig->load('models/response.php.twig');
 
         foreach ($this->sharedObjectMap as $name => $class) {
             $class->getProperties()->nameSort();
@@ -508,7 +508,7 @@ class Generator
      */
     protected function writeOutResponseModels()
     {
-        $template = $this->twig->load('responses/model.php.twig');
+        $template = $this->twig->load('models/response.php.twig');
 
         foreach ($this->apis as $name => $api) {
             $response = $api->getResponse();

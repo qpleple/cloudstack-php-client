@@ -57,8 +57,8 @@ use {{ namespace_path('CloudStackHelpers') }};{% endif %}{% endif %}
  * @package {{ namespace_path('CloudStackRequest', true) }}
 {{ since_tag_line(api.since, 0, true) }} */
 class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudStackApiCommandRequest{% if api.isList %}, CloudStackListRequest{% endif %}{% if api.isAsync %}, CloudStackAsynchronousRequest{% else %}, CloudStackSynchronousRequest{% endif %}{% if api.isCacheable %}, CloudStackCacheableRequest{% endif %}
-{
 
+{
 {% if api.isAsync %}
     const EVENT_TYPE = {% if api.eventType == '' %}''{% else %}CloudStackEventTypes::{{ api.eventType }}{% endif %};
 {% endif %}
@@ -69,7 +69,20 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
 {{ prop.propertyDocBloc }}
     private ${{ prop.name }};
 
-{% endfor %}{% endif %}{% if requiredParamLength > 0 or optionalParamLength > 0 %}
+{% endfor %}{% endif %}{% if api.isCacheable %}
+    /**
+     * If true, allows the response to be pulled from cache rather than being executed against ACS
+     * @var bool
+     */
+    private $cachedResponseAllowed = true;
+
+    /**
+     * If true, allows the response from this request to be put in the cache
+     * @var bool
+     */
+    private $responseCachingAllowed = true;
+
+{% endif %}{% if requiredParamLength > 0 or optionalParamLength > 0 %}
     /**
      * {{ api.requestClassname }} Constructor
      *
@@ -105,7 +118,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * @param array $data
      * @return {{ namespace_path('CloudStackRequest\\' ~ api.requestClassname, true) }}
      */
-    public static function fromArray(array $data)
+    public static function fromArray(array $data): {{ api.requestClassName }}
     {
 {% if requiredParamLength == 0 and optionalParamLength == 0 %}
         return new static;
@@ -132,31 +145,52 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     }
 
 {% for prop in api.parameters %}
+{% include "models/getter.php.twig" with {'prop': prop, 'env': env} %}
+
+
+{% include "models/setter.php.twig" with {'api': api, 'prop': prop, 'env': env} %}
+
+
+{% endfor %}{% if api.isCacheable %}
     /**
-{{ prop.phpdocDescription }}
-     * @return {{ prop.phpTypeTagValue }}
-     */
-    public function get{{ prop.name|capitalize }}()
+    * Specifies that the cache may not be used for this request
+    */
+    public function disallowCachedResponse(): void
     {
-        return $this->{{ prop.name }};
+        $this->cachedResponseAllowed = false;
     }
 
     /**
-{{ prop.phpdocDescription }}
-     * @param {{ prop.phpTypeTagValue }} ${{ prop.name }}
-     * @return $this
-     */
-    public function set{{ prop.name|capitalize }}({% if 'array' == prop.phpType %}array {% endif %}${{ prop.name }})
+    * If true, the client will attempt to pull the response for this request from cache
+    * @return bool
+    */
+    public function isCachedResponseAllowed(): bool
     {
-        $this->{{ prop.name }} = ${{ prop.name }};
-        return $this;
+        return $this->cachedResponseAllowed;
     }
 
-{% endfor %}
+    /**
+    * Specifies that the response from this request may not be put into the cache
+    */
+    public function disallowResponseCaching(): void
+    {
+        $this->responseCachingAllowed = false;
+    }
+
+    /**
+    * If true, the response from this request may not be cached.
+    * @return bool
+    */
+    public function isResponseCachingAllowed(): bool
+    {
+        return $this->responseCachingAllowed;
+    }
+
+{% endif %}
     /**
      * @return string
      */
-    public function getCloudStackCommandParameter()
+    public function getCloudStackCommandParameter(): string
     {
         return 'command';
     }
@@ -164,7 +198,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     /**
      * @return string
      */
-    public function getCloudStackCommandName()
+    public function getCloudStackCommandName(): string
     {
         return '{{ api.name }}';
     }
@@ -172,7 +206,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     /**
      * @return string
      */
-    public function getCloudStackResponseModel()
+    public function getCloudStackResponseModel(): string
     {
         return '{{ api.response.FQName|replace({"\\": "\\\\"}) }}';
     }
@@ -181,7 +215,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     /**
      * @return string
      */
-    public function getCloudStackEventType()
+    public function getCloudStackEventType(): string
     {
         return self::EVENT_TYPE;
     }
@@ -190,7 +224,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     /**
      * @return bool
      */
-    public function isRequestValid()
+    public function isRequestValid(): bool
     {
 {% if 0 == requiredParamLength %}
         // all parameters are optional
@@ -202,7 +236,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     /**
      * @return array
      */
-    public function toUrlParams()
+    public function toUrlParams(): array
     {
         $a = [];
 {% for param in api.parameters %}

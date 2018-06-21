@@ -96,7 +96,7 @@ class AsyncJobStartResponse
      * Returns the full async request object
      * @return {{ namespace_path('CloudStackRequest\\CloudStackRequestInterface', true) }}
      */
-    public function getRequest()
+    public function getRequest(): CloudStackRequest\CloudStackRequestInterface
     {
         return $this->request;
     }
@@ -104,7 +104,7 @@ class AsyncJobStartResponse
     /**
      * @return string
      */
-    public function getResponseClassName()
+    public function getResponseClassName(): string
     {
         return $this->request->getCloudStackResponseModel();
     }

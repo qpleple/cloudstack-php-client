@@ -40,31 +40,31 @@ interface CloudStackRequestInterface extends \JsonSerializable
      * Must return the name of the command request property
      * @return string
      */
-    public function getCloudStackCommandParameter();
+    public function getCloudStackCommandParameter(): string;
 
     /**
      * Must return the upstream command name
      * @return string
      */
-    public function getCloudStackCommandName();
+    public function getCloudStackCommandName(): string;
 
     /**
      * Must return fully qualified class name of response model
      * @return string
      */
-    public function getCloudStackResponseModel();
+    public function getCloudStackResponseModel(): string;
 
     /**
      * Must return boolean state of request validity
      * @return bool
      */
-    public function isRequestValid();
+    public function isRequestValid(): bool;
 
     /**
      * Must return an array of [param => value] that can be directly serialized for consumption by CloudStack
      * @return array
      */
-    public function toUrlParams();
+    public function toUrlParams(): array;
 }
 
 /**
@@ -107,7 +107,7 @@ interface CloudStackAsynchronousRequest
     /**
      * @return string
      */
-    public function getCloudStackEventType();
+    public function getCloudStackEventType(): string;
 }
 
 /**
@@ -127,5 +127,25 @@ interface CloudStackListRequest
  */
 interface CloudStackCacheableRequest
 {
+    /**
+     * Specifies that the cache may not be used for this request
+     */
+    public function disallowCachedResponse(): void;
 
+    /**
+     * If true, the client will attempt to pull the response for this request from cache
+     * @return bool
+     */
+    public function isCachedResponseAllowed(): bool;
+
+    /**
+     * Specifies that the response from this request may not be put into the cache
+     */
+    public function disallowResponseCaching(): void;
+
+    /**
+     * If true, the response from this request may not be cached.
+     * @return bool
+     */
+    public function isResponseCachingAllowed(): bool;
 }

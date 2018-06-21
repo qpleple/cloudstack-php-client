@@ -72,7 +72,7 @@ class AccessVmConsoleProxyResponse
      * Attempt to pull just the console proxy address out of the response iframe.
      * @return string
      */
-    public function getIframeSrc()
+    public function getIframeSrc(): string
     {
         if (!isset($this->src)) {
             if (is_string($this->iframe)) {
