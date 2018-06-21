@@ -34,6 +34,10 @@ php_cs_generator:
           allow_redirects: true
           http_errors: true
           verify: false
+      cache:
+        default_ttl: 300 # 5 minutes
+        command_ttls:
+          listZones: 2592000 # 30 days
     prod:
       host: prod.ourcloudstack.com
       port: 8765

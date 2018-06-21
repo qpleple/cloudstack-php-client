@@ -82,6 +82,12 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      */
     private $responseCachingAllowed = true;
 
+    /**
+     * The duration this request's response is cached, if caching is allowed for this request
+     * @var int
+     */
+    private $responseCacheTTL = {{ env.cache.commandTTL(api.name) }};
+
 {% endif %}{% if requiredParamLength > 0 or optionalParamLength > 0 %}
     /**
      * {{ api.requestClassname }} Constructor
@@ -184,6 +190,24 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
     public function isResponseCachingAllowed(): bool
     {
         return $this->responseCachingAllowed;
+    }
+
+    /**
+     * The duration in seconds the response for this request may be cached, if allowed
+     * @return int
+     */
+    public function getResponseCacheTTL(): int
+    {
+        return $this->responseCacheTTL;
+    }
+
+    /**
+     * Specifies the number of seconds this specific request's response maybe cached for, if allowed
+     * @param int $ttl
+     */
+    public function setResponseCacheTTL(int $ttl): void
+    {
+        $this->responseCacheTTL = $ttl;
     }
 
 {% endif %}

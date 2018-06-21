@@ -4,6 +4,7 @@ namespace MyENA\CloudStackClientGenerator\Configuration;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -90,6 +91,9 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
     /** @var \GuzzleHttp\ClientInterface */
     private $httpClient;
 
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache */
+    private $cache;
+
     /**
      * Environment constructor.
      *
@@ -99,6 +103,9 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
      */
     public function __construct(array $config = [])
     {
+        // create default cache config, will be overwritten below if defined.
+        $this->cache = new Cache();
+
         $clientClass = Client::class;
         $clientConfig = [];
 
@@ -118,6 +125,9 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
                 continue;
             } elseif ('logger' === $k) {
                 list($loggerClass, $loggerLevel) = $this->parseLoggerEntry($v, $loggerClass, $loggerLevel);
+                continue;
+            } elseif ('cache' === $k) {
+                $this->cache = $this->parseCacheEntry($v);
                 continue;
             }
 
@@ -417,6 +427,14 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
     }
 
     /**
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache|null
+     */
+    public function getCache(): ?Cache
+    {
+        return $this->cache ?? null;
+    }
+
+    /**
      * @return array
      */
     public function jsonSerialize()
@@ -541,5 +559,25 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
         }
 
         return [$loggerClass, $loggerLevel];
+    }
+
+    /**
+     * @param $v
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache|null
+     */
+    protected function parseCacheEntry($v): ?Cache
+    {
+        if (null === $v) {
+            return null;
+        }
+
+        if (!is_array($v)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Key "cache" must be array, %s seen.',
+                gettype($v)
+            ));
+        }
+
+        return new Cache($v);
     }
 }
