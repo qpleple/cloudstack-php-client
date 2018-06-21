@@ -49,7 +49,7 @@ use {{ namespace_path('CloudStackEventTypes') }};
 use {{ namespace_path('CloudStackHelpers') }};{% endif %}{% endif %}
 
 /**
-{{ swagger_definition_tag(api.swaggername, api.description, api.parameters, 0) }}
+{{ swagger_definition_tag(api.swaggername, escape_swagger_string(api.description), api.parameters, 0) }}
  */
 
 /**
