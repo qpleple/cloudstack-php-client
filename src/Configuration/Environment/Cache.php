@@ -8,41 +8,40 @@ namespace MyENA\CloudStackClientGenerator\Configuration\Environment;
  */
 class Cache
 {
+    const DEFAULT_ENABLED = true;
     const DEFAULT_TTL = 5 * 60;
 
     /** @var int */
-    private $defaultTTL = self::DEFAULT_TTL;
-
-    /** @var array */
-    private $commandTTLs = [];
+    private $defaultTTL;
+    /** @var bool */
+    private $defaultEnabled;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\CommandCache[] */
+    private $commands = [];
 
     /**
      * Cache constructor.
-     * @param array $conf
+     * @param array $cacheConfig
      */
-    public function __construct(array $conf = [])
+    public function __construct(array $cacheConfig = [])
     {
-        $this->defaultTTL = $conf['default_ttl'] ?? self::DEFAULT_TTL;
-        if (isset($conf['command_ttls'])) {
-            foreach ($conf['command_ttls'] as $command => $ttl) {
+        $this->defaultTTL = (int)($cacheConfig['default_ttl'] ?? self::DEFAULT_TTL);
+        $this->defaultEnabled = (bool)($cacheConfig['default_enabled'] ?? self::DEFAULT_ENABLED);
+        if (isset($cacheConfig['commands'])) {
+            foreach ($cacheConfig['commands'] as $command => $commandConfig) {
                 if (!is_string($command)) {
                     throw new \InvalidArgumentException(sprintf(
                         'Key "cache" sub-key "command_ttls" must have strings for keys, %s seen.',
                         gettype($command)
                     ));
                 }
-                if (is_string($ttl) && ctype_digit($ttl)) {
-                    $ttl = (int)$ttl;
-                }
-                if (!is_int($ttl)) {
+                if (!is_array($commandConfig)) {
                     throw new \InvalidArgumentException(sprintf(
-                        'Key "cache" sub-key "command_ttls" must have integers for values, command %s has non-int value of type %s',
+                        'Key "cache" sub-key "commands" key "%s" must have array value, %s seen.',
                         $command,
-                        gettype($ttl)
+                        gettype($commandConfig)
                     ));
                 }
-                // TODO: validate that the command exists?
-                $this->commandTTLs[$command] = $ttl;
+                $this->commands[$command] = new CommandCache($command, $commandConfig);
             }
         }
     }
@@ -56,11 +55,40 @@ class Cache
     }
 
     /**
-     * @return array
+     * @return bool
      */
-    public function getCommandTTLs(): array
+    public function isDefaultEnabled(): bool
     {
-        return $this->commandTTLs;
+        return $this->defaultEnabled;
+    }
+
+    /**
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\CommandCache[]
+     */
+    public function getCommands(): array
+    {
+        return $this->commands;
+    }
+
+    /**
+     * @param string $command
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\CommandCache|null
+     */
+    public function getCommand(string $command): ?CommandCache
+    {
+        return $this->commands[$command] ?? null;
+    }
+
+    /**
+     * @param string $command
+     * @return bool
+     */
+    public function isCommandEnabled(string $command): bool
+    {
+        if ($command = $this->getCommand($command)) {
+            return $command->isEnabled();
+        }
+        return $this->isDefaultEnabled();
     }
 
     /**
@@ -69,6 +97,9 @@ class Cache
      */
     public function getCommandTTL(string $command): int
     {
-        return $this->commandTTLs[$command] ?? $this->getDefaultTTL();
+        if ($command = $this->getCommand($command)) {
+            return $command->getTTL();
+        }
+        return self::DEFAULT_TTL;
     }
 }

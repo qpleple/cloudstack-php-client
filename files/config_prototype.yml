@@ -35,9 +35,13 @@ php_cs_generator:
           http_errors: true
           verify: false
       cache:
+        default_enabled: false # will disable caching for everything except those explicitly defined in "commands"
         default_ttl: 300 # 5 minutes
-        command_ttls:
-          listZones: 2592000 # 30 days
+        commands:
+          listZones:
+            ttl: 2592000 # 30 days
+          listVirtualMachines:
+            enabled: false # disables caching entirely for this command
     prod:
       host: prod.ourcloudstack.com
       port: 8765

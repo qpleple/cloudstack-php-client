@@ -74,13 +74,13 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * If true, allows the response to be pulled from cache rather than being executed against ACS
      * @var bool
      */
-    private $cachedResponseAllowed = true;
+    private $cachedResponseAllowed = {{ env.cache.commandEnabled(api.name) ? 'true' : 'false' }};
 
     /**
      * If true, allows the response from this request to be put in the cache
      * @var bool
      */
-    private $responseCachingAllowed = true;
+    private $responseCachingEnabled = {{ env.cache.commandEnabled(api.name) ? 'true' : 'false' }};
 
     /**
      * The duration this request's response is cached, if caching is allowed for this request
@@ -157,60 +157,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
 {% include "models/setter.php.twig" with {'api': api, 'prop': prop, 'env': env} %}
 
 
-{% endfor %}{% if api.isCacheable %}
-    /**
-    * Specifies that the cache may not be used for this request
-    */
-    public function disallowCachedResponse(): void
-    {
-        $this->cachedResponseAllowed = false;
-    }
-
-    /**
-    * If true, the client will attempt to pull the response for this request from cache
-    * @return bool
-    */
-    public function isCachedResponseAllowed(): bool
-    {
-        return $this->cachedResponseAllowed;
-    }
-
-    /**
-    * Specifies that the response from this request may not be put into the cache
-    */
-    public function disallowResponseCaching(): void
-    {
-        $this->responseCachingAllowed = false;
-    }
-
-    /**
-    * If true, the response from this request may not be cached.
-    * @return bool
-    */
-    public function isResponseCachingAllowed(): bool
-    {
-        return $this->responseCachingAllowed;
-    }
-
-    /**
-     * The duration in seconds the response for this request may be cached, if allowed
-     * @return int
-     */
-    public function getResponseCacheTTL(): int
-    {
-        return $this->responseCacheTTL;
-    }
-
-    /**
-     * Specifies the number of seconds this specific request's response maybe cached for, if allowed
-     * @param int $ttl
-     */
-    public function setResponseCacheTTL(int $ttl): void
-    {
-        $this->responseCacheTTL = $ttl;
-    }
-
-{% endif %}
+{% endfor %}
     /**
      * @return string
      */
@@ -285,7 +232,78 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
 {% endif %}
 {% endfor %}
         return $a;
+    }{% if api.isCacheable %}
+
+
+    /**
+     * Returns unique cache identifier for this specific request
+     * @param string $apiKey
+     * @param string $apiSecret
+     * @return string
+     */
+    public function getRequestCacheID(string $apiKey, string $apiSecret): string
+    {
+        $id = "{{ api.name }}{$apiKey}{$apiSecret}";
+        foreach($this->toUrlParams() as $k => $v) {
+            $id .= ",{$k}={$v}";
+        }
+        return sha1($id);
     }
+
+    /**
+     * Specify whether this request is allowed to use the response cache
+     * @param bool $allow
+     */
+    public function setAllowCachedResponse(bool $allow): void
+    {
+        $this->cachedResponseAllowed = $allow;
+    }
+
+    /**
+     * If true, the client will attempt to pull the response for this request from cache
+     * @return bool
+     */
+    public function getCachedResponseAllowed(): bool
+    {
+        return $this->cachedResponseAllowed;
+    }
+
+    /**
+     * Specifies that the response from this request may not be put into the cache
+     * @param bool $enable
+     */
+    public function setEnableResponseCaching(bool $enable): void
+    {
+        $this->responseCachingEnabled = $enable;
+    }
+
+    /**
+     * If true, the response from this request may not be cached.
+     * @return bool
+     */
+    public function getResponseCachingEnabled(): bool
+    {
+        return $this->responseCachingEnabled;
+    }
+
+    /**
+     * The duration in seconds the response for this request may be cached, if allowed
+     * @return int
+     */
+    public function getResponseCacheTTL(): int
+    {
+        return $this->responseCacheTTL;
+    }
+
+    /**
+     * Specifies the number of seconds this specific request's response maybe cached for, if allowed
+     * @param int $ttl
+     */
+    public function setResponseCacheTTL(int $ttl): void
+    {
+        $this->responseCacheTTL = $ttl;
+    }{% endif %}
+
 
     /**
      * @return array

@@ -128,26 +128,36 @@ interface CloudStackListRequest
 interface CloudStackCacheableRequest
 {
     /**
-     * Specifies that the cache may not be used for this request
+     * Must return a unique identifier for this request, ideally taking into account all defined parameters
+     * @param string $apiKey
+     * @param string $apiSecret
+     * @return string
      */
-    public function disallowCachedResponse(): void;
+    public function getRequestCacheID(string $apiKey, string $apiSecret): string;
+
+    /**
+     * Specify whether this request is allowed to use the response cache
+     * @param bool $allow
+     */
+    public function setAllowCachedResponse(bool $allow): void;
 
     /**
      * If true, the client will attempt to pull the response for this request from cache
      * @return bool
      */
-    public function isCachedResponseAllowed(): bool;
+    public function getCachedResponseAllowed(): bool;
 
     /**
-     * Specifies that the response from this request may not be put into the cache
+     * Specify whether this specific request is allowed to have its response cached
+     * @param bool $enable
      */
-    public function disallowResponseCaching(): void;
+    public function setEnableResponseCaching(bool $enable): void;
 
     /**
      * If true, the response from this request may not be cached.
      * @return bool
      */
-    public function isResponseCachingAllowed(): bool;
+    public function getResponseCachingEnabled(): bool;
 
     /**
      * Must return the number of seconds the cached response from this request is considered valid

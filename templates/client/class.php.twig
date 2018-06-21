@@ -166,7 +166,9 @@ class CloudStackClient
             RequestOptions::DECODE_CONTENT => false,
         ];
 
-        $cacheable = isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest;
+        $cacheable = isset($this->cacheProvider) &&
+            $request instanceof CloudStackRequest\CloudStackCacheableRequest &&
+            0 < $request->getResponseCacheTTL();
 
         if ($cacheable && $request->isCachedResponseAllowed()) {
             // TODO: implement cache retrieval
