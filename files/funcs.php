@@ -41,7 +41,7 @@ function buildSwaggerDefinitionTag(
     $tag = tagIndent($indent) . "@SWG\\Definition(\n";
     $tag .= tagIndent($indent, 4) . "definition=\"{$swaggerName}\",\n";
     $tag .= tagIndent($indent, 4) . "type=\"object\",\n";
-    $tag .= tagIndent($indent, 4) . "description=\"{$description},\n";
+    $tag .= tagIndent($indent, 4) . "description=\"{$description}\",\n";
 
     if (0 < count($required = $variables->getRequired())) {
         $names = [];
