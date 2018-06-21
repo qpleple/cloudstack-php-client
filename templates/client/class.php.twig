@@ -45,6 +45,9 @@ class CloudStackClient
     /** @var {{ namespace_path('CloudStackConfiguration', true) }} */
     protected $configuration;
 
+    /** @var \Psr\Log\LoggerInterface */
+    protected $logger;
+
     /** @var \Doctrine\Common\Cache\Cache */
     protected $cacheProvider;
 
@@ -55,6 +58,7 @@ class CloudStackClient
      */
     public function __construct(CloudStackConfiguration $configuration) {
         $this->configuration = $configuration;
+        $this->logger = $configuration->getLogger();
         $this->cacheProvider = $configuration->getCacheProvider();
     }
 
@@ -166,12 +170,20 @@ class CloudStackClient
             RequestOptions::DECODE_CONTENT => false,
         ];
 
-        $cacheable = isset($this->cacheProvider) &&
-            $request instanceof CloudStackRequest\CloudStackCacheableRequest &&
-            0 < $request->getResponseCacheTTL();
+        $command = $request->getCloudStackCommandName();
+        $cacheable = (isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest);
 
-        if ($cacheable && $request->isCachedResponseAllowed()) {
-            // TODO: implement cache retrieval
+        if ($cacheable) {
+            $cacheID = $request->getRequestCacheID($this->configuration->getApiKey(), $this->configuration->getSecretKey());
+        }
+
+        if ($cacheable && $request->getCachedResponseAllowed()) {
+            $this->logger->debug(sprintf('Found command %s cache with id %s', $command, $cacheID));
+            if ($this->cacheProvider->contains($cacheID)) {
+                if (false !== ($cached = $this->cacheProvider->fetch($cacheID))) {
+                    return $cached;
+                }
+            }
         }
 
         $resp = $this->configuration->getHttpClient()->send($this->createPsr7Request($request), $defaultOpts);
@@ -194,7 +206,7 @@ class CloudStackClient
 
         if ($decode) {
             $responseModel = $request->getCloudStackResponseModel();
-            $decoded = $this->decodeBody($resp, $request->getCloudStackCommandName());
+            $decoded = $this->decodeBody($resp, $command);
 
             // if async request, don't test for cache
             if ($request instanceof CloudStackRequest\CloudStackAsynchronousRequest) {
@@ -213,8 +225,22 @@ class CloudStackClient
                 $response = new $responseModel($decoded);
             }
 
-            if ($cacheable && $request->isResponseCachingAllowed()) {
-                // TODO: implementing response caching
+            if ($cacheable && $request->getResponseCachingEnabled()) {
+                $ttl = $request->getResponseCacheTTL();
+                if (!$this->cacheProvider->save($cacheID, $response, $ttl)) {
+                    $this->logger->warning(sprintf(
+                        'Unable to store cache for command %s with cache id %s',
+                        $command,
+                        $cacheID
+                    ));
+                } else {
+                    $this->logger->debug(sprintf(
+                        'Command %s cache with id %s saved with ttl %d seconds.',
+                        $command,
+                        $cacheID,
+                        $ttl
+                    ));
+                }
             }
 
             return $response;

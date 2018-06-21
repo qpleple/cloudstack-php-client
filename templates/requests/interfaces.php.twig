@@ -160,14 +160,14 @@ interface CloudStackCacheableRequest
     public function getResponseCachingEnabled(): bool;
 
     /**
-     * Must return the number of seconds the cached response from this request is considered valid
-     * @return int
-     */
-    public function getResponseCacheTTL(): int;
-
-    /**
      * Set a specific response cache TTL for this request
      * @param int $ttl
      */
     public function setResponseCacheTTL(int $ttl): void;
+
+    /**
+     * Must return the number of seconds the cached response from this request is considered valid
+     * @return int
+     */
+    public function getResponseCacheTTL(): int;
 }
