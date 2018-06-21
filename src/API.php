@@ -208,7 +208,7 @@ class API
     public function isCacheable(): bool
     {
         $name = $this->getName();
-        return 0 === strpos($name, 'get') || 0 === strpos($name, 'list');
+        return 'getApiLimit' !== $name && (0 === strpos($name, 'get') || 0 === strpos($name, 'list'));
     }
 
     /**

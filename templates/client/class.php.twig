@@ -174,7 +174,7 @@ class CloudStackClient
         $cacheable = ($decode && isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest);
 
         if ($cacheable) {
-            $cacheID = $request->getRequestCacheID($this->configuration->getApiKey(), $this->configuration->getSecretKey());
+            $cacheID = $this->getRequestCacheID($request);
         }
 
         if ($cacheable && $request->getCachedResponseAllowed()) {
@@ -247,6 +247,19 @@ class CloudStackClient
         }
 
         return $resp;
+    }
+
+    /**
+     * @param {{ namespace_path('CloudStackRequest\\CloudStackCacheableRequest', true) }} $request
+     * @return string
+     */
+    protected function getRequestCacheID(CloudStackRequest\CloudStackCacheableRequest $request): string
+    {
+        $id = "{$this->configuration->getHost()}{$this->configuration->getApiKey()}{$this->configuration->getSecretKey()}{$request->getCloudStackCommandName()}";
+        foreach($request->toUrlParams() as $k => $v) {
+            $id .= "{$k}{$v}";
+        }
+        return {% if env.cache.idPrefix is not null %}'{{ env.cache.idPrefix }}'.{% endif %}sha1($id);
     }
 
     /**

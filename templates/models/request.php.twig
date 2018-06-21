@@ -62,7 +62,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
 {% if api.isAsync %}
     const EVENT_TYPE = {% if api.eventType == '' %}''{% else %}CloudStackEventTypes::{{ api.eventType }}{% endif %};
 {% endif %}
-    const API_NAME = '{{ api.name }}';
+    const COMMAND_NAME = '{{ api.name }}';
 {% if requiredParamLength > 0 or optionalParamLength > 0 %}
 
 {% for prop in api.parameters %}
@@ -124,7 +124,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      * @param array $data
      * @return {{ namespace_path('CloudStackRequest\\' ~ api.requestClassname, true) }}
      */
-    public static function fromArray(array $data): {{ api.requestClassName }}
+    public static function fromArray(array $data = []): {{ api.requestClassName }}
     {
 {% if requiredParamLength == 0 and optionalParamLength == 0 %}
         return new static;
@@ -171,7 +171,7 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
      */
     public function getCloudStackCommandName(): string
     {
-        return '{{ api.name }}';
+        return self::COMMAND_NAME;
     }
 
     /**
@@ -234,21 +234,6 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         return $a;
     }{% if api.isCacheable %}
 
-
-    /**
-     * Returns unique cache identifier for this specific request
-     * @param string $apiKey
-     * @param string $apiSecret
-     * @return string
-     */
-    public function getRequestCacheID(string $apiKey, string $apiSecret): string
-    {
-        $id = "{{ api.name }}{$apiKey}{$apiSecret}";
-        foreach($this->toUrlParams() as $k => $v) {
-            $id .= "{$k}{$v}";
-        }
-        return {% if env.cache.idPrefix is not null %}'{{ env.cache.idPrefix }}'.{% endif %}sha1($id);
-    }
 
     /**
      * Specify whether this request is allowed to use the response cache

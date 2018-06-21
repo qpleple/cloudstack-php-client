@@ -72,7 +72,7 @@ interface CloudStackRequestInterface extends \JsonSerializable
  * Interface CloudStackApiCommandRequest
  * @package {{ namespace_path('CloudStackApiCommandRequest', true) }}
  */
-interface CloudStackApiCommandRequest
+interface CloudStackApiCommandRequest extends CloudStackRequestInterface
 {
 
 }
@@ -82,7 +82,7 @@ interface CloudStackApiCommandRequest
  * Interface CloudStackConsoleCommandRequest
  * @package {{ namespace_path('CloudStackConsoleCommandRequest', true) }}
  */
-interface CloudStackConsoleCommandRequest
+interface CloudStackConsoleCommandRequest extends CloudStackRequestInterface
 {
 
 }
@@ -92,7 +92,7 @@ interface CloudStackConsoleCommandRequest
  * Interface CloudStackSynchronousRequest
  * @package {{ namespace_path('CloudStackConsoleCommandRequest', true) }}
  */
-interface CloudStackSynchronousRequest
+interface CloudStackSynchronousRequest extends CloudStackRequestInterface
 {
 
 }
@@ -102,7 +102,7 @@ interface CloudStackSynchronousRequest
  * Interface CloudStackAsynchronousRequest
  * @package {{ namespace_path('CloudStackAsynchronousRequest', true) }}
  */
-interface CloudStackAsynchronousRequest
+interface CloudStackAsynchronousRequest extends CloudStackRequestInterface
 {
     /**
      * @return string
@@ -115,7 +115,7 @@ interface CloudStackAsynchronousRequest
  * Interface CloudStackListRequest
  * @package {{ namespace_path('CloudStackListRequest', true) }}
  */
-interface CloudStackListRequest
+interface CloudStackListRequest extends CloudStackRequestInterface
 {
 
 }
@@ -125,16 +125,8 @@ interface CloudStackListRequest
  * Interface CloudStackCacheableRequest
  * @package {{ namespace_path('CloudStackCacheableRequest', true) }}
  */
-interface CloudStackCacheableRequest
+interface CloudStackCacheableRequest extends CloudStackRequestInterface
 {
-    /**
-     * Must return a unique identifier for this request, ideally taking into account all defined parameters
-     * @param string $apiKey
-     * @param string $apiSecret
-     * @return string
-     */
-    public function getRequestCacheID(string $apiKey, string $apiSecret): string;
-
     /**
      * Specify whether this request is allowed to use the response cache
      * @param bool $allow
