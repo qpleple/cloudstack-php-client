@@ -5,6 +5,7 @@ namespace MyENA\CloudStackClientGenerator;
 use MyENA\CloudStackClientGenerator\API\ObjectVariable;
 use MyENA\CloudStackClientGenerator\API\Variable;
 use MyENA\CloudStackClientGenerator\Configuration\Environment;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Generator
@@ -54,16 +55,17 @@ class Generator
 
     /**
      * Generator constructor.
+     * @param \Psr\Log\LoggerInterface $logger
      * @param \MyENA\CloudStackClientGenerator\Configuration $config
      * @param \MyENA\CloudStackClientGenerator\Configuration\Environment $environment
      */
-    public function __construct(Configuration $config, Environment $environment)
+    public function __construct(LoggerInterface $logger, Configuration $config, Environment $environment)
     {
+        $this->log = $logger;
+
         $this->config = $config;
         $this->env = $environment;
         $this->client = new Client($environment);
-
-        $this->log = $environment->getLogger();
 
         $this->log->info('Generator constructing with environment "' . $environment->getName() . '"');
 

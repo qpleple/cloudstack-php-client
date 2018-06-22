@@ -6,21 +6,15 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Composer;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
-use Psr\Log\NullLogger;
 use function MyENA\CloudStackClientGenerator\tryResolvePath;
 
 /**
  * Class Environment
  * @package MyENA\CloudStackClientGenerator\Configuration
  */
-class Environment implements LoggerAwareInterface, \JsonSerializable
+class Environment implements \JsonSerializable
 {
-    use LoggerAwareTrait;
-
     const DEFAULT_SCHEME = 'http';
     const DEFAULT_PORT = 8080;
     const DEFAULT_API_PATH = 'client/api';
@@ -45,17 +39,8 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
         'out'         => true,
     ];
 
-    /** @var array */
-    private static $logLevels = [
-        LogLevel::DEBUG     => true,
-        LogLevel::INFO      => true,
-        LogLevel::NOTICE    => true,
-        LogLevel::WARNING   => true,
-        LogLevel::ERROR     => true,
-        LogLevel::ALERT     => true,
-        LogLevel::CRITICAL  => true,
-        LogLevel::EMERGENCY => true,
-    ];
+    /** @var \Psr\Log\LoggerInterface */
+    private $logger;
 
     /** @var string */
     private $name = '';
@@ -95,23 +80,18 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
 
     /**
      * Environment constructor.
-     *
-     * TODO: clean this up a bit.
-     *
+     * @param \Psr\Log\LoggerInterface $logger
      * @param array $config
      */
-    public function __construct(array $config = [])
+    public function __construct(LoggerInterface $logger, array $config = [])
     {
+        $this->logger = $logger;
+
         // create default cache config, will be overwritten below if defined.
         $this->cache = new Cache();
 
         $clientClass = Client::class;
         $clientConfig = [];
-
-        $loggerClass = class_exists('\\MyENA\\DefaultANSILogger', true)
-            ? '\\MyENA\\DefaultANSILogger'
-            : NullLogger::class;
-        $loggerLevel = LogLevel::INFO;
 
         foreach ($config as $k => $v) {
             if (false !== strpos($k, '_')) {
@@ -121,9 +101,6 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
 
             if ('httpClient' === $k) {
                 list($clientClass, $clientConfig) = $this->parseHttpClientEntry($v, $clientClass);
-                continue;
-            } elseif ('logger' === $k) {
-                list($loggerClass, $loggerLevel) = $this->parseLoggerEntry($v, $loggerClass, $loggerLevel);
                 continue;
             } elseif ('cache' === $k) {
                 $this->cache = $this->parseCacheEntry($v);
@@ -141,20 +118,6 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
         }
 
         $this->httpClient = new $clientClass($clientConfig);
-        $this->logger = new $loggerClass();
-
-        if (method_exists($this->logger, 'setLevel')) {
-            $this->logger->setLevel($loggerLevel);
-        } elseif (method_exists($this->logger, 'setLogLevel')) {
-            $this->logger->setLogLevel($loggerLevel);
-        } elseif (method_exists($this->logger, 'setLoggerLevel')) {
-            $this->logger->setLoggerLevel($loggerLevel);
-        } else {
-            $this->logger->warning(sprintf(
-                'Unable to find method by which to set log level with logger "%s"',
-                get_class($this->logger)
-            ));
-        }
 
         $this->logger->debug(sprintf('Environment %s configuration loaded', $this->name));
     }
@@ -174,14 +137,6 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
     public function setKey(string $key)
     {
         $this->key = $key;
-    }
-
-    /**
-     * @return \Psr\Log\LoggerInterface
-     */
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
     }
 
     /**
@@ -478,65 +433,6 @@ class Environment implements LoggerAwareInterface, \JsonSerializable
         }
 
         return [$clientClass, $clientConfig];
-    }
-
-    /**
-     * @param null|array $v
-     * @return array(
-     * @type string Logger class
-     * @type string Logger level
-     * )
-     */
-    protected function parseLoggerEntry($v, string $loggerClass, string $loggerLevel): array
-    {
-        if (null === $v) {
-            return [$loggerClass, $loggerLevel];
-        }
-
-        if (!is_array($v)) {
-            throw new \DomainException(sprintf(
-                'Key "logger" expected to be array, %s seen',
-                gettype($v)
-            ));
-        }
-
-        if (isset($v['class'])) {
-            if (!is_string($v['class'])) {
-                throw new \DomainException(sprintf(
-                    'Key "logger" sub-key "class" must be string, %s seen.',
-                    gettype($v['class'])
-                ));
-            } elseif (!class_exists($v['class'], true)) {
-                throw new \RuntimeException(sprintf(
-                    'Specified Logger class "%s" not found',
-                    $v['class']
-                ));
-            } elseif (!isset(class_implements($v['class'])[LoggerInterface::class])) {
-                throw new \InvalidArgumentException(sprintf(
-                    'Specified Logger class "%s" does not seem to implement \\Psr\\Log\\LoggerInterface',
-                    $v['class']
-                ));
-            }
-            $loggerClass = $v['class'];
-        }
-
-        if (isset($v['level'])) {
-            if (!is_string($v['level'])) {
-                throw new \DomainException(sprintf(
-                    'Key "logger" sub-key "level" must be string, %s seen.',
-                    gettype($v['level'])
-                ));
-            } elseif (!isset(self::$logLevels[$v['level']])) {
-                throw new \OutOfBoundsException(sprintf(
-                    'Specified Logger level "%s" is not in valid range  ["%s"]',
-                    $v['level'],
-                    implode('", "', self::$logLevels)
-                ));
-            }
-            $loggerLevel = $v['level'];
-        }
-
-        return [$loggerClass, $loggerLevel];
     }
 
     /**

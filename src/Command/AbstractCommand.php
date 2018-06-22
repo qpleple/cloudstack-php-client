@@ -135,7 +135,7 @@ abstract class AbstractCommand extends Command
      */
     protected function initializeConfig(InputInterface $input, OutputInterface $output): bool
     {
-        $this->config = new Configuration([]);
+        $this->config = new Configuration($this->log, []);
 
         // attempt to parse config file
         if ($file = $input->getOption('config')) {
@@ -148,15 +148,10 @@ abstract class AbstractCommand extends Command
                 return false;
             }
         } else {
-            $environment = new Configuration\Environment([
-                'name' => 'adhoc',
-            ]);
+            $environment = new Configuration\Environment($this->log, ['name' => 'adhoc']);
             $this->config->getEnvironments()->setEnvironment($environment);
             $this->env = $environment;
             $this->log->info('No config file specified, using adhoc');
-        }
-        if ($this->env->getLogger() === null || $this->env->getLogger() instanceof NullLogger) {
-            $this->env->setLogger($this->log); // TODO: might just set null logger again, do we care?
         }
 
         // Set any runtime command options
@@ -244,7 +239,7 @@ abstract class AbstractCommand extends Command
 
         $parsed = $parsed['php_cs_generator'];
 
-        $this->config = new Configuration($parsed);
+        $this->config = new Configuration($this->log, $parsed);
 
         if ('' !== $env) {
             $environment = $this->config->getEnvironments()->getEnvironment($env);

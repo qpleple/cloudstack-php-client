@@ -2,6 +2,8 @@
 
 namespace MyENA\CloudStackClientGenerator\Configuration\Environment;
 
+use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache\Command;
+
 /**
  * Class Cache
  * @package MyENA\CloudStackClientGenerator\Configuration\Environment
@@ -17,7 +19,7 @@ class Cache
     private $defaultTTL;
     /** @var bool */
     private $defaultEnabled;
-    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\CommandCache[] */
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache\Command[] */
     private $commands = [];
 
     /**
@@ -44,7 +46,7 @@ class Cache
                         gettype($commandConfig)
                     ));
                 }
-                $this->commands[$command] = new CommandCache($command, $commandConfig);
+                $this->commands[$command] = new Command($command, $commandConfig);
             }
         }
     }
@@ -74,7 +76,7 @@ class Cache
     }
 
     /**
-     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\CommandCache[]
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache\Command[]
      */
     public function getCommands(): array
     {
@@ -83,9 +85,9 @@ class Cache
 
     /**
      * @param string $command
-     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\CommandCache|null
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache\Command|null
      */
-    public function getCommand(string $command): ?CommandCache
+    public function getCommand(string $command): ?Command
     {
         return $this->commands[$command] ?? null;
     }

@@ -47,7 +47,7 @@ STRING
 
         $this->log->info("Generating client against host \"{$this->env->getHost()}\"");
 
-        $generator = new Generator($this->config, $this->env);
+        $generator = new Generator($this->log, $this->config, $this->env);
 
         try {
             $generator->generate();

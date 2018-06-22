@@ -2,24 +2,31 @@
 
 namespace MyENA\CloudStackClientGenerator\Configuration;
 
+use Psr\Log\LoggerInterface;
+
 /**
  * Class Environments
  * @package MyENA\CloudStackClientGenerator\Configuration
  */
 class Environments implements \ArrayAccess, \Iterator, \Countable, \JsonSerializable
 {
+    /** @var \Psr\Log\LoggerInterface */
+    private $logger;
+
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment[] */
     private $_storage = [];
 
     /**
      * Environments constructor.
-     * @param \MyENA\CloudStackClientGenerator\Configuration\Environment[] $environments
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param array $environments
      */
-    public function __construct(array $environments = [])
+    public function __construct(LoggerInterface $logger, array $environments = [])
     {
+        $this->logger = $logger;
         foreach ($environments as $name => $env) {
             if (is_array($env)) {
-                $env = new Environment(['name' => $name] + $env);
+                $env = new Environment($logger, ['name' => $name] + $env);
             }
             $this->setEnvironment($env);
         }

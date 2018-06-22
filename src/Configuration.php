@@ -4,6 +4,7 @@ namespace MyENA\CloudStackClientGenerator;
 
 use MyENA\CloudStackClientGenerator\Configuration\Environments;
 use MyENA\CloudStackClientGenerator\Configuration\OverloadedClasses;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Configuration
@@ -11,6 +12,11 @@ use MyENA\CloudStackClientGenerator\Configuration\OverloadedClasses;
  */
 class Configuration
 {
+    /** @var \Psr\Log\LoggerInterface */
+    private $logger;
+
+    /** @var array */
+    private $config;
 
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environments */
     protected $environments;
@@ -23,15 +29,17 @@ class Configuration
 
     /**
      * Configuration constructor.
-     *
+     * @param \Psr\Log\LoggerInterface $logger
      * @param array $config
      */
-    public function __construct(array $config = [])
+    public function __construct(LoggerInterface $logger, array $config = [])
     {
+        $this->logger = $logger;
+        $this->config = $config;
         $this->eventTypeMap = require __DIR__ . '/../files/command_event_map.php';
 
-        $this->environments = new Environments($config['environments'] ?? []);
-        $this->overloadedClasses = new OverloadedClasses($config['overloaded_classes'] ?? []);
+        $this->environments = new Environments($logger,$config['environments'] ?? []);
+        $this->overloadedClasses = new OverloadedClasses($logger,$config['overloaded_classes'] ?? []);
     }
 
     public function __debugInfo()

@@ -2,12 +2,16 @@
 
 namespace MyENA\CloudStackClientGenerator\Configuration;
 
+use Psr\Log\LoggerInterface;
+
 /**
  * Class OverloadedClass
  * @package MyENA\CloudStackClientGenerator\Configuration
  */
 class OverloadedClass implements \JsonSerializable
 {
+    /** @var \Psr\Log\LoggerInterface */
+    private $logger;
 
     /** @var string */
     private $name;
@@ -15,25 +19,16 @@ class OverloadedClass implements \JsonSerializable
     private $overload;
 
     /**
-     * ClassMapEntry constructor.
-     * @param string $name Name of response class being overloaded
-     * @param string $overload Fully qualified class name of the overloading class
+     * OverloadedClass constructor.
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param string $name
+     * @param string $overload
      */
-    public function __construct(string $name, string $overload)
+    public function __construct(LoggerInterface $logger, string $name, string $overload)
     {
+        $this->logger = $logger;
         $this->name = $name;
         $this->overload = $overload;
-    }
-
-    /**
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return [
-            'name'     => $this->getName(),
-            'overload' => $this->getOverload(),
-        ];
     }
 
     /**
@@ -50,5 +45,16 @@ class OverloadedClass implements \JsonSerializable
     public function getOverload(): string
     {
         return $this->overload;
+    }
+
+    /**
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'name'     => $this->getName(),
+            'overload' => $this->getOverload(),
+        ];
     }
 }

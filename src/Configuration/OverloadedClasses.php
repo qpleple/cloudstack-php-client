@@ -2,22 +2,32 @@
 
 namespace MyENA\CloudStackClientGenerator\Configuration;
 
+use Psr\Log\LoggerInterface;
+
 /**
  * Class OverloadedClasses
  * @package MyENA\CloudStackClientGenerator\Configuration
  */
 class OverloadedClasses implements \ArrayAccess, \Iterator, \Countable, \JsonSerializable
 {
+    /** @var \Psr\Log\LoggerInterface */
+    private $logger;
+
     /** @var \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass[] */
     private $_classes = [];
 
     /**
      * OverloadedClasses constructor.
-     * @param \MyENA\CloudStackClientGenerator\Configuration\OverloadedClass[] $classes
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param array $classes
      */
-    public function __construct(array $classes = [])
+    public function __construct(LoggerInterface $logger, array $classes = [])
     {
+        $this->logger = $logger;
         foreach ($classes as $class) {
+            if (is_array($class)) {
+                $class = new OverloadedClass($logger, $class['name'] ?? '', $class['overload'] ?? '');
+            }
             $this->setOverloadedClass($class);
         }
     }

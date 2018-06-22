@@ -1,12 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace MyENA\CloudStackClientGenerator\Configuration\Environment;
+namespace MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
+
+use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
 
 /**
- * Class CommandCache
- * @package MyENA\CloudStackClientGenerator\Configuration\Environment
+ * Class Command
+ * @package MyENA\CloudStackClientGenerator\Configuration\Environment\Cache
  */
-class CommandCache
+class Command
 {
     /** @var string */
     private $name;

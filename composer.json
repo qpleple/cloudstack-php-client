@@ -46,12 +46,6 @@
     "justinrainbow/json-schema": "~5.2",
     "dcarbone/gotime": "0.3.*"
   },
-  "require-dev": {
-    "myena/default-logger": "~1.1"
-  },
-  "suggest": {
-    "myena/default-logger": "Simple PSR-3-compliant logger with level-filtering and ANSI coloring features"
-  },
   "scripts": {
     "build": [
       "rm -rf vendor",
