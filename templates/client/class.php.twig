@@ -177,8 +177,9 @@ class CloudStackClient
             $cacheID = $this->getRequestCacheID($request);
         }
 
-        if ($cacheable && $request->getCachedResponseAllowed()) {
-            $this->logger->debug(sprintf('Found command %s cache with id %s', $command, $cacheID));
+        if ($cacheable && $request->getCachedResponseAllowed()) {{ '{' }}{% if env.logging.isDebug %}
+            $this->logger->debug(sprintf('Found command %s cache with id %s', $command, $cacheID));{% endif %}
+
             if ($this->cacheProvider->contains($cacheID)) {
                 if (false !== ($cached = $this->cacheProvider->fetch($cacheID))) {
                     return $cached;
@@ -233,14 +234,15 @@ class CloudStackClient
                         $command,
                         $cacheID
                     ));
-                } else {
+                }{% if env.logging.isDebug %} else {
                     $this->logger->debug(sprintf(
                         'Command %s cache with id %s saved with ttl %d seconds.',
                         $command,
                         $cacheID,
                         $ttl
                     ));
-                }
+                }{% endif %}
+
             }
 
             return $response;

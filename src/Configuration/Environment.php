@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Composer;
+use MyENA\CloudStackClientGenerator\Configuration\Environment\Logging;
 use Psr\Log\LoggerInterface;
 use function MyENA\CloudStackClientGenerator\tryResolvePath;
 
@@ -77,6 +78,8 @@ class Environment implements \JsonSerializable
     private $cache;
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Composer */
     private $composer;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Logging */
+    private $logging;
 
     /**
      * Environment constructor.
@@ -87,8 +90,9 @@ class Environment implements \JsonSerializable
     {
         $this->logger = $logger;
 
-        // create default cache config, will be overwritten below if defined.
+        // create some defaults, will be overridden if defined.
         $this->cache = new Cache();
+        $this->logging = new Logging();
 
         $clientClass = Client::class;
         $clientConfig = [];
@@ -107,6 +111,9 @@ class Environment implements \JsonSerializable
                 continue;
             } elseif ('composer' === $k) {
                 $this->composer = $this->parseComposerEntry($config['namespace'] ?? '', $v);
+                continue;
+            } elseif ('logging' === $k) {
+                $this->logging = $this->parseLoggingEntry($v);
                 continue;
             }
 
@@ -368,6 +375,14 @@ class Environment implements \JsonSerializable
     }
 
     /**
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Logging
+     */
+    public function getLogging(): Logging
+    {
+        return $this->logging;
+    }
+
+    /**
      * @return array
      */
     public function jsonSerialize()
@@ -463,5 +478,14 @@ class Environment implements \JsonSerializable
     protected function parseComposerEntry(string $namespace, $v): Composer
     {
         return new Composer($namespace, is_array($v) ? $v : []);
+    }
+
+    /**
+     * @param $v
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Logging
+     */
+    protected function parseLoggingEntry($v): Logging
+    {
+        return new Logging(is_array($v) ? $v : []);
     }
 }

@@ -35,10 +35,9 @@ php_cs_generator:
         require: # dependencies to add to the default list
           "package/name": ">=9000.*"
         autoload: ~ # any additional autoload entries you wish to add
-#      logger:
-#        class: ~ # psr-3 compliant logger class name
-#        level: ~ # level the environment's logger should be, if your logger implementation supports level filtering
-#        silent: ~ # this
+      logging:
+        enabled: ~ # if set to false, will prevent any logging code from being placed in the output.
+        debug: false # if set to true, increases number of log statements generated
       http_client:
         class: ~ # any class that implements \GuzzleHttp\ClientInterface
         config:
