@@ -108,6 +108,13 @@ class Generator
         $this->initializeDirectories();
 
         $this->log->info("Compiling APIs from {$this->env->getHost()}...");
+        $capabilities = $this->getCapabilities();
+        $this->log->info("CloudStack Version: {$capabilities->capability->cloudstackversion}");
+        $this->env->getComposer()->setCloudStackVersion($capabilities->capability->cloudstackversion);
+
+        $this->log->info('Validating composer.json...');
+        $this->env->getComposer()->validate();
+
         $this->compileAPIs();
         ksort($this->apis, SORT_NATURAL);
 
@@ -386,57 +393,57 @@ class Generator
 
         $this->writeFile(
             $this->env->getOut() . '/composer.json',
-            $this->twig->load('composer.json.twig')->render(['env' => $this->env])
+            $this->twig->load('composer.json.twig')->render([])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackConfiguration.php',
-            $this->twig->load('configuration.php.twig')->render(['env' => $this->env])
+            $this->twig->load('configuration.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->filesDir . '/constants.php',
-            $this->twig->load('constants.php.twig')->render(['env' => $this->env])
+            $this->twig->load('constants.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackEventTypes.php',
-            $this->twig->load('eventTypes.php.twig')->render(['env' => $this->env])
+            $this->twig->load('eventTypes.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->responseDir . '/AsyncJobStartResponse.php',
-            $this->twig->load('responses/asyncJobStart.php.twig')->render(['env' => $this->env])
+            $this->twig->load('responses/asyncJobStart.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->responseDir . '/AccessVmConsoleProxyResponse.php',
-            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render(['env' => $this->env])
+            $this->twig->load('responses/accessVmConsoleProxy.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->responseTypesDir . '/DateType.php',
-            $this->twig->load('responses/dateType.php.twig')->render(['env' => $this->env])
+            $this->twig->load('responses/dateType.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackHelpers.php',
-            $this->twig->load('helpers.php.twig')->render(['env' => $this->env])
+            $this->twig->load('helpers.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->requestDir . '/CloudStackRequestInterfaces.php',
-            $this->twig->load('requests/interfaces.php.twig')->render(['env' => $this->env])
+            $this->twig->load('requests/interfaces.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->requestDir . '/AccessVmConsoleProxyRequest.php',
-            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render(['env' => $this->env])
+            $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render([])
         );
 
         $this->writeFile(
             $this->srcDir . '/CloudStackExceptions.php',
-            $this->twig->load('exceptions.php.twig')->render(['env' => $this->env])
+            $this->twig->load('exceptions.php.twig')->render([])
         );
     }
 
@@ -460,7 +467,7 @@ class Generator
     {
         $this->writeFile(
             $this->srcDir . '/CloudStackClient.php',
-            $this->twig->load('client/class.php.twig')->render(['env' => $this->env, 'apis' => $this->apis])
+            $this->twig->load('client/class.php.twig')->render(['apis' => $this->apis])
         );
     }
 
@@ -477,7 +484,7 @@ class Generator
             $className = $api->getRequestClassName();
             $this->writeFile(
                 $this->requestDir . '/' . $className . '.php',
-                $template->render(['env' => $this->env, 'api' => $api])
+                $template->render(['api' => $api])
             );
         }
     }

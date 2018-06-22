@@ -17,17 +17,28 @@ php_cs_generator:
     dev: # Name of this config.  Accessible via the "env" option
       scheme: "http"
       host: ~ # dev.ourcloudstack.com
+      key: ~ # your api key
+      secret: ~ # your api secret
       port: 8080
       apipath: "client/api"
       consolepath: "client/console"
       out: ~ # choose output path
       namespace: "\\MyGreatNamespace"
-      composer_package: "my/greatnamespace"
-      key: ~ # your api key
-      secret: ~ # your api secret
+      composer: # generated composer.json details. any valid composer entries are allowed here, ones that have special treatment are listed below
+        name: "my/greatnamespace" # required
+        type: ~ # if left blank, will be "library"
+        license: ~ # if left blank, will be "MIT"
+        description: ~ # if left blank, will have default value containing date of generation and ACS version
+        authors: # list of authors to be appended to default author list
+          - name: "yourname"
+            email: "yourname@email.you"
+        require: # dependencies to add to the default list
+          "package/name": ">=9000.*"
+        autoload: ~ # any additional autoload entries you wish to add
       logger:
         class: ~ # psr-3 compliant logger class name
         level: ~ # level the environment's logger should be, if your logger implementation supports level filtering
+        silent: ~ # this
       http_client:
         class: ~ # any class that implements \GuzzleHttp\ClientInterface
         config:

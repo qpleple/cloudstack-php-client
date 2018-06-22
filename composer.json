@@ -42,13 +42,14 @@
     "twig/extensions": "^1.5",
     "psr/log": "^1.0",
     "guzzlehttp/psr7": "^1.4",
-    "guzzlehttp/guzzle": "^6.3"
+    "guzzlehttp/guzzle": "^6.3",
+    "justinrainbow/json-schema": "~5.2",
+    "dcarbone/gotime": "0.3.*"
   },
   "require-dev": {
     "myena/default-logger": "~1.1"
   },
   "suggest": {
-    "doctrine/cache": "Used to enable response caching on \"get\" and \"list\" requests",
     "myena/default-logger": "Simple PSR-3-compliant logger with level-filtering and ANSI coloring features"
   },
   "scripts": {
