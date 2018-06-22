@@ -138,8 +138,11 @@ class Composer
     public function getDescription(): string
     {
         if (!isset($this->description)) {
-            return sprintf(self::DEFAULT_DESCRIPTION_TEMPLATE, Time::Now()->format(DATE_RFC3339),
-                $this->getCloudStackVersion());
+            return sprintf(
+                self::DEFAULT_DESCRIPTION_TEMPLATE,
+                Time::Now()->format(DATE_RFC3339),
+                $this->getCloudStackVersion()
+            );
         }
         return $this->description;
     }

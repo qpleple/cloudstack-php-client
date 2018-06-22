@@ -25,7 +25,7 @@ php_cs_generator:
       out: ~ # choose output path
       namespace: "\\MyGreatNamespace"
       composer: # generated composer.json details. any valid composer entries are allowed here, ones that have special treatment are listed below
-        name: "my/greatnamespace" # required
+        name: ~ # if left blank, will be created from namespace entry above
         type: ~ # if left blank, will be "library"
         license: ~ # if left blank, will be "MIT"
         description: ~ # if left blank, will have default value containing date of generation and ACS version
