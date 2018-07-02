@@ -51,6 +51,8 @@ php_cs_generator:
         commands:
           listZones:
             ttl: 2592000 # 30 days
+          listTemplates:
+            ttl: "123s" # supports parsing golang duration format strings, equates to 123 seconds
           listVirtualMachines:
             enabled: false # disables caching entirely for this command
     prod:

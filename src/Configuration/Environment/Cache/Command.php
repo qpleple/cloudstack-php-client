@@ -3,12 +3,13 @@
 namespace MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
 
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
+use function MyENA\CloudStackClientGenerator\parseTTL;
 
 /**
  * Class Command
  * @package MyENA\CloudStackClientGenerator\Configuration\Environment\Cache
  */
-class Command
+class Command implements \JsonSerializable
 {
     /** @var string */
     private $name;
@@ -26,7 +27,7 @@ class Command
     {
         $this->name = $name;
         $this->enabled = (bool)($config['enabled'] ?? true);
-        $this->ttl = (int)($config['ttl'] ?? Cache::DEFAULT_TTL);
+        $this->ttl = parseTTL(($config['ttl'] ?? Cache::DEFAULT_TTL));
     }
 
     /**
@@ -51,5 +52,18 @@ class Command
     public function getTTL(): int
     {
         return $this->ttl;
+    }
+
+    /**
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        $a = [
+            'name'    => $this->getName(),
+            'enabled' => $this->isEnabled(),
+            'ttl'     => $this->getTTL(),
+        ];
+        return $a;
     }
 }

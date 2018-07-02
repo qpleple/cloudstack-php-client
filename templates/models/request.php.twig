@@ -104,12 +104,18 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
 {# end optional arguments #}
      * }
 {% endif %}
+{% if api.isCacheable %}
+     * @param bool $useCachedResponse Whether to allow the use of a previously cached response for this specific request
+     * @param bool $enableResponseCaching Whether to allow the response from this specific request to be cached for later use
+     * @param int $cacheTTL Time in seconds to cache response, if allowed
+{% endif %}
      */
     public function __construct ({% for param in requiredParams %}{{ loop.index0 > 0 ? ', ' : '' }}{% if 'array' == param.phpType %}array {% endif %}${{ param.name }}{% endfor %}
 {# end required #}
 {# append optional arguments if needed #}
-{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %})
-{
+{% if optionalParamLength > 0 %}{% if requiredParamLength > 0 %}, {% endif %}array $optArgs = []{% endif %}
+{% if api.isCacheable %}{% if requiredParamLength > 0 or optionalParamLength > 0 %}, {% endif %}bool $useCachedResponse = {{ env.cache.isCommandEnabled(api.name) ? 'true' : 'false' }}, bool $enableResponseCaching = {{ env.cache.isCommandEnabled(api.name) ? 'true' : 'false' }}, int $cacheTTL = {{ env.cache.commandTTL(api.name) }}{% endif %})
+    {
 {% for param in requiredParams %}
         $this->set{{ param.name|capitalize }}(${{ param.name }});
 {% endfor %}{% if 0 != optionalParamLength %}
@@ -117,6 +123,9 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
             $this->{'set'.ucfirst($k)}($v);
         }
 {% endif %}
+        $this->cachedResponseAllowed = $useCachedResponse;
+        $this->responseCachingEnabled = $enableResponseCaching;
+        $this->responseCacheTTL = $cacheTTL;
     }
 {% endif %}
 

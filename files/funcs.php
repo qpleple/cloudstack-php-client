@@ -2,6 +2,7 @@
 
 namespace MyENA\CloudStackClientGenerator;
 
+use DCarbone\Go\Time;
 use MyENA\CloudStackClientGenerator\API\VariableContainer;
 
 /**
@@ -145,5 +146,27 @@ function tryResolvePath(string $in): string
         return PHPCS_ROOT . '/' . ltrim($in, "/");
     } else {
         return $in;
+    }
+}
+
+/**
+ * @param $in
+ * @return int
+ */
+function parseTTL($in): int
+{
+    if (is_int($in)) {
+        return $in;
+    } elseif (is_string($in)) {
+        if (ctype_digit($in)) {
+            return (int)$in;
+        } else {
+            return (int)Time::ParseDuration($in)->Seconds();
+        }
+    } else {
+        throw new \InvalidArgumentException(sprintf(
+            'TTL values must be either an integer value or a string Duration value following the Golang Duration spec https://godoc.org/time#Duration.  %s seen.',
+            gettype($in)
+        ));
     }
 }

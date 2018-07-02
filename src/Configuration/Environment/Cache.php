@@ -3,12 +3,13 @@
 namespace MyENA\CloudStackClientGenerator\Configuration\Environment;
 
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache\Command;
+use function MyENA\CloudStackClientGenerator\parseTTL;
 
 /**
  * Class Cache
  * @package MyENA\CloudStackClientGenerator\Configuration\Environment
  */
-class Cache
+class Cache implements \JsonSerializable
 {
     const DEFAULT_ENABLED = true;
     const DEFAULT_TTL = 5 * 60;
@@ -29,7 +30,7 @@ class Cache
     public function __construct(array $cacheConfig = [])
     {
         $this->idPrefix = $cacheConfig['id_prefix'] ?? null;
-        $this->defaultTTL = (int)($cacheConfig['default_ttl'] ?? self::DEFAULT_TTL);
+        $this->defaultTTL = parseTTL($cacheConfig['default_ttl'] ?? self::DEFAULT_TTL);
         $this->defaultEnabled = (bool)($cacheConfig['default_enabled'] ?? self::DEFAULT_ENABLED);
         if (isset($cacheConfig['commands'])) {
             foreach ($cacheConfig['commands'] as $command => $commandConfig) {
@@ -114,5 +115,19 @@ class Cache
             return $command->getTTL();
         }
         return self::DEFAULT_TTL;
+    }
+
+    /**
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        $a = [
+            'idPrefix'       => $this->getIDPrefix(),
+            'defaultTTL'     => $this->getDefaultTTL(),
+            'defaultEnabled' => $this->isDefaultEnabled(),
+            'commands'       => $this->getCommands(),
+        ];
+        return $a;
     }
 }

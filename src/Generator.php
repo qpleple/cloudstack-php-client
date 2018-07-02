@@ -447,6 +447,11 @@ class Generator
             $this->srcDir . '/CloudStackExceptions.php',
             $this->twig->load('exceptions.php.twig')->render([])
         );
+
+        $this->writeFile(
+            $this->srcDir . '/CloudStackGenerationMeta.php',
+            $this->twig->load('meta.php.twig')->render([])
+        );
     }
 
     /**
@@ -601,6 +606,18 @@ class Generator
                 }
                 return $now->format($format);
             },
+            ['is_safe' => ['html']]
+        ));
+
+        $this->twig->addFunction(new \Twig_Function(
+            'var_export',
+            'var_export',
+            ['is_safe' => ['html']]
+        ));
+
+        $this->twig->addFunction(new \Twig_Function(
+            'json_decode',
+            'json_decode',
             ['is_safe' => ['html']]
         ));
 
