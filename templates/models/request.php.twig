@@ -122,10 +122,11 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         foreach($optArgs as $k => $v) {
             $this->{'set'.ucfirst($k)}($v);
         }
-{% endif %}
+{% endif %}{% if api.isCacheable %}
         $this->cachedResponseAllowed = $useCachedResponse;
         $this->responseCachingEnabled = $enableResponseCaching;
         $this->responseCacheTTL = $cacheTTL;
+{% endif %}
     }
 {% endif %}
 
