@@ -415,13 +415,11 @@ class CloudStackClient
     protected function compileQuery(CloudStackRequest\CloudStackRequestInterface $request): string
     {
         $query = http_build_query($this->compileParameters($request));
-        $compiledQuery = sprintf(
+        return sprintf(
             '%s&signature=%s',
             $this->encodeQueryForRequest($query),
             $this->configuration->buildSignature($this->encodeQueryForSignature($query))
         );
-
-        return $compiledQuery;
     }
 
     /**
