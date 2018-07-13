@@ -48,7 +48,6 @@ class Composer
 
         ],
         'files' => [
-            'files/constants.php',
             'src/CloudStackRequest/CloudStackRequestInterfaces.php',
             'src/CloudStackExceptions.php',
         ],

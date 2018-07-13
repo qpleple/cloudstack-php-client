@@ -404,11 +404,6 @@ class Generator
         );
 
         $this->writeFile(
-            $this->filesDir . '/constants.php',
-            $this->twig->load('constants.php.twig')->render([])
-        );
-
-        $this->writeFile(
             $this->srcDir . '/CloudStackEventTypes.php',
             $this->twig->load('eventTypes.php.twig')->render([])
         );
@@ -575,7 +570,7 @@ class Generator
                 if ('' === $in) {
                     return " namespace {$rootNS};";
                 }
-                return " namespace {$rootNS}\\{$in};";
+                return "namespace {$rootNS}\\{$in};";
             },
             ['is_safe' => ['html']]
         ));
@@ -645,6 +640,16 @@ class Generator
             'required_tag_line',
             '\\MyENA\\CloudStackClientGenerator\\buildRequiredTagLine',
             ['is_safe' => ['html']]
+        ));
+        $this->twig->addFunction(new \Twig_Function(
+            'bor',
+            function (int ...$ints): int {
+                $v = 0x0;
+                foreach ($ints as $int) {
+                    $v |= $int;
+                }
+                return $v;
+            }
         ));
     }
 }

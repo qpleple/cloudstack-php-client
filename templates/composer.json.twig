@@ -10,4 +10,4 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
-{{ env.composer.compiled|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}
+{{ env.composer.compiled|json_encode(bor(constant('JSON_PRETTY_PRINT'), constant('JSON_UNESCAPED_SLASHES')))|raw }}

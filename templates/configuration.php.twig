@@ -102,15 +102,13 @@ class CloudStackConfiguration implements LoggerAwareInterface
         }
 
         if ('' === $this->host) {
-            throw new \RuntimeException(ENDPOINT_EMPTY_MSG, ENDPOINT_EMPTY);
+            throw new \RuntimeException('host cannot be empty');
         }
-
         if ('' === $this->apiKey) {
-            throw new \RuntimeException(APIKEY_EMPTY_MSG, APIKEY_EMPTY);
+            throw new \RuntimeException('apiKey cannot be empty');
         }
-
         if ('' === $this->secretKey) {
-            throw new \RuntimeException(SECRETKEY_EMPTY_MSG, SECRETKEY_EMPTY);
+            throw new \RuntimeException('secretKey cannot be empty');
         }
 
         if (!isset($this->httpClient) || !($this->httpClient instanceof ClientInterface)) {
@@ -299,7 +297,7 @@ class CloudStackConfiguration implements LoggerAwareInterface
     public function buildSignature(string $query): string
     {
         if ('' === $query) {
-            throw new \Exception(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
+            throw new \InvalidArgumentException('buildSignature: $query is empty, cannot build request');
         }
 
         $hash = @hash_hmac('SHA1', strtolower($query), $this->getSecretKey(), true);

@@ -61,6 +61,12 @@ interface CloudStackRequestInterface extends \JsonSerializable
     public function isRequestValid(): bool;
 
     /**
+     * Must throw a {{ namespace_path('CloudStackRequestException', true) }} if validity checks are not met
+     * @throws {{ namespace_path('CloudStackRequestException', true) }}
+     */
+    public function validateRequest(): void;
+
+    /**
      * Must return an array of [param => value] that can be directly serialized for consumption by CloudStack
      * @return array
      */

@@ -41,12 +41,15 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-{% if namespace_path() != '' %}{% if api.isAsync and api.eventType != ''%}
+{% if 0 < requiredParamLength %}
 
-use {{ namespace_path('CloudStackEventTypes') }};
-{% endif %}{% if hasMapParameter %}
+use {{ namespace_path('CloudStackRequestException') }};{% endif %}{% if namespace_path() != '' %}{% if api.isAsync and api.eventType != ''%}
 
-use {{ namespace_path('CloudStackHelpers') }};{% endif %}{% endif %}
+use {{ namespace_path('CloudStackEventTypes') }};{% endif %}{% if hasMapParameter %}
+
+use {{ namespace_path('CloudStackHelpers') }};{% endif %}
+
+{% endif %}
 
 /**
 {{ swagger_definition_tag(api.swaggername, escape_swagger_string(api.description), api.parameters, 0) }}
@@ -122,10 +125,11 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         foreach($optArgs as $k => $v) {
             $this->{'set'.ucfirst($k)}($v);
         }
-{% endif %}
+{% endif %}{% if api.isCacheable %}
         $this->cachedResponseAllowed = $useCachedResponse;
         $this->responseCachingEnabled = $enableResponseCaching;
         $this->responseCacheTTL = $cacheTTL;
+{% endif %}
     }
 {% endif %}
 
@@ -211,6 +215,26 @@ class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudSta
         return true;{% else %}
         return isset($this->{{ requiredParams|keys|join(")\n            && isset($this->") }});{% endif %}
 
+    }
+
+    /**
+     * @throws {{ namespace_path('CloudStackRequestException', true) }}
+     */
+    public function validateRequest(): void
+    {
+{% if 0 == requiredParamLength %}
+        // all parameters are optional
+{% else %}
+        $errors = [];
+{% for param in requiredParams %}
+        if (!isset($this->{{ param.name }})) {
+            $errors[] = 'Required parameter "{{ param.name }}" is not set';
+        }
+{% endfor %}
+        if (0 < count($errors)) {
+            throw new CloudStackRequestException($this, $errors);
+        }
+{% endif %}
     }
 
     /**

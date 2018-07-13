@@ -30,6 +30,7 @@
  * file that was distributed with this source code.
  */
 
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Psr7\Request as GuzzlePsr7Request;
@@ -42,6 +43,12 @@ use Psr\Http\Message\ResponseInterface;
  */
 class CloudStackClient
 {
+    // default options to apply to each request
+    protected const GUZZLE_REQUEST_OPTS = [
+        RequestOptions::HTTP_ERRORS => false,
+        RequestOptions::DECODE_CONTENT => false,
+    ];
+
     /** @var {{ namespace_path('CloudStackConfiguration', true) }} */
     protected $configuration;
 
@@ -165,11 +172,7 @@ class CloudStackClient
      */
     public function doRequest(CloudStackRequest\CloudStackRequestInterface $request, bool $decode = true)
     {
-        static $defaultOpts = [
-            RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::DECODE_CONTENT => false,
-        ];
-
+        $request->validateRequest();
         $command = $request->getCloudStackCommandName();
         $cacheable = ($decode && isset($this->cacheProvider) && $request instanceof CloudStackRequest\CloudStackCacheableRequest);
 
@@ -187,7 +190,11 @@ class CloudStackClient
             }
         }
 
-        $resp = $this->configuration->getHttpClient()->send($this->createPsr7Request($request), $defaultOpts);
+        try {
+            $resp = $this->configuration->getHttpClient()->send($this->createPsr7Request($request), self::GUZZLE_REQUEST_OPTS);
+        } catch (TransferException $e) {
+            throw new CloudStackTransportException($request, $e);
+        }
 
         // Check for 200..
         if (200 !== $resp->getStatusCode()) {
@@ -199,15 +206,25 @@ class CloudStackClient
                     $decoded = reset($decoded);
                 }
                 if (isset($decoded['errortext'])) {
-                    throw new CloudStackAPIException($decoded);
+                    throw new CloudStackAPIException($request, $decoded);
                 }
             }
-            throw new \RuntimeException(sprintf('Received non-200 response: %d %s.  Body: %s', $resp->getStatusCode(), $resp->getReasonPhrase(), $data), NO_VALID_JSON_RECEIVED);
+            throw new CloudStackResponseException(
+                $request,
+                sprintf(
+                    'Unable to decode non-200 response: %d %s: %s; Body: %s',
+                    $resp->getStatusCode(),
+                    $resp->getReasonPhrase(),
+                    json_last_error_msg(),
+                    $data
+                ),
+                json_last_error()
+            );
         }
 
         if ($decode) {
             $responseModel = $request->getCloudStackResponseModel();
-            $decoded = $this->decodeBody($resp, $command);
+            $decoded = $this->decodeBody($request, $resp);
 
             // if async request, don't test for cache
             if ($request instanceof CloudStackRequest\CloudStackAsynchronousRequest) {
@@ -297,33 +314,51 @@ class CloudStackClient
      * @return array
      * @throws \RuntimeException
      */
-    protected function decodeBody(ResponseInterface $resp, string $command): array
+    protected function decodeBody(CloudStackRequest\CloudStackRequestInterface $request, ResponseInterface $resp): array
     {
         $body = $resp->getBody();
 
         if (0 === $body->getSize()) {
-            throw new \RuntimeException(NO_DATA_RECEIVED_MSG, NO_DATA_RECEIVED);
+            throw new CloudStackResponseException($request, 'Received empty response body', 500);
         }
 
         $data = $body->getContents();
 
         $decoded = @json_decode($data, true);
         if (JSON_ERROR_NONE !== json_last_error()) {
-            throw new \RuntimeException(sprintf('%s: %s', NO_VALID_JSON_RECEIVED_MSG, json_last_error_msg()), NO_VALID_JSON_RECEIVED);
+            throw new CloudStackResponseException(
+                $request,
+                sprintf(
+                    'Unable to decode %s response: %d %s: %s; Body: %s',
+                    $request->getCloudStackCommandName(),
+                    $resp->getStatusCode(),
+                    $resp->getReasonPhrase(),
+                    json_last_error_msg(),
+                    $data
+                ),
+                json_last_error()
+            );
         }
 
-        $lowerCmd = strtolower($command);
+        $lowerCmd = strtolower($request->getCloudStackCommandName());
         $propertyResponse = sprintf('%sresponse', $lowerCmd);
 
         if (!isset($decoded[$propertyResponse])) {
             // some commands drop the trailing 's' in the response: listPools becomes 'listpoolresponse'
             $propertyResponse = sprintf('%sresponse', substr($lowerCmd, 0, -1));
             if (!isset($decoded[$propertyResponse])) {
-                throw new \RuntimeException(sprintf(
-                    'Unable to parse the response. Got code %d and message: %s',
-                    $resp->getStatusCode(),
-                    $data
-                ));
+                throw new CloudStackResponseException(
+                    $request,
+                    sprintf(
+                        'Expected key "%s" not found in %s response: %d %s; Body: %s',
+                        $propertyResponse,
+                        $request->getCloudStackCommandName(),
+                        $resp->getStatusCode(),
+                        $resp->getReasonPhrase(),
+                        $data
+                    ),
+                    500
+                );
             }
         }
 
