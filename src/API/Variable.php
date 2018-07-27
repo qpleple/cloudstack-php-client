@@ -285,8 +285,13 @@ class Variable
      */
     public function getPHPTypeTagValue(): string
     {
-        if ($this->inResponse() && $this->isDate()) {
-            return '\\DateTime|string|null Value will try to be parsed as a \\DateTime, falling back to the raw string value if unable';
+        if ($this->inResponse()) {
+            if ($this->isDate()) {
+                return '\\DateTime|string|null Value will try to be parsed as a \\DateTime, falling back to the raw string value if unable';
+            }
+            if ('jobresult' === $this->getName()) {
+                return 'mixed Value will vary between async jobs';
+            }
         }
 
         $tag = $this->getPHPType();
@@ -304,6 +309,10 @@ class Variable
      */
     public function getPHPTypeHintValue(bool $nullable = false, bool $asReturn = false): string
     {
+        if ($this->inResponse() && 'jobresult' === $this->getName()) {
+            return '';
+        }
+
         $hint = '';
         if ($this->isCollection()) {
             $hint = 'array';

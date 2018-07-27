@@ -70,6 +70,26 @@ class CloudStackClient
     }
 
     /**
+     * This will construct a new CloudStackClient instance with caching entirely disabled
+     * @param {{ namespace_path('CloudStackConfiguration', true) }} $configuration
+     * @return {{ namespace_path('CloudStackClient', true) }}
+     */
+    public static function withoutCache(CloudStackConfiguration $configuration): CloudStackClient
+    {
+        $new = new static($configuration);
+        $new->cacheProvider = null;
+        return $new;
+    }
+
+    /**
+     * @return bool
+     */
+    public function cachingEnabled(): bool
+    {
+        return isset($this->cacheProvider);
+    }
+
+    /**
      * @return {{ namespace_path('CloudStackConfiguration', true) }}
      */
     public function getCloudStackClientConfiguration(): CloudStackConfiguration
@@ -135,17 +155,14 @@ class CloudStackClient
         while(true) {
             $result = $this->queryAsyncJobResult($startResponse->jobid);
 
-            if (2 === $result->jobstatus || 2 === $result->jobprocstatus) {
-                throw new \RuntimeException($result->jobresult['errortext'], $result->jobresult['errorcode']);
-            }
-
             if (0 === $result->jobstatus) {
                 if (-1 !== $tries && $attempts > $tries) {
                     return null;
                 }
                 sleep($sleep);
             } else {
-                if (isset($result->jobresult) && is_array($result->jobresult) && 0 < count($result->jobresult)) {
+                // if this is a non-error response, try to unmarshal
+                if (2 !== $result->jobstatus && 2 !== $result->jobprocstatus && isset($result->jobresult) && is_array($result->jobresult) && 0 < count($result->jobresult)) {
                     $class = $startResponse->getResponseClassName();
 
                     // check for simple async responses (i.e.: ["success" => true])
