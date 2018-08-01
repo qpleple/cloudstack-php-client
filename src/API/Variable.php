@@ -355,10 +355,7 @@ class Variable
      */
     public function getSinceTagLine(int $indent = 4, bool $newline = false): string
     {
-        if ('0.0' !== ($since = $this->getSince())) {
-            return buildSinceTagLine($since, $indent, $newline);
-        }
-        return '';
+        return buildSinceTagLine($this->getSince(), $indent, $newline);
     }
 
     /**

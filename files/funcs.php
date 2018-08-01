@@ -68,9 +68,8 @@ function buildSwaggerDefinitionTag(
 function buildSinceTagLine(string $since, int $indent = 4, bool $newline = false): string
 {
     if ('0.0' === $since) {
-        return $newline ? "\n" : '';
+        return '';
     }
-
     return tagIndent($indent) . '@since ' . $since . ($newline ? "\n" : '');
 }
 
