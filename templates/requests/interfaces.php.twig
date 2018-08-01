@@ -113,6 +113,16 @@ interface CloudStackListRequest extends CloudStackRequestInterface
 }
 
 /**
+ * Indicates this is a List Request that accepts "page" and "pagesize" parameters
+ * Interface CloudStackPageableListRequest
+ * @package {{ namespace_path('CloudStackPageableListRequest', true) }}
+ */
+interface CloudStackPageableListRequest extends CloudStackListRequest
+{
+
+}
+
+/**
  * Indicates this request can have its response cached
  * Interface CloudStackCacheableRequest
  * @package {{ namespace_path('CloudStackCacheableRequest', true) }}

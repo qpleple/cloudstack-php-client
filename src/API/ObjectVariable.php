@@ -2,6 +2,7 @@
 
 namespace MyENA\CloudStackClientGenerator\API;
 
+use MyENA\CloudStackClientGenerator\API;
 use function MyENA\CloudStackClientGenerator\buildSwaggerDefinitionTag;
 use function MyENA\CloudStackClientGenerator\escapeSwaggerString;
 
@@ -35,9 +36,10 @@ class ObjectVariable extends Variable
     /**
      * TODO: This loops through the properties entirely to many times.
      *
+     * @param \MyENA\CloudStackClientGenerator\API|null $sourceAPI
      * @return string
      */
-    public function buildConstructor()
+    public function buildConstructor(?API $sourceAPI = null)
     {
         $dates = [];
         $objects = [];
@@ -59,11 +61,41 @@ class ObjectVariable extends Variable
     /**
      * {$this->getClassName()} Constructor
      *
+
+STRING;
+        if ($sourceAPI && ($sourceAPI->isPageable() || $sourceAPI->isList())) {
+            if ($sourceAPI->isPageable()) {
+                $c .= <<<STRING
+     * @param int \$requestPage
+     * @param int \$requestPageSize
+     * @param int \$totalReturnCount
+     * @param array \$data    
+     */
+    public function __construct(?int \$requestPage, ?int \$requestPageSize, int \$totalReturnCount, array \$data) {
+        \$this->requestPage = \$requestPage;
+        \$this->requestPageSize = \$requestPageSize;
+        \$this->totalReturnCount = \$totalReturnCount;
+
+STRING;
+            } else {
+                $c .= <<<STRING
+     * @param int \$totalReturnCount
+     * @param array \$data    
+     */
+    public function __construct(int \$totalReturnCount, array \$data) {
+        \$this->totalReturnCount = \$totalReturnCount;
+
+STRING;
+            }
+        } else {
+            $c .= <<<STRING
      * @param array \$data
      */
     public function __construct(array \$data) {
 
 STRING;
+
+        }
 
         // if this is a very simple class, just return the loop and move on.
         if (0 === $datesCnt && 0 === $objectsCnt) {

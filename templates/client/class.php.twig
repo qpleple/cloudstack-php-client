@@ -237,9 +237,18 @@ class CloudStackClient
             if ($request instanceof CloudStackRequest\CloudStackListRequest) {
                 $response = [];
                 if ($decoded) {
+                    $count = (int)($decoded['count'] ?? 0);
                     unset($decoded['count']);
-                    foreach(reset($decoded) as $item) {
-                        $response[] = new $responseModel($item);
+                    if ($request instanceof CloudStackRequest\CloudStackPageableListRequest) {
+                        $page = $request->getPage();
+                        $pageSize = $request->getPagesize();
+                        foreach(reset($decoded) as $item) {
+                            $response[] = new $responseModel($page, $pageSize, $count, $item);
+                        }
+                    } else {
+                        foreach(reset($decoded) as $item) {
+                            $response[] = new $responseModel($count, $item);
+                        }
                     }
                 }
             } else {

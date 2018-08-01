@@ -24,3 +24,35 @@ interface CloudStackResponseInterface
 {
 
 }
+
+/**
+ * Interface CloudStackListResponse
+ * @package {{ namespace_path('CloudStackListResponse', true) }}
+ */
+interface CloudStackListResponse extends CloudStackResponseInterface
+{
+    /**
+     * Must return the total number of possible values returnabled based upon query before paging
+     * @return int
+     */
+    public function getTotalReturnCount(): int;
+}
+
+/**
+ * Interface CloudStackPageableListResponse
+ * @package {{ namespace_path('CloudStackPageableListResponse', true) }}
+ */
+interface CloudStackPageableListResponse extends CloudStackListResponse
+{
+    /**
+     * If defined, must return the value of the "page" parameter of the request that produced this response
+     * @return null|int
+     */
+    public function getRequestPage(): ?int;
+
+    /**
+     * If defined, must return the value of the "pagesize" parameter of the request that produced this response
+     * @return null|int
+     */
+    public function getRequestPageSize(): ?int;
+}

@@ -10,6 +10,8 @@
     For the full copyright and license information, please view the LICENSE
     file that was distributed with this source code.
 #}
+{% set isListResponse = api is defined and api.list %}
+{% set isPageableResponse = api is defined and api.pageable %}
 <?php
 
 {{ namespace_stmt('CloudStackResponse') }}
@@ -24,15 +26,26 @@
  * Class {{ obj.className }}
  * @package {{ namespace_path('CloudStackResponse', true) }}
 {% if api is defined %}{{ since_tag_line(api.since, 0, true) }}{% endif %} */
-class {{ obj.className }}{% if obj.shared == false %} implements CloudStackResponseInterface{% endif %}
+class {{ obj.className }}{% if obj.shared == false %} implements {% if isPageableResponse %}CloudStackPageableListResponse{% elseif isListResponse %}CloudStackListResponse{% else %}CloudStackResponseInterface{% endif %}{% endif %}
 
 {
 {% for prop in obj.properties %}
 {{ prop.propertyDocBloc }}
     public ${{ prop.name }};
 
-{% endfor %}
-{{ obj.buildConstructor }}
+{% endfor %}{% if isListResponse %}
+    /** @var int */
+    private $totalReturnCount = 0;
+
+{% endif %}{% if isPageableResponse %}
+    /** @var null|int */
+    private $requestPage = null;
+
+    /** @var null|int */
+    private $requestPageSize = null;
+
+{% endif %}
+{{ obj.buildConstructor(api is defined ? api : null) }}
 
 {% for prop in obj.properties %}
 {% include "models/getter.php.twig" with {'prop': prop, 'env': env} %}
@@ -41,4 +54,34 @@ class {{ obj.className }}{% if obj.shared == false %} implements CloudStackRespo
 
 {% endif %}
 {% endfor %}
+{% if isListResponse %}
+
+    /**
+     * @return int
+     */
+    public function getTotalReturnCount(): int
+    {
+        return $this->totalReturnCount;
+    }
+{% endif %}
+{% if isPageableResponse %}
+
+    /**
+     * If defined, must return the value of the "page" parameter of the request that produced this response
+     * @return null|int
+     */
+    public function getRequestPage(): ?int
+    {
+        return $this->requestPage;
+    }
+
+    /**
+     * If defined, must return the value of the "pagesize" parameter of the request that produced this response
+     * @return null|int
+     */
+    public function getRequestPageSize(): ?int
+    {
+        return $this->requestPageSize;
+    }
+{% endif %}
 }

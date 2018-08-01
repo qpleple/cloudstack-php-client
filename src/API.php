@@ -31,6 +31,9 @@ class API
     /** @var \MyENA\CloudStackClientGenerator\API\ObjectVariable */
     private $response;
 
+    /** @var bool */
+    private $pageable;
+
     /**
      * API constructor.
      */
@@ -209,6 +212,31 @@ class API
     {
         $name = $this->getName();
         return 'getApiLimit' !== $name && (0 === strpos($name, 'get') || 0 === strpos($name, 'list'));
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPageable(): bool
+    {
+        if (!isset($this->pageable)) {
+            $pageFound = $pageSizeFound = false;
+            foreach ($this->getParameters() as $parameter) {
+                switch ($parameter->getName()) {
+                    case 'page':
+                        $pageFound = true;
+                        break;
+                    case 'pagesize':
+                        $pageSizeFound = true;
+                        break;
+                }
+                if ($pageFound && $pageSizeFound) {
+                    break;
+                }
+            }
+            $this->pageable = $pageFound && $pageSizeFound;
+        }
+        return $this->pageable;
     }
 
     /**

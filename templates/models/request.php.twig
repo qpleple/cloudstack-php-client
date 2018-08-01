@@ -45,7 +45,7 @@ use {{ namespace_path('CloudStackHelpers') }};{% endif %}
  * Class {{ api.requestClassname }}
  * @package {{ namespace_path('CloudStackRequest', true) }}
 {{ since_tag_line(api.since, 0, true) }} */
-class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudStackApiCommandRequest{% if api.isList %}, CloudStackListRequest{% endif %}{% if api.isAsync %}, CloudStackAsynchronousRequest{% else %}, CloudStackSynchronousRequest{% endif %}{% if api.isCacheable %}, CloudStackCacheableRequest{% endif %}
+class {{ api.requestClassname }} implements CloudStackRequestInterface, CloudStackApiCommandRequest{% if api.isList %}{% if api.pageable %}, CloudStackPageableListRequest{% else %}, CloudStackListRequest{% endif %}{% endif %}{% if api.isAsync %}, CloudStackAsynchronousRequest{% else %}, CloudStackSynchronousRequest{% endif %}{% if api.isCacheable %}, CloudStackCacheableRequest{% endif %}
 
 {
 {% if api.isAsync %}
