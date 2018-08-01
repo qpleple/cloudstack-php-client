@@ -36,6 +36,8 @@
   },
   "require": {
     "php": "~7.1",
+    "ext-json": "*",
+    "ext-curl": "*",
     "symfony/console": "^4.1",
     "symfony/yaml": "^4.1",
     "twig/twig": "^2.4",

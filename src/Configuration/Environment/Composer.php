@@ -38,6 +38,8 @@ class Composer
     ];
     const DEFAULT_REQUIRE = [
         'php'               => '^7.1',
+        'ext-json'          => '*',
+        'ext-curl'          => '*',
         'psr/log'           => '~1.0',
         'guzzlehttp/psr7'   => '~1.4',
         'guzzlehttp/guzzle' => '~6',
@@ -49,6 +51,7 @@ class Composer
         ],
         'files' => [
             'src/CloudStackRequest/CloudStackRequestInterfaces.php',
+            'src/CloudStackResponse/CloudStackResponseInterfaces.php',
             'src/CloudStackExceptions.php',
         ],
     ];

@@ -434,6 +434,11 @@ class Generator
         );
 
         $this->writeFile(
+            $this->responseDir . '/CloudStackResponseInterfaces.php',
+            $this->twig->load('responses/interfaces.php.twig')->render([])
+        );
+
+        $this->writeFile(
             $this->requestDir . '/AccessVmConsoleProxyRequest.php',
             $this->twig->load('requests/accessVmConsoleProxy.php.twig')->render([])
         );
@@ -565,10 +570,10 @@ class Generator
                     if ('' === $in) {
                         return '';
                     }
-                    return " namespace {$in};";
+                    return "namespace {$in};";
                 }
                 if ('' === $in) {
-                    return " namespace {$rootNS};";
+                    return "namespace {$rootNS};";
                 }
                 return "namespace {$rootNS}\\{$in};";
             },
@@ -650,6 +655,12 @@ class Generator
                 }
                 return $v;
             }
+        ));
+
+        $this->twig->addFunction(new \Twig_Function(
+            'file_header',
+            '\\MyENA\\CloudStackClientGenerator\\buildFileHeader',
+            ['is_safe' => ['html']]
         ));
     }
 }

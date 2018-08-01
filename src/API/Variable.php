@@ -139,7 +139,7 @@ class Variable
         $bloc = "    /**\n";
         $bloc .= "{$this->getPHPDocDescription()}\n";
         $bloc .= "     * @var {$this->getPHPTypeTagValue()}\n";
-        $bloc .= $this->getSinceTagLine();
+        $bloc .= $this->getSinceTagLine(4, true);
         $bloc .= $this->getRequiredTagLine();
         return $bloc . "\n     */";
     }
@@ -355,7 +355,10 @@ class Variable
      */
     public function getSinceTagLine(int $indent = 4, bool $newline = false): string
     {
-        return buildSinceTagLine($this->getSince(), $indent, $newline);
+        if ('0.0' !== ($since = $this->getSince())) {
+            return buildSinceTagLine($since, $indent, $newline);
+        }
+        return '';
     }
 
     /**
