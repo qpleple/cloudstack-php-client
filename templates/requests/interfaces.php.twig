@@ -119,7 +119,17 @@ interface CloudStackListRequest extends CloudStackRequestInterface
  */
 interface CloudStackPageableListRequest extends CloudStackListRequest
 {
+    /**
+     * Returns the page specified for this request
+     * @return null|int
+     */
+    public function getPage(): ?int;
 
+    /**
+     * Returns the page size specified for this request
+     * @return null|int
+     */
+    public function getPagesize(): ?int;
 }
 
 /**
