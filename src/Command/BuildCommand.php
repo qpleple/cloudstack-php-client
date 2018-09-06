@@ -2,15 +2,20 @@
 
 namespace MyENA\CloudStackClientGenerator\Command;
 
+use Psr\Log\NullLogger;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Class BuildCommand
  * @package MyENA\CloudStackClientGenerator\Command
  */
-class BuildCommand extends AbstractCommand
+class BuildCommand extends Command
 {
+    /** @var \Psr\Log\LoggerInterface */
+    protected $log;
 
     /** @var \Phar */
     protected $phar;
@@ -27,14 +32,18 @@ class BuildCommand extends AbstractCommand
      */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
-        parent::initialize($input, $output);
+        if ((bool)$output->isQuiet()) {
+            $this->log = new NullLogger();
+        } else {
+            $this->log = new ConsoleLogger($output);
+        }
         $this->rootPath = realpath(__DIR__ . '/../../');
     }
 
     protected function configure()
     {
         $this
-            ->setName($this->generateName('build'))
+            ->setName('phpcs:build')
             ->setDescription('Used to build redistributable phar')
             ->setHelp(<<<STRING
 This command is designed to be used in conjunction with the "build" script defined in composer.json

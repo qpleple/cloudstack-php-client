@@ -28,7 +28,7 @@ final class CloudStackGenerationMeta implements \JsonSerializable
     /** @var string */
     private const ENVIRONMENT_NAME = '{{ env.name }}';
     /** @var string */
-    private const CLOUDSTACK_HOST = '{{ env.host }}';
+    private const GENERATION_SOURCE = '{{ env.sourceProvider.description }}';
     /** @var array */
     private const CACHE_CONFIG = {{ var_export(json_decode(env.cache|json_encode, true), true) }};
 
@@ -57,13 +57,13 @@ final class CloudStackGenerationMeta implements \JsonSerializable
     }
 
     /**
-     * Returns the hostname of the CloudStack environment this client was generated from
+     * Returns the description of the source this client was generated from
      *
      * @return string
      */
-    public static function getCloudStackHost(): string
+    public static function getGenerationSource(): string
     {
-        return self::CLOUDSTACK_HOST;
+        return self::GENERATION_SOURCE;
     }
 
     /**
@@ -94,7 +94,7 @@ final class CloudStackGenerationMeta implements \JsonSerializable
         $a = [
             'generationDate' => self::getGenerationDate(),
             'environmentName' => self::getEnvironmentName(),
-            'cloudStackHost' => self::getCloudStackHost(),
+            'generationSource' => self::getGenerationSource(),
             'cacheConfiguration' => self::getCacheConfiguration(),
             'cloudStackCapabilities' => self::getCloudStackCapabilities(),
         ];

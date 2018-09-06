@@ -16,10 +16,20 @@ php_cs_generator:
   environments:
     dev: # Name of this config.  Accessible via the "env" option
       scheme: "http"
-      host: ~ # dev.ourcloudstack.com
-      key: ~ # your api key
-      secret: ~ # your api secret
-      port: 8080
+      local: # if both fields are defined, will use locally-sourced api and capability json for generation
+        list_apis_json: ~
+        list_capabilities_json: ~
+      remote: # if defined and local is not defined, will attempt to pull api and capability json from host
+        host: ~ # dev.ourcloudstack.com
+        key: ~ # your api key
+        secret: ~ # your api secret
+        port: 8080
+        http_client:
+          class: ~ # any class that implements \GuzzleHttp\ClientInterface
+          config:
+            allow_redirects: true
+            http_errors: true
+            verify: false
       apipath: "client/api"
       consolepath: "client/console"
       out: ~ # choose output path
@@ -30,20 +40,14 @@ php_cs_generator:
         license: ~ # if left blank, will be "MIT"
         description: ~ # if left blank, will have default value containing date of generation and ACS version
         authors: # list of authors to be appended to default author list
-          - name: "yourname"
-            email: "yourname@email.you"
+        - name: "yourname"
+          email: "yourname@email.you"
         require: # dependencies to add to the default list
           "package/name": ">=9000.*"
         autoload: ~ # any additional autoload entries you wish to add
       logging:
         enabled: ~ # if set to false, will prevent any logging code from being placed in the output.
         debug: false # if set to true, increases number of log statements generated
-      http_client:
-        class: ~ # any class that implements \GuzzleHttp\ClientInterface
-        config:
-          allow_redirects: true
-          http_errors: true
-          verify: false
       cache:
         id_prefix: ~ # if defined, will prepend each cache id with this value
         default_enabled: false # will disable caching for everything except those explicitly defined in "commands"
@@ -56,13 +60,14 @@ php_cs_generator:
           listVirtualMachines:
             enabled: false # disables caching entirely for this command
     prod:
-      host: prod.ourcloudstack.com
-      port: 8765
-      key: ~ # your api key
-      secret: ~ # your api secret
+      remote:
+        host: prod.ourcloudstack.com
+        port: 8765
+        key: ~ # your api key
+        secret: ~ # your api secret
   # allows you to extend the classes constructed by this lib with your own class
   overloaded_classes:
-    - name: Tags                  # name of class you are overloading
-      overload: MyGreatTagsClass  # fully qualified name of class extending the base class
-    - name: ListVirtualMachinesRequest
-      overload: DoSomethingCrazyRequest
+  - name: Tags                  # name of class you are overloading
+    overload: MyGreatTagsClass  # fully qualified name of class extending the base class
+  - name: ListVirtualMachinesRequest
+    overload: DoSomethingCrazyRequest

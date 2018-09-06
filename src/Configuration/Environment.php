@@ -2,11 +2,12 @@
 
 namespace MyENA\CloudStackClientGenerator\Configuration;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Cache;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Composer;
 use MyENA\CloudStackClientGenerator\Configuration\Environment\Logging;
+use MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Local;
+use MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Remote;
+use MyENA\CloudStackClientGenerator\Configuration\Environment\SourceProviderInterface;
 use Psr\Log\LoggerInterface;
 use function MyENA\CloudStackClientGenerator\tryResolvePath;
 
@@ -16,9 +17,7 @@ use function MyENA\CloudStackClientGenerator\tryResolvePath;
  */
 class Environment implements \JsonSerializable
 {
-    const DEFAULT_SCHEME = 'http';
-    const DEFAULT_PORT = 8080;
-    const DEFAULT_API_PATH = 'client/api';
+    const DEFAULT_API_PATH     = 'client/api';
     const DEFAULT_CONSOLE_PATH = 'client/console';
 
     const VALID_NAMESPACE_REGEX = '{^[a-zA-Z][a-zA-Z0-9_]*(\\\[a-zA-Z][a-zA-Z0-9_]*)*$}';
@@ -29,11 +28,6 @@ class Environment implements \JsonSerializable
      */
     private static $settableParams = [
         'name'        => true,
-        'key'         => true,
-        'secret'      => true,
-        'scheme'      => true,
-        'host'        => true,
-        'port'        => true,
         'apiPath'     => true,
         'consolePath' => true,
         'namespace'   => true,
@@ -46,17 +40,10 @@ class Environment implements \JsonSerializable
     /** @var string */
     private $name = '';
 
-    /** @var string */
-    private $key = '';
-    /** @var string */
-    private $secret = '';
-
-    /** @var string */
-    private $scheme = self::DEFAULT_SCHEME;
-    /** @var string */
-    private $host = '';
-    /** @var int */
-    private $port = self::DEFAULT_PORT;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Local */
+    private $local;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Remote */
+    private $remote;
 
     /** @var string */
     private $apiPath = self::DEFAULT_API_PATH;
@@ -64,15 +51,9 @@ class Environment implements \JsonSerializable
     private $consolePath = self::DEFAULT_CONSOLE_PATH;
 
     /** @var string */
-    private $compiledAddress = '';
-
-    /** @var string */
     private $namespace = '';
     /** @var string */
     private $out = '';
-
-    /** @var \GuzzleHttp\ClientInterface */
-    private $httpClient;
 
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\Cache */
     private $cache;
@@ -94,8 +75,8 @@ class Environment implements \JsonSerializable
         $this->cache = new Cache();
         $this->logging = new Logging();
 
-        $clientClass = Client::class;
-        $clientConfig = [];
+        $localConf = null;
+        $remoteConf = null;
 
         foreach ($config as $k => $v) {
             if (false !== strpos($k, '_')) {
@@ -103,10 +84,7 @@ class Environment implements \JsonSerializable
                 $k = lcfirst(implode('', array_map('ucfirst', explode('_', $k))));
             }
 
-            if ('httpClient' === $k) {
-                list($clientClass, $clientConfig) = $this->parseHttpClientEntry($v, $clientClass);
-                continue;
-            } elseif ('cache' === $k) {
+            if ('cache' === $k) {
                 $this->cache = $this->parseCacheEntry($v);
                 continue;
             } elseif ('composer' === $k) {
@@ -114,6 +92,12 @@ class Environment implements \JsonSerializable
                 continue;
             } elseif ('logging' === $k) {
                 $this->logging = $this->parseLoggingEntry($v);
+                continue;
+            } elseif ('remote' === $k) {
+                $remoteConf = $v;
+                continue;
+            } elseif ('local' === $k) {
+                $localConf = $v;
                 continue;
             }
 
@@ -124,136 +108,14 @@ class Environment implements \JsonSerializable
             $this->{'set' . ucfirst($k)}($v);
         }
 
-        $this->httpClient = new $clientClass($clientConfig);
+        if (isset($remoteConf)) {
+            $this->remote = $this->parseRemoteEntry($remoteConf);
+        }
+        if (isset($localConf)) {
+            $this->local = $this->parseLocalEntry($localConf);
+        }
 
         $this->logger->debug(sprintf('Environment %s configuration loaded', $this->name));
-    }
-
-    /**
-     * @return string
-     */
-    public function getKey(): string
-    {
-        return $this->key;
-    }
-
-    /**
-     * @param string $key
-     * @return void
-     */
-    public function setKey(string $key)
-    {
-        $this->key = $key;
-    }
-
-    /**
-     * @return \GuzzleHttp\ClientInterface
-     */
-    public function getHttpClient(): ClientInterface
-    {
-        return $this->httpClient;
-    }
-
-    /**
-     * @param \GuzzleHttp\ClientInterface $httpClient
-     */
-    public function setHttpClient(ClientInterface $httpClient)
-    {
-        $this->httpClient = $httpClient;
-    }
-
-    /**
-     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Composer
-     */
-    public function getComposer(): Composer
-    {
-        return $this->composer;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCompiledAddress(): string
-    {
-        if ('' === $this->compiledAddress) {
-            $this->compiledAddress = rtrim(sprintf(
-                '%s://%s%s/',
-                $this->getScheme(),
-                $this->getHost(),
-                0 === $this->port ? '' : sprintf(':%d', $this->port)
-            ),
-                "/");
-        }
-
-        return $this->compiledAddress;
-    }
-
-    /**
-     * @return string
-     */
-    public function getScheme(): string
-    {
-        return $this->scheme;
-    }
-
-    /**
-     * @param string $scheme
-     * @return void
-     */
-    public function setScheme(string $scheme)
-    {
-        $this->scheme = $scheme;
-        $this->compiledAddress = '';
-    }
-
-    /**
-     * @return string
-     */
-    public function getHost(): string
-    {
-        return $this->host;
-    }
-
-    /**
-     * @param string $host
-     * @return void
-     */
-    public function setHost(string $host)
-    {
-        $this->host = $host;
-        $this->compiledAddress = '';
-    }
-
-    /**
-     * @param string $query
-     * @return string
-     * @throws \Exception
-     */
-    public function buildSignature(string $query): string
-    {
-        if ('' === $query) {
-            throw new \Exception(STRTOSIGN_EMPTY_MSG, STRTOSIGN_EMPTY);
-        }
-
-        $hash = hash_hmac('SHA1', strtolower($query), $this->getSecret(), true);
-        return urlencode(base64_encode($hash));
-    }
-
-    /**
-     * @return string
-     */
-    public function getSecret(): string
-    {
-        return $this->secret;
-    }
-
-    /**
-     * @param string $secret
-     * @return void
-     */
-    public function setSecret(string $secret)
-    {
-        $this->secret = $secret;
     }
 
     /**
@@ -274,21 +136,11 @@ class Environment implements \JsonSerializable
     }
 
     /**
-     * @return int
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Composer
      */
-    public function getPort(): int
+    public function getComposer(): Composer
     {
-        return $this->port;
-    }
-
-    /**
-     * @param int $port
-     * @return void
-     */
-    public function setPort(int $port)
-    {
-        $this->port = $port;
-        $this->compiledAddress = '';
+        return $this->composer;
     }
 
     /**
@@ -383,71 +235,60 @@ class Environment implements \JsonSerializable
     }
 
     /**
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Local|null
+     */
+    public function getLocal(): ?Local
+    {
+        return $this->local ?? null;
+    }
+
+    /**
+     * @param \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Local|null $local
+     */
+    public function setLocal(?Local $local): void
+    {
+        $this->local = $local;
+    }
+
+    /**
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Remote|null
+     */
+    public function getRemote(): ?Remote
+    {
+        return $this->remote ?? null;
+    }
+
+    /**
+     * @param \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Remote|null $remote
+     */
+    public function setRemote(?Remote $remote): void
+    {
+        $this->remote = $remote;
+    }
+
+    /**
+     * @return null|\MyENA\CloudStackClientGenerator\Configuration\Environment\SourceProviderInterface
+     */
+    public function getSourceProvider(): ?SourceProviderInterface
+    {
+        if ($source = $this->getLocal()) {
+            return $source;
+        }
+        return $this->getRemote();
+    }
+
+    /**
      * @return array
      */
     public function jsonSerialize()
     {
         return [
             'name'        => $this->getName(),
-            'scheme'      => $this->getScheme(),
-            'host'        => $this->getHost(),
-            'port'        => $this->getPort(),
             'apiPath'     => $this->getAPIPath(),
             'consolePath' => $this->getConsolePath(),
             'namespace'   => $this->getNamespace(),
             'outputDir'   => $this->getOut(),
         ];
-    }
-
-    /**
-     * @param array|null $v
-     * @return array(
-     * @type string Client class
-     * @type array Client config
-     * )
-     */
-    protected function parseHttpClientEntry($v, string $clientClass): array
-    {
-        $clientConfig = [];
-        if (null === $v) {
-            return [$clientClass, $clientConfig];
-        }
-
-        if (!is_array($v)) {
-            throw new \DomainException(sprintf(
-                'Key "http_client" expected to be array, %s seen',
-                gettype($v)
-            ));
-        }
-
-        if (isset($v['class'])) {
-            if (!is_string($v['class'])) {
-                throw new \DomainException(sprintf(
-                    'Key "http_client" sub-key "class" must be string, % seen',
-                    gettype($v['class'])
-                ));
-            } elseif (!class_exists($v['class'], true)) {
-                throw new \RuntimeException(sprintf('Specified HttpClient class "%s" not found', $v['class']));
-            } elseif (!isset(class_implements($v['class'])[ClientInterface::class])) {
-                throw new \DomainException(sprintf(
-                    'Specified HttpClient class "%s" does not seem to implement \\GuzzleHttp\\ClientInterface',
-                    $v['class']
-                ));
-            }
-            $clientClass = $v['class'];
-        }
-
-        if (isset($v['config'])) {
-            if (!is_array($v['config'])) {
-                throw new \InvalidArgumentException(sprintf(
-                    'http_client property config must be array, %s seen.',
-                    gettype($v['config'])
-                ));
-            }
-            $clientConfig = $v['config'];
-        }
-
-        return [$clientClass, $clientConfig];
     }
 
     /**
@@ -487,5 +328,23 @@ class Environment implements \JsonSerializable
     protected function parseLoggingEntry($v): Logging
     {
         return new Logging(is_array($v) ? $v : []);
+    }
+
+    /**
+     * @param $v
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Remote
+     */
+    protected function parseRemoteEntry($v)
+    {
+        return new Remote($this->getAPIPath(), $v);
+    }
+
+    /**
+     * @param $v
+     * @return \MyENA\CloudStackClientGenerator\Configuration\Environment\Source\Local
+     */
+    protected function parseLocalEntry($v)
+    {
+        return new Local($v);
     }
 }

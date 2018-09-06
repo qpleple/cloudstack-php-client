@@ -2,7 +2,6 @@
 
 namespace MyENA\CloudStackClientGenerator\Command;
 
-use MyENA\CloudStackClientGenerator\Client;
 use MyENA\CloudStackClientGenerator\Configuration;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Command\Command;
@@ -19,6 +18,22 @@ use function MyENA\CloudStackClientGenerator\tryResolvePath;
  */
 abstract class AbstractCommand extends Command
 {
+    protected const OPT_CONFIG          = 'config';
+    protected const OPT_ENV             = 'env';
+    protected const OPT_REMOTE          = 'remote';
+    protected const OPT_REMOTE_SCHEME   = 'remote-scheme';
+    protected const OPT_REMOTE_HOST     = 'remote-host';
+    protected const OPT_REMOTE_PORT     = 'remote-port';
+    protected const OPT_REMOTE_KEY      = 'remote-key';
+    protected const OPT_REMOTE_SECRET   = 'remote-secret';
+    protected const OPT_LOCAL           = 'local';
+    protected const OPT_LOCAL_API_JSON  = 'local-api-json';
+    protected const OPT_LOCAL_CAPS_JSON = 'local-caps-json';
+    protected const OPT_API_PATH        = 'apipath';
+    protected const OPT_CONSOLE_PATH    = 'consolepath';
+    protected const OPT_OUT             = 'out';
+    protected const OPT_NAMESPACE       = 'namespace';
+
     /** @var \Psr\Log\LoggerInterface */
     protected $log;
 
@@ -28,8 +43,8 @@ abstract class AbstractCommand extends Command
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment */
     protected $env;
 
-    /** @var \MyENA\CloudStackClientGenerator\Client */
-    private $client;
+    /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment\SourceProviderInterface */
+    protected $source;
 
     /**
      * @param string $commandName
@@ -44,71 +59,95 @@ abstract class AbstractCommand extends Command
     {
         $this
             ->addOption(
-                'config',
+                self::OPT_CONFIG,
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Configuration file to use'
             )
             ->addOption(
-                'env',
+                self::OPT_ENV,
                 null,
                 InputOption::VALUE_REQUIRED,
                 'If configuration file defined, which environment to use from config'
             )
             ->addOption(
-                'scheme',
+                self::OPT_REMOTE,
                 null,
-                InputOption::VALUE_REQUIRED,
-                'HTTP Scheme to use (http or https)',
-                Configuration\Environment::DEFAULT_SCHEME
+                InputOption::VALUE_NONE,
+                'Whether to pull APIs and Capabilities using Remote configuration'
             )
             ->addOption(
-                'host',
+                self::OPT_REMOTE_SCHEME,
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Hostname of running CloudStack instance'
+                'If using Remote, HTTP Scheme to use (http or https)',
+                Configuration\Environment\Source\Remote::DEFAULT_SCHEME
             )
             ->addOption(
-                'port',
+                self::OPT_REMOTE_HOST,
                 null,
                 InputOption::VALUE_REQUIRED,
-                'API Client port to use',
-                Configuration\Environment::DEFAULT_PORT
+                'If using Remote, Hostname of running CloudStack instance'
             )
             ->addOption(
-                'apipath',
+                self::OPT_REMOTE_PORT,
+                null,
+                InputOption::VALUE_REQUIRED,
+                'If using Remote, API Client port to use',
+                Configuration\Environment\Source\Remote::DEFAULT_PORT
+            )
+            ->addOption(
+                self::OPT_REMOTE_KEY,
+                null,
+                InputOption::VALUE_REQUIRED,
+                'If using Remote, CloudStack API Key'
+            )
+            ->addOption(
+                self::OPT_REMOTE_SECRET,
+                null,
+                InputOption::VALUE_REQUIRED,
+                'If using Remote, CloudStack API Secret'
+            )
+            ->addOption(
+                self::OPT_LOCAL,
+                null,
+                InputOption::VALUE_NONE,
+                'Whether to pull APIs and Capabilities from Local configuration'
+            )
+            ->addOption(
+                self::OPT_LOCAL_API_JSON,
+                null,
+                InputOption::VALUE_REQUIRED,
+                'If using Local, either the Path to a file containing output from "listApis" or the JSON itself'
+            )
+            ->addOption(
+                self::OPT_LOCAL_CAPS_JSON,
+                null,
+                InputOption::VALUE_REQUIRED,
+                'If using Local, either the path to a file containing output from "listCapbilities" or the JSON itself'
+            )
+            ->addOption(
+                self::OPT_API_PATH,
                 null,
                 InputOption::VALUE_REQUIRED,
                 'API path to use',
                 Configuration\Environment::DEFAULT_API_PATH
             )
             ->addOption(
-                'consolepath',
+                self::OPT_CONSOLE_PATH,
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Console path to use',
                 Configuration\Environment::DEFAULT_CONSOLE_PATH
             )
             ->addOption(
-                'key',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'CloudStack API Key'
-            )
-            ->addOption(
-                'secret',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'CloudStack API Secret'
-            )
-            ->addOption(
-                'out',
+                self::OPT_OUT,
                 'O',
                 InputOption::VALUE_REQUIRED,
                 'Output Directory'
             )
             ->addOption(
-                'namespace',
+                self::OPT_NAMESPACE,
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Namespace for generated code'
@@ -138,13 +177,13 @@ abstract class AbstractCommand extends Command
         $this->config = new Configuration($this->log, []);
 
         // attempt to parse config file
-        if ($file = $input->getOption('config')) {
+        if ($file = $input->getOption(self::OPT_CONFIG)) {
             $file = tryResolvePath($file);
             if (!file_exists($file) || !is_readable($file)) {
                 $this->log->error("Config file {$file} either does not exist or is not readable");
                 return false;
             }
-            if (!$this->parseYAML($file, (string)$input->getOption('env'))) {
+            if (!$this->parseYAML($file, (string)$input->getOption(self::OPT_ENV))) {
                 return false;
             }
         } else {
@@ -154,30 +193,78 @@ abstract class AbstractCommand extends Command
             $this->log->info('No config file specified, using adhoc');
         }
 
+        $local = (bool)$input->getOption(self::OPT_LOCAL);
+        $remote = (bool)$input->getOption(self::OPT_REMOTE);
+
+        if (!$local && !$remote) {
+            if ($this->env->getLocal()) {
+                $local = true;
+            } elseif ($this->env->getRemote()) {
+                $remote = true;
+            }
+        }
+
+        if ($local) {
+            $source = $this->env->getLocal();
+            if (null === $source) {
+                $source = new Configuration\Environment\Source\Local();
+            }
+            if ($opt = $input->getOption(self::OPT_LOCAL_API_JSON)) {
+                $source->setListApisJson($opt);
+            }
+            if ($opt = $input->getOption(self::OPT_LOCAL_CAPS_JSON)) {
+                $source->setListCapabilitiesJson($opt);
+            }
+            if ('' === $source->getListApisJson()) {
+                $this->log->error('"list_apis_json" cannot be empty');
+                return false;
+            }
+            if ('' === $source->getListCapabilitiesJson()) {
+                $this->log->error('"list_capabilities_json" cannot be empty');
+                return false;
+            }
+            $this->env->setRemote(null);
+        } elseif ($remote) {
+            $source = $this->env->getRemote();
+            if (null === $source) {
+                $source = new Configuration\Environment\Source\Remote($this->env->getAPIPath());
+            }
+            if (Configuration\Environment\Source\Remote::DEFAULT_SCHEME === $source->getScheme()) {
+                $source->setScheme($input->getOption(self::OPT_REMOTE_SCHEME));
+            }
+            if (Configuration\Environment\Source\Remote::DEFAULT_PORT === $source->getPort()) {
+                $source->setPort($input->getOption(self::OPT_REMOTE_PORT));
+            }
+            if ($key = $input->getOption(self::OPT_REMOTE_KEY)) {
+                $source->setKey($key);
+            }
+            if ($secret = $input->getOption(self::OPT_REMOTE_SECRET)) {
+                $source->setSecret($secret);
+            }
+            if ('' === $source->getHost()) {
+                $this->log->error('"host" cannot be empty');
+                return false;
+            }
+            if ('' === $source->getKey()) {
+                $this->log->error('"key" cannot be empty');
+                return false;
+            }
+            if ('' === $source->getSecret()) {
+                $this->log->error('"secret" cannot be empty');
+                return false;
+            }
+            $this->env->setLocal(null);
+        } else {
+            throw new \LogicException('Unable to determine source');
+        }
+
         // Set any runtime command options
-        if (Configuration\Environment::DEFAULT_SCHEME === $this->env->getScheme() &&
-            Configuration\Environment::DEFAULT_SCHEME !== ($scheme = $input->getOption('scheme'))) {
-            $this->env->setScheme($scheme);
-        }
-        if ($host = $input->getOption('host')) {
-            $this->env->setHost($host);
-        }
-        if (Configuration\Environment::DEFAULT_PORT === $this->env->getPort() &&
-            Configuration\Environment::DEFAULT_PORT !== ($port = $input->getOption('port'))) {
-            $this->env->setPort($port);
-        }
         if (Configuration\Environment::DEFAULT_API_PATH === $this->env->getApiPath() &&
             Configuration\Environment::DEFAULT_API_PATH !== ($apiPath = $input->getOption('apipath'))) {
             $this->env->setApiPath($apiPath);
         }
         if ($consolePath = $input->getOption('consolepath')) {
             $this->env->setConsolePath($consolePath);
-        }
-        if ($key = $input->getOption('key')) {
-            $this->env->setKey($key);
-        }
-        if ($secret = $input->getOption('secret')) {
-            $this->env->setSecret($secret);
         }
         if ($out = $input->getOption('out')) {
             $this->env->setOut(tryResolvePath($out));
@@ -187,18 +274,6 @@ abstract class AbstractCommand extends Command
         }
 
         // Do some basic validation
-        if ('' === $this->env->getHost()) {
-            $this->log->error('"host" cannot be empty');
-            return false;
-        }
-        if ('' === $this->env->getKey()) {
-            $this->log->error('"key" cannot be empty');
-            return false;
-        }
-        if ('' === $this->env->getSecret()) {
-            $this->log->error('"secret" cannot be empty');
-            return false;
-        }
         if ('' === $this->env->getOut()) {
             $this->log->error('The "out" option must be passed!');
         } else {
@@ -212,6 +287,8 @@ abstract class AbstractCommand extends Command
                 }
             }
         }
+
+        $this->source = $source;
 
         // we good, lets go.
         return true;
@@ -260,16 +337,5 @@ abstract class AbstractCommand extends Command
         $this->log->info("Using \"{$this->env->getName()}\" configuration");
 
         return true;
-    }
-
-    /**
-     * @return \MyENA\CloudStackClientGenerator\Client
-     */
-    protected function getClient(): Client
-    {
-        if (!isset($this->client)) {
-            $this->client = new Client($this->env);
-        }
-        return $this->client;
     }
 }

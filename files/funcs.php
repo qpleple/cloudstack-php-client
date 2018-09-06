@@ -196,6 +196,6 @@ function buildFileHeader(\stdClass $capabilities): string
 STRING
         ,
         date('Y-m-d'),
-        $capabilities->capability->cloudstackversion
+        $capabilities->cloudstackversion
     );
 }

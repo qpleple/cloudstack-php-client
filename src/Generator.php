@@ -18,17 +18,12 @@ class Generator
     protected $config;
     /** @var \MyENA\CloudStackClientGenerator\Configuration\Environment */
     protected $env;
-    /** @var \MyENA\CloudStackClientGenerator\Client */
-    protected $client;
 
     /** @var \Psr\Log\LoggerInterface */
     protected $log;
 
     /** @var \Twig_Environment */
     protected $twig;
-
-    /** @var \stdClass */
-    protected $capabilities;
 
     /** @var API[] */
     protected $apis = [];
@@ -65,7 +60,6 @@ class Generator
 
         $this->config = $config;
         $this->env = $environment;
-        $this->client = new Client($environment);
 
         $this->log->info('Generator constructing with environment "' . $environment->getName() . '"');
 
@@ -99,7 +93,6 @@ class Generator
      * Execute generation of CloudStack API client
      *
      * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \Twig_Error_Loader
      * @throws \Twig_Error_Runtime
      * @throws \Twig_Error_Syntax
@@ -109,15 +102,24 @@ class Generator
         $this->log->info('Initializing directories...');
         $this->initializeDirectories();
 
-        $this->log->info("Compiling APIs from {$this->env->getHost()}...");
-        $capabilities = $this->getCapabilities();
-        $this->log->info("CloudStack Version: {$capabilities->capability->cloudstackversion}");
-        $this->env->getComposer()->setCloudStackVersion($capabilities->capability->cloudstackversion);
+        $source = $this->env->getSourceProvider();
+        if (!$source) {
+            throw new \LogicException(sprintf(
+                'Unable to determine Source provider for env %s',
+                $this->env->getName()
+            ));
+        }
+        $this->log->info("Compiling APIs from source \"{$source->getName()}\"...");
+        $apis = $source->getApis();
+        $capabilities = $source->getCapabilities();
+
+        $this->log->info("CloudStack Version: {$capabilities->cloudstackversion}");
+        $this->env->getComposer()->setCloudStackVersion($capabilities->cloudstackversion);
 
         $this->log->info('Validating composer.json...');
         $this->env->getComposer()->validate();
 
-        $this->compileAPIs();
+        $this->compileAPIs($apis);
         ksort($this->apis, SORT_NATURAL);
 
         $this->log->info(count($this->apis) . ' API(s) found.');
@@ -126,7 +128,7 @@ class Generator
         $this->twig->addGlobal('config', $this->config);
         $this->twig->addGlobal('env', $this->env);
         $this->twig->addGlobal('log', $this->log);
-        $this->twig->addGlobal('capabilities', $this->getCapabilities());
+        $this->twig->addGlobal('capabilities', $capabilities);
 
         $this->log->info('Writing static templates...');
         $this->writeOutStaticTemplates();
@@ -184,14 +186,11 @@ class Generator
     }
 
     /**
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @param array $apis
      */
-    protected function compileAPIs()
+    protected function compileAPIs(array $apis)
     {
-        $data = $this->client->do('listApis')->listapisresponse;
-
-        foreach ($data->api as $apiDef) {
+        foreach ($apis as $apiDef) {
             $api = new API();
 
             $api->setName(trim($apiDef->name));
@@ -364,21 +363,6 @@ class Generator
                 $properties->add($var);
             }
         }
-    }
-
-    /**
-     * @return \stdClass
-     * @throws \Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     */
-    protected function getCapabilities()
-    {
-        if (!isset($this->capabilities)) {
-            $data = $this->client->do('listCapabilities');
-            $this->capabilities = $data->listcapabilitiesresponse;
-        }
-
-        return $this->capabilities;
     }
 
     /**
